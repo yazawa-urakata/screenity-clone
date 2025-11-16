@@ -4,11 +4,11 @@ import { ContentStateContext } from "../../context/ContentState"; // Import the 
 
 const URL = "/assets/";
 
-const CropNav = () => {
+const CropNav: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
 
-  const handleCancel = () => {
-    setContentState((prevContentState) => ({
+  const handleCancel = (): void => {
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       mode: "player",
       blob: contentState.originalBlob,
@@ -22,8 +22,8 @@ const CropNav = () => {
     }));
   };
 
-  const handleRevert = () => {
-    setContentState((prevContentState) => ({
+  const handleRevert = (): void => {
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       blob: contentState.originalBlob,
       start: 0,
@@ -36,7 +36,7 @@ const CropNav = () => {
     }));
   };
 
-  const saveChanges = async () => {
+  const saveChanges = async (): Promise<void> => {
     contentState.handleCrop(
       contentState.left,
       contentState.top,

@@ -10,35 +10,43 @@ import { ReactSVG } from "react-svg";
 import ShareModal from "./ShareModal";
 
 // Context
-import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import { ContentStateContext } from "../../context/ContentState";
 
-const Title = () => {
-  const [showShare, setShowShare] = useState(false);
-  const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
-  const inputRef = useRef(null);
+const Title: React.FC = () => {
+  const [showShare, setShowShare] = useState<boolean>(false);
+  const contextValue = useContext(ContentStateContext);
+
+  if (!contextValue) {
+    throw new Error("Title must be used within ContentStateContext");
+  }
+
+  const [contentState, setContentState] = contextValue;
+  const inputRef = useRef<HTMLInputElement>(null);
+
   // Show the video title, as a heading by default (multiline), on click show a text input to edit the title
-  const [showTitle, setShowTitle] = useState(true);
-  const [title, setTitle] = useState(contentState.title);
-  const [displayTitle, setDisplayTitle] = useState(contentState.title);
+  const [showTitle, setShowTitle] = useState<boolean>(true);
+  const [title, setTitle] = useState<string>(contentState.title || "");
+  const [displayTitle, setDisplayTitle] = useState<string>(contentState.title || "");
 
   useEffect(() => {
-    setTitle(contentState.title);
-    if (contentState.title.length > 80) {
-      setDisplayTitle(contentState.title.slice(0, 80) + "...");
+    const currentTitle = contentState.title || "";
+    setTitle(currentTitle);
+    if (currentTitle.length > 80) {
+      setDisplayTitle(currentTitle.slice(0, 80) + "...");
     } else {
-      setDisplayTitle(contentState.title);
+      setDisplayTitle(currentTitle);
     }
   }, [contentState.title]);
 
-  const handleTitleChange = (e) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setTitle(e.target.value);
   };
 
-  const handleTitleClick = () => {
+  const handleTitleClick = (): void => {
     setShowTitle(false);
   };
 
-  const handleTitleBlur = () => {
+  const handleTitleBlur = (): void => {
     setShowTitle(true);
     setContentState((prevState) => ({
       ...prevState,
@@ -47,14 +55,14 @@ const Title = () => {
   };
 
   useEffect(() => {
-    if (!showTitle) {
+    if (!showTitle && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
   }, [showTitle]);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Enter") {
         setShowTitle(true);
         setContentState((prevState) => ({
@@ -63,7 +71,7 @@ const Title = () => {
         }));
       } else if (e.key === "Escape") {
         setShowTitle(true);
-        setTitle(contentState.title);
+        setTitle(contentState.title || "");
       }
     };
 
@@ -72,7 +80,7 @@ const Title = () => {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [title]);
+  }, [title, contentState.title, setContentState]);
 
   return (
     <div className={styles.TitleParent}>
@@ -87,7 +95,7 @@ const Title = () => {
               <ReactSVG
                 src={URL + "editor/icons/pencil.svg"}
                 className={styles.pencil}
-                styles={{ display: "inline-block" }}
+                style={{ display: "inline-block" }}
               />
             </h1>
             {/* <div

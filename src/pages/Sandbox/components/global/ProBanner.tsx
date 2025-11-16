@@ -1,18 +1,24 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 // Context
-import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import { ContentStateContext } from "../../context/ContentState";
 
 const CLOUD_FEATURES_ENABLED =
   process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
 
-const ProBanner = () => {
-  const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
+const ProBanner: React.FC = () => {
+  const contextValue = useContext(ContentStateContext);
 
-  const titleKey = CLOUD_FEATURES_ENABLED
+  if (!contextValue) {
+    throw new Error("ProBanner must be used within ContentStateContext");
+  }
+
+  const [contentState, setContentState] = contextValue;
+
+  const titleKey: string = CLOUD_FEATURES_ENABLED
     ? "proBannerTitle"
     : "hostBannerTitle";
 
-  const descriptionKey = CLOUD_FEATURES_ENABLED
+  const descriptionKey: string = CLOUD_FEATURES_ENABLED
     ? "proBannerDescription"
     : "hostBannerDescription";
 

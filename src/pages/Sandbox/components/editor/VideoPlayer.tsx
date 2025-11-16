@@ -16,7 +16,11 @@ interface PlyrRef {
   plyr: PlyrInstance;
 }
 
-const VideoPlayer: React.FC = () => {
+interface VideoPlayerProps {
+  onSeek?: (time: number, updateTime: boolean) => void;
+}
+
+const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
   const contextValue = useContext(ContentStateContext);
   if (!contextValue) return null;
   const [contentState, setContentState] = contextValue;

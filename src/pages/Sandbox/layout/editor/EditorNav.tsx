@@ -4,26 +4,21 @@ import { ContentStateContext } from "../../context/ContentState"; // Import the 
 
 const URL = "/assets/";
 
-const AudioNav = () => {
+const EditorNav: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
 
-  const handleCancel = () => {
-    setContentState((prevContentState) => ({
+  const handleCancel = (): void => {
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       mode: "player",
       blob: contentState.originalBlob,
       start: 0,
       end: 1,
-      width: contentState.prevWidth,
-      height: contentState.prevHeight,
-      left: 0,
-      top: 0,
-      fromCropper: false,
     }));
   };
 
-  const handleRevert = () => {
-    setContentState((prevContentState) => ({
+  const handleRevert = (): void => {
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       blob: contentState.originalBlob,
       start: 0,
@@ -31,8 +26,9 @@ const AudioNav = () => {
     }));
   };
 
-  const saveChanges = async () => {
-    setContentState((prevContentState) => ({
+  const saveChanges = async (): Promise<void> => {
+    await contentState.handleReencode();
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       mode: "player",
       start: 0,
@@ -53,7 +49,7 @@ const AudioNav = () => {
         </div>
         <div className={styles.editorNavCenter}>
           <div className={styles.editorNavTitle}>
-            {chrome.i18n.getMessage("sandboxEditorMainTitle") + " "}{" "}
+            {chrome.i18n.getMessage("sandboxEditorMainTitle")}{" "}
             <span className={styles.beta}>BETA</span>
           </div>
         </div>
@@ -72,12 +68,13 @@ const AudioNav = () => {
           >
             {chrome.i18n.getMessage("sandboxEditorRevertButton")}
           </button>
+
           <button
             className="button primaryButton"
             onClick={saveChanges}
             disabled={contentState.isFfmpegRunning}
           >
-            {contentState.cropping
+            {contentState.reencoding
               ? chrome.i18n.getMessage("sandboxEditorSaveProgressButton")
               : chrome.i18n.getMessage("sandboxEditorSaveButton")}
           </button>
@@ -87,4 +84,4 @@ const AudioNav = () => {
   );
 };
 
-export default AudioNav;
+export default EditorNav;

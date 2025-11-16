@@ -4,37 +4,45 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 // Context
 import { ContentStateContext } from "../../context/ContentState";
 
-const Modal = (props) => {
-  const [contentState, setContentState] = useContext(ContentStateContext);
-  const [title, setTitle] = useState("Test");
-  const [description, setDescription] = useState("Description here");
-  const [button1, setButton1] = useState("Submit");
-  const [button2, setButton2] = useState("Cancel");
-  const [trigger, setTrigger] = useState(() => {});
-  const [trigger2, setTrigger2] = useState(() => {});
-  const [showModal, setShowModal] = useState(false);
-  const [image, setImage] = useState(null);
-  const [learnmore, setLearnMore] = useState(null);
-  const [learnMoreLink, setLearnMoreLink] = useState(() => {});
-  const [colorSafe, setColorSafe] = useState(false);
-  const [sideButton, setSideButton] = useState(false);
-  const [sideButtonAction, setSideButtonAction] = useState(() => {});
+interface ModalProps {}
+
+const Modal: React.FC<ModalProps> = (props) => {
+  const contextValue = useContext(ContentStateContext);
+
+  if (!contextValue) {
+    throw new Error("Modal must be used within ContentStateContext");
+  }
+
+  const [contentState, setContentState] = contextValue;
+  const [title, setTitle] = useState<string>("Test");
+  const [description, setDescription] = useState<string>("Description here");
+  const [button1, setButton1] = useState<string | null>("Submit");
+  const [button2, setButton2] = useState<string | null>("Cancel");
+  const [trigger, setTrigger] = useState<() => void>(() => {});
+  const [trigger2, setTrigger2] = useState<() => void>(() => {});
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [image, setImage] = useState<string | null>(null);
+  const [learnmore, setLearnMore] = useState<string | null>(null);
+  const [learnMoreLink, setLearnMoreLink] = useState<(() => void) | null>(() => {});
+  const [colorSafe, setColorSafe] = useState<boolean>(false);
+  const [sideButton, setSideButton] = useState<string | false>(false);
+  const [sideButtonAction, setSideButtonAction] = useState<() => void>(() => {});
 
   const openModal = useCallback(
     (
-      title,
-      description,
-      button1,
-      button2,
-      action,
-      action2,
-      image = null,
-      learnMore = null,
-      learnMoreLink = null,
-      colorSafe = false,
-      sideButton = false,
-      sideButtonAction = () => {}
-    ) => {
+      title: string,
+      description: string,
+      button1: string | null,
+      button2: string | null,
+      action: () => void,
+      action2: () => void,
+      image: string | null = null,
+      learnMore: string | null = null,
+      learnMoreLink: (() => void) | null = null,
+      colorSafe: boolean = false,
+      sideButton: string | false = false,
+      sideButtonAction: () => void = () => {}
+    ): void => {
       setTitle(title);
       setDescription(description);
       setButton1(button1);
@@ -48,7 +56,8 @@ const Modal = (props) => {
       setColorSafe(colorSafe);
       setSideButton(sideButton);
       setSideButtonAction(() => sideButtonAction);
-    }
+    },
+    []
   );
 
   useEffect(() => {
@@ -63,12 +72,12 @@ const Modal = (props) => {
         openModal: null,
       }));
     };
-  }, []);
+  }, [openModal, setContentState]);
 
   return (
     <AlertDialog.Root
       open={showModal}
-      onOpenChange={(open) => {
+      onOpenChange={(open: boolean) => {
         setShowModal(open);
       }}
     >
@@ -85,12 +94,15 @@ const Modal = (props) => {
             {learnmore && (
               <a
                 href="#"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  learnMoreLink();
+                  if (learnMoreLink) {
+                    learnMoreLink();
+                  }
                 }}
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 {learnmore}
               </a>
@@ -105,6 +117,7 @@ const Modal = (props) => {
                 marginTop: 5,
                 borderRadius: "15px",
               }}
+              alt="Modal illustration"
             />
           )}
           <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>

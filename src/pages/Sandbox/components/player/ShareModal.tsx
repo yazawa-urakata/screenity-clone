@@ -1,16 +1,27 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 
 import styles from "../../styles/player/_ShareModal.module.scss";
 
 import { ReactSVG } from "react-svg";
 
 // Context
-import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import { ContentStateContext } from "../../context/ContentState";
 
 const URL = "/assets/";
 
-const ShareModal = ({ showShare, setShowShare }) => {
-  const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
+interface ShareModalProps {
+  showShare: boolean;
+  setShowShare: (show: boolean) => void;
+}
+
+const ShareModal: React.FC<ShareModalProps> = ({ showShare, setShowShare }) => {
+  const contextValue = useContext(ContentStateContext);
+
+  if (!contextValue) {
+    throw new Error("ShareModal must be used within ContentStateContext");
+  }
+
+  const [contentState, setContentState] = contextValue;
 
   return (
     <div className={styles.modalWrap}>

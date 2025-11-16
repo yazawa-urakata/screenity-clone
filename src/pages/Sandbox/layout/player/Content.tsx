@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import React, { useContext } from "react";
 import styles from "../../styles/player/_Content.module.scss";
 
 // Components
@@ -8,7 +8,7 @@ import CropperWrap from "../../components/editor/CropperWrap";
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 
-const Content = () => {
+const Content: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
   return (
     <div className={styles.content}>

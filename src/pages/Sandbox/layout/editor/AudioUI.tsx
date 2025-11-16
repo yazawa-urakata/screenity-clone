@@ -14,25 +14,26 @@ import { ReactSVG } from "react-svg";
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 
-const AudioUI = (props) => {
+const AudioUI: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
-  const [audio, setAudio] = useState(null);
-  const prevBlob = useRef(null);
-  const inputRef = useRef(null);
+  const [audio, setAudio] = useState<File | null>(null);
+  const prevBlob = useRef<Blob | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (contentState.blob !== prevBlob.current) {
       prevBlob.current = contentState.blob;
       setAudio(null);
-      setContentState((prevContentState) => ({
+      setContentState((prevContentState: any) => ({
         ...prevContentState,
         volume: 1,
       }));
     }
   }, []);
 
-  const handleAudio = async (e) => {
-    const file = e.target.files[0];
+  const handleAudio = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     // Check if the file is an audio file
     if (!file.type.includes("audio") || file.size === 0) {
       return;
@@ -42,26 +43,26 @@ const AudioUI = (props) => {
     setAudio(file);
   };
 
-  const handleVolume = (e) => {
+  const handleVolume = (e: React.ChangeEvent<HTMLInputElement>): void => {
     let value = e.target.value;
-    if (isNaN(value)) {
+    if (isNaN(value as any)) {
       return;
     }
-    if (value < 0) {
+    if (parseFloat(value) < 0) {
       return;
     }
-    if (value > 100) {
+    if (parseFloat(value) > 100) {
       return;
     }
 
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       volume: parseFloat(value) / 100,
     }));
   };
 
-  const updateAudio = async () => {
-    setContentState((prevContentState) => ({
+  const updateAudio = async (): Promise<void> => {
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       blob: prevBlob.current,
     }));
@@ -82,7 +83,7 @@ const AudioUI = (props) => {
         {!audio && (
           <div
             className={styles.uploadArea}
-            onClick={() => inputRef.current.click()}
+            onClick={() => inputRef.current?.click()}
           >
             <ReactSVG src={URL + "editor/icons/upload.svg"} />
             <div className={styles.uploadDetails}>
@@ -108,11 +109,13 @@ const AudioUI = (props) => {
                 src={URL + "editor/icons/cross.svg"}
                 onClick={() => {
                   setAudio(null);
-                  setContentState((prevContentState) => ({
+                  setContentState((prevContentState: any) => ({
                     ...prevContentState,
                     blob: prevBlob.current,
                   }));
-                  inputRef.current.value = null;
+                  if (inputRef.current) {
+                    inputRef.current.value = null as any;
+                  }
                 }}
               />
             </div>
@@ -135,7 +138,7 @@ const AudioUI = (props) => {
               value={Math.round(contentState.volume * 100)}
               onBlur={(e) => {
                 if (e.target.value === "") {
-                  setContentState((prevContentState) => ({
+                  setContentState((prevContentState: any) => ({
                     ...prevContentState,
                     volume: 0,
                   }));
@@ -148,11 +151,11 @@ const AudioUI = (props) => {
             className={styles.SliderRoot}
             max={100}
             step={1}
-            onValueChange={(newValue) => {
-              setContentState((prevContentState) => ({
+            onValueChange={(newValue: number[]) => {
+              setContentState((prevContentState: any) => ({
                 ...prevContentState,
                 // Round to the nearest integer
-                volume: Math.round(newValue) / 100,
+                volume: Math.round(newValue[0]) / 100,
               }));
             }}
             value={[contentState.volume * 100]}

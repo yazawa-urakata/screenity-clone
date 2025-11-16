@@ -17,12 +17,17 @@ const TimeIcon = URL + "editor/icons/time.svg";
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 
-const TrimUI = (props) => {
+interface TrimUIProps {
+  blob: Blob;
+  onSeek: (t: number, updateTime: boolean) => void;
+}
+
+const TrimUI: React.FC<TrimUIProps> = (props) => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
-  const [undoDisabled, setUndoDisabled] = useState(true);
-  const [redoDisabled, setRedoDisabled] = useState(true);
-  const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(0);
+  const [undoDisabled, setUndoDisabled] = useState<boolean>(true);
+  const [redoDisabled, setRedoDisabled] = useState<boolean>(true);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [endTime, setEndTime] = useState<number>(0);
 
   useEffect(() => {
     setStartTime(contentState.start * contentState.duration);
@@ -45,7 +50,7 @@ const TrimUI = (props) => {
     }
   }, [contentState.redoHistory]);
 
-  const toTimeStamp = (time) => {
+  const toTimeStamp = (time: number): string => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time - minutes * 60);
 

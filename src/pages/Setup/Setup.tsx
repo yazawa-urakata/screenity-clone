@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 
-const Setup = () => {
-  const [setupComplete, setSetupComplete] = useState(false);
+interface SetupCompleteMessage {
+  type: string;
+}
+
+const Setup: React.FC = () => {
+  const [setupComplete, setSetupComplete] = useState<boolean>(false);
 
   useEffect(() => {
     // Inject content script
@@ -26,9 +30,9 @@ const Setup = () => {
 
   useEffect(() => {
     chrome.runtime.onMessage.addListener(function (
-      request,
-      sender,
-      sendResponse
+      request: SetupCompleteMessage,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void
     ) {
       if (request.type === "setup-complete") {
         setSetupComplete(true);
@@ -121,7 +125,7 @@ const Setup = () => {
 					text-decoration: none!important;
 					color: #4C7DE2;
 				}
-				
+
 				@keyframes moveBackground {
 					0% {
 						background-position: 0 0;
@@ -251,7 +255,7 @@ const Setup = () => {
 				.setupContainer.center {
 					width: 40%!important;
 				}
-				
+
 				@media only screen and (max-width: 800px) {
 					.setupContainer {
 						flex-direction: column;

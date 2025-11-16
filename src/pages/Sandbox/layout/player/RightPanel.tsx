@@ -15,14 +15,14 @@ import AudioUI from "../editor/AudioUI";
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 
-const RightPanel = () => {
+const RightPanel: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
-  const contentStateRef = useRef(contentState);
-  const consoleErrorRef = useRef([]);
+  const contentStateRef = useRef<any>(contentState);
+  const consoleErrorRef = useRef<any[]>([]);
 
   // Override console.error to catch errors from ffmpeg.wasm
   useEffect(() => {
-    console.error = (error) => {
+    console.error = (error: any) => {
       consoleErrorRef.current.push(error);
     };
   }, []);
@@ -31,9 +31,9 @@ const RightPanel = () => {
     contentStateRef.current = contentState;
   }, [contentState]);
 
-  const saveToDrive = () => {
+  const saveToDrive = (): void => {
     //if (contentState.noffmpeg) return;
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       saveDrive: true,
     }));
@@ -44,10 +44,10 @@ const RightPanel = () => {
           type: "save-to-drive-fallback",
           title: contentState.title,
         })
-        .then((response) => {
+        .then((response: any) => {
           if (response.status === "ew") {
             // Cancel saving to drive
-            setContentState((prevContentState) => ({
+            setContentState((prevContentState: any) => ({
               ...prevContentState,
               saveDrive: false,
             }));
@@ -57,7 +57,7 @@ const RightPanel = () => {
       // Blob to base64
       const reader = new FileReader();
       reader.onload = () => {
-        const dataUrl = reader.result;
+        const dataUrl = reader.result as string;
         const base64 = dataUrl.split(",")[1];
 
         chrome.runtime
@@ -66,10 +66,10 @@ const RightPanel = () => {
             base64: base64,
             title: contentState.title,
           })
-          .then((response) => {
+          .then((response: any) => {
             if (response.status === "ew") {
               // Cancel saving to drive
-              setContentState((prevContentState) => ({
+              setContentState((prevContentState: any) => ({
                 ...prevContentState,
                 saveDrive: false,
               }));
@@ -88,41 +88,41 @@ const RightPanel = () => {
     }
   };
 
-  const handleEdit = () => {
+  const handleEdit = (): void => {
     if (
       contentState.duration > contentState.editLimit &&
       !contentState.override
     )
       return;
     if (!contentState.mp4ready) return;
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       mode: "edit",
       dragInteracted: false,
     }));
 
     if (!contentState.hasBeenEdited) {
-      setContentState((prevContentState) => ({
+      setContentState((prevContentState: any) => ({
         ...prevContentState,
         hasBeenEdited: true,
       }));
     }
   };
 
-  const handleCrop = () => {
+  const handleCrop = (): void => {
     if (
       contentState.duration > contentState.editLimit &&
       !contentState.override
     )
       return;
     if (!contentState.mp4ready) return;
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       mode: "crop",
     }));
 
     if (!contentState.hasBeenEdited) {
-      setContentState((prevContentState) => ({
+      setContentState((prevContentState: any) => ({
         ...prevContentState,
         hasBeenEdited: true,
       }));
@@ -222,7 +222,7 @@ const RightPanel = () => {
                         chrome.i18n.getMessage("overLimitModalButton"),
                         chrome.i18n.getMessage("sandboxEditorCancelButton"),
                         () => {
-                          setContentState((prevContentState) => ({
+                          setContentState((prevContentState: any) => ({
                             ...prevContentState,
                             saved: true,
                           }));
@@ -284,12 +284,12 @@ const RightPanel = () => {
                 role="button"
                 className={styles.button}
                 onClick={handleEdit}
-                disabled={
+                {...({ disabled:
                   (contentState.duration > contentState.editLimit &&
                     !contentState.override) ||
                   !contentState.mp4ready ||
                   contentState.noffmpeg
-                }
+                } as any)}
               >
                 <div className={styles.buttonLeft}>
                   <ReactSVG src={URL + "editor/icons/trim.svg"} />
@@ -319,12 +319,12 @@ const RightPanel = () => {
                 role="button"
                 className={styles.button}
                 onClick={handleCrop}
-                disabled={
+                {...({ disabled:
                   (contentState.duration > contentState.editLimit &&
                     !contentState.override) ||
                   !contentState.mp4ready ||
                   contentState.noffmpeg
-                }
+                } as any)}
               >
                 <div className={styles.buttonLeft}>
                   <ReactSVG src={URL + "editor/icons/crop.svg"} />
@@ -363,7 +363,7 @@ const RightPanel = () => {
                   role="button"
                   className={styles.button}
                   onClick={() => contentState.downloadWEBM()}
-                  disabled={contentState.isFfmpegRunning}
+                  {...({ disabled: contentState.isFfmpegRunning } as any)}
                 >
                   <div className={styles.buttonLeft}>
                     <ReactSVG src={URL + "editor/icons/download.svg"} />
@@ -390,12 +390,12 @@ const RightPanel = () => {
                   if (!contentState.mp4ready) return;
                   contentState.download();
                 }}
-                disabled={
+                {...({ disabled:
                   contentState.isFfmpegRunning ||
                   contentState.noffmpeg ||
                   !contentState.mp4ready ||
                   contentState.noffmpeg
-                }
+                } as any)}
               >
                 <div className={styles.buttonLeft}>
                   <ReactSVG src={URL + "editor/icons/download.svg"} />
@@ -428,7 +428,7 @@ const RightPanel = () => {
                   role="button"
                   className={styles.button}
                   onClick={() => contentState.downloadWEBM()}
-                  disabled={contentState.isFfmpegRunning}
+                  {...({ disabled: contentState.isFfmpegRunning } as any)}
                 >
                   <div className={styles.buttonLeft}>
                     <ReactSVG src={URL + "editor/icons/download.svg"} />
@@ -459,12 +459,12 @@ const RightPanel = () => {
                   if (!contentState.mp4ready) return;
                   contentState.downloadGIF();
                 }}
-                disabled={
+                {...({ disabled:
                   contentState.isFfmpegRunning ||
                   contentState.duration > 30 ||
                   !contentState.mp4ready ||
                   contentState.noffmpeg
-                }
+                } as any)}
               >
                 <div className={styles.buttonLeft}>
                   <ReactSVG src={URL + "editor/icons/gif.svg"} />

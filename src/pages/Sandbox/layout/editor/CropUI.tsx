@@ -12,19 +12,19 @@ const URL =
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 
-const CropUI = (props) => {
+const CropUI: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
 
-  const handleWidth = (e) => {
+  const handleWidth = (e: React.ChangeEvent<HTMLInputElement>): void => {
     let value = e.target.value;
-    if (isNaN(value)) {
+    if (isNaN(value as any)) {
       return;
     }
-    if (value < 0) {
+    if (parseFloat(value) < 0) {
       return;
     }
 
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       width: parseFloat(value),
       cropPreset: "none",
@@ -32,16 +32,16 @@ const CropUI = (props) => {
     }));
   };
 
-  const handleHeight = (e) => {
+  const handleHeight = (e: React.ChangeEvent<HTMLInputElement>): void => {
     let value = e.target.value;
-    if (isNaN(value)) {
+    if (isNaN(value as any)) {
       return;
     }
-    if (value < 0) {
+    if (parseFloat(value) < 0) {
       return;
     }
 
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       height: parseFloat(value),
       cropPreset: "none",
@@ -49,32 +49,32 @@ const CropUI = (props) => {
     }));
   };
 
-  const handleTop = (e) => {
+  const handleTop = (e: React.ChangeEvent<HTMLInputElement>): void => {
     let value = e.target.value;
-    if (isNaN(value)) {
+    if (isNaN(value as any)) {
       return;
     }
-    if (value < 0) {
+    if (parseFloat(value) < 0) {
       return;
     }
 
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       top: parseFloat(value),
       fromCropper: false,
     }));
   };
 
-  const handleLeft = (e) => {
+  const handleLeft = (e: React.ChangeEvent<HTMLInputElement>): void => {
     let value = e.target.value;
-    if (isNaN(value)) {
+    if (isNaN(value as any)) {
       return;
     }
-    if (value < 0) {
+    if (parseFloat(value) < 0) {
       return;
     }
 
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       left: parseFloat(value),
       fromCropper: false,
@@ -129,7 +129,7 @@ const CropUI = (props) => {
               onChange={(e) => handleWidth(e)}
               onBlur={(e) => {
                 if (e.target.value === "") {
-                  setContentState((prevContentState) => ({
+                  setContentState((prevContentState: any) => ({
                     ...prevContentState,
                     width: 0,
                   }));
@@ -150,7 +150,7 @@ const CropUI = (props) => {
               value={contentState.height}
               onBlur={(e) => {
                 if (e.target.value === "") {
-                  setContentState((prevContentState) => ({
+                  setContentState((prevContentState: any) => ({
                     ...prevContentState,
                     height: 0,
                   }));
@@ -171,7 +171,7 @@ const CropUI = (props) => {
               onChange={(e) => handleLeft(e)}
               onBlur={(e) => {
                 if (e.target.value === "") {
-                  setContentState((prevContentState) => ({
+                  setContentState((prevContentState: any) => ({
                     ...prevContentState,
                     left: 0,
                   }));
@@ -191,7 +191,7 @@ const CropUI = (props) => {
               onChange={(e) => handleTop(e)}
               onBlur={(e) => {
                 if (e.target.value === "") {
-                  setContentState((prevContentState) => ({
+                  setContentState((prevContentState: any) => ({
                     ...prevContentState,
                     top: 0,
                   }));

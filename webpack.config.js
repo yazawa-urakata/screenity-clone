@@ -30,13 +30,13 @@ const entryPoints = {
     "RecorderOffscreen",
     "index.jsx"
   ),
-  waveform: path.join(__dirname, "src", "pages", "Waveform", "index.jsx"),
+  waveform: path.join(__dirname, "src", "pages", "Waveform", "index.tsx"),
   sandbox: path.join(__dirname, "src", "pages", "Sandbox", "index.jsx"),
-  permissions: path.join(__dirname, "src", "pages", "Permissions", "index.jsx"),
-  setup: path.join(__dirname, "src", "pages", "Setup", "index.jsx"),
+  permissions: path.join(__dirname, "src", "pages", "Permissions", "index.tsx"),
+  setup: path.join(__dirname, "src", "pages", "Setup", "index.tsx"),
   playground: path.join(__dirname, "src", "pages", "Playground", "index.tsx"),
   editor: path.join(__dirname, "src", "pages", "Editor", "index.jsx"),
-  region: path.join(__dirname, "src", "pages", "Region", "index.jsx"),
+  region: path.join(__dirname, "src", "pages", "Region", "index.tsx"),
   download: path.join(__dirname, "src", "pages", "Download", "index.jsx"),
   editorfallback: path.join(
     __dirname,

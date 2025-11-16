@@ -6,11 +6,15 @@ import { ContentStateContext } from "../../context/ContentState"; // Import the 
 
 import HelpButton from "../../components/player/HelpButton";
 
-const Editor = ({ ffmpeg }) => {
+interface EditorProps {
+  ffmpeg: any;
+}
+
+const Editor: React.FC<EditorProps> = ({ ffmpeg }) => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
 
-  const handleSeek = (t, updateTime) => {
-    setContentState((prevContentState) => ({
+  const handleSeek = (t: number, updateTime: boolean): void => {
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       updatePlayerTime: updateTime,
       time: t,
@@ -18,7 +22,7 @@ const Editor = ({ ffmpeg }) => {
   };
 
   useEffect(() => {
-    setContentState((prevContentState) => ({
+    setContentState((prevContentState: any) => ({
       ...prevContentState,
       history: [{}],
       redoHistory: [],

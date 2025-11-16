@@ -1,4 +1,32 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+
+interface DeviceInfo {
+  deviceId: string;
+  label: string;
+}
+
+interface PermissionsMessage {
+  type: string;
+  success?: boolean;
+  error?: string;
+  audioinput?: DeviceInfo[];
+  audiooutput?: DeviceInfo[];
+  videoinput?: DeviceInfo[];
+  cameraPermission?: boolean;
+  microphonePermission?: boolean;
+}
+
+interface StorageData {
+  audioinput: DeviceInfo[];
+  audiooutput: DeviceInfo[];
+  videoinput: DeviceInfo[];
+  cameraPermission: boolean;
+  microphonePermission: boolean;
+}
+
+interface IncomingMessage {
+  type: string;
+}
 
 const Recorder: React.FC = () => {
   useEffect(() => {
@@ -47,7 +75,7 @@ const Recorder: React.FC = () => {
             type: "screenity-permissions",
             success: false,
             error: "Permission not granted",
-          },
+          } as PermissionsMessage,
           "*"
         );
       }
@@ -56,7 +84,7 @@ const Recorder: React.FC = () => {
     }
   };
 
-  const enumerateDevices = async (micGranted = true): Promise<void> => {
+  const enumerateDevices = async (micGranted: boolean = true): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: micGranted,
@@ -65,8 +93,8 @@ const Recorder: React.FC = () => {
 
       const devicesInfo = await navigator.mediaDevices.enumerateDevices();
 
-      let audioinput: { deviceId: string; label: string }[] = [];
-      let audiooutput: { deviceId: string; label: string }[] = [];
+      let audioinput: DeviceInfo[] = [];
+      let audiooutput: DeviceInfo[] = [];
 
       if (micGranted) {
         // Filter by audio input
@@ -94,7 +122,7 @@ const Recorder: React.FC = () => {
         videoinput: [],
         cameraPermission: false,
         microphonePermission: micGranted,
-      });
+      } as StorageData);
 
       // Post message to parent window
       window.parent.postMessage(
@@ -106,9 +134,11 @@ const Recorder: React.FC = () => {
           videoinput: [],
           cameraPermission: false,
           microphonePermission: micGranted,
-        },
+        } as PermissionsMessage,
         "*"
       );
+
+      //sendResponse({ success: true, audioinput, audiooutput, videoinput });
 
       // End the stream
       stream.getTracks().forEach(function (track) {
@@ -120,14 +150,15 @@ const Recorder: React.FC = () => {
         {
           type: "screenity-permissions",
           success: false,
-          error: err instanceof Error ? err.name : "Unknown error",
-        },
+          error: (err as Error).name,
+        } as PermissionsMessage,
         "*"
       );
+      //sendResponse({ success: false, error: err.name });
     }
   };
 
-  const onMessage = (message: { type: string }): void => {
+  const onMessage = (message: IncomingMessage): void => {
     if (message.type === "screenity-get-permissions") {
       checkPermissions();
     }
@@ -135,15 +166,9 @@ const Recorder: React.FC = () => {
 
   // Post message listener
   useEffect(() => {
-    const handleMessage = (event: MessageEvent): void => {
+    window.addEventListener("message", (event: MessageEvent) => {
       onMessage(event.data);
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
+    });
   }, []);
 
   return <div></div>;

@@ -11,9 +11,9 @@ const StarIcon = URL + "editor/icons/help-nav.svg";
 const HeartIcon = URL + "editor/icons/heart.svg";
 const UnlockIcon = URL + "editor/icons/unlock.svg";
 
-const PlayerNav = () => {
+const PlayerNav: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
-  const contentStateRef = useRef(null);
+  const contentStateRef = useRef<any>(null);
 
   useEffect(() => {
     contentStateRef.current = contentState;

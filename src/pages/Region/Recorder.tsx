@@ -19,54 +19,115 @@ const chunksStore = localforage.createInstance({
   name: "chunks",
 });
 
-const Recorder = () => {
-  const isRestarting = useRef(false);
-  const isDismissing = useRef(false);
-  const isFinishing = useRef(false);
-  const isFinished = useRef(false);
-  const sentLast = useRef(false);
-  const index = useRef(0);
-  const lastTimecode = useRef(0);
-  const hasChunks = useRef(false);
-  const lastSize = useRef(0);
+interface ChunkData {
+  index: number;
+  chunk: Blob;
+  timestamp: number;
+}
+
+type BlobEventWithTimecode = BlobEvent & {
+  timecode?: number;
+};
+
+interface StorageEstimate {
+  usage?: number;
+  quota?: number;
+}
+
+interface QualityValue {
+  qualityValue: string;
+}
+
+interface FpsValue {
+  fpsValue: string;
+}
+
+interface BackupValue {
+  backup: boolean;
+}
+
+interface ChromeMessage {
+  type: string;
+  backup?: boolean;
+  region?: boolean;
+  data?: string;
+  active?: boolean;
+  volume?: number;
+  error?: string;
+  why?: string;
+}
+
+interface StreamingData {
+  systemAudio: boolean;
+  defaultAudioInput: string;
+  micActive: boolean;
+}
+
+interface CropTarget {
+  cropTo(target: CropTarget): Promise<void>;
+}
+
+type MediaTrackWithCrop = MediaStreamTrack & {
+  cropTo(target: CropTarget): Promise<void>;
+};
+
+interface PostMessageData {
+  type: string;
+  target?: CropTarget;
+}
+
+interface ExtendedDisplayMediaStreamOptions extends DisplayMediaStreamOptions {
+  preferCurrentTab?: boolean;
+}
+
+const Recorder: React.FC = () => {
+  const isRestarting = useRef<boolean>(false);
+  const isDismissing = useRef<boolean>(false);
+  const isFinishing = useRef<boolean>(false);
+  const isFinished = useRef<boolean>(false);
+  const sentLast = useRef<boolean>(false);
+  const index = useRef<number>(0);
+  const lastTimecode = useRef<number>(0);
+  const hasChunks = useRef<boolean>(false);
+  const lastSize = useRef<number>(0);
 
   // Main stream (recording)
-  const liveStream = useRef(null);
+  const liveStream = useRef<MediaStream | null>(null);
 
   // Helper streams
-  const helperVideoStream = useRef(null);
-  const helperAudioStream = useRef(null);
+  const helperVideoStream = useRef<MediaStream | null>(null);
+  const helperAudioStream = useRef<MediaStream | null>(null);
 
   // Audio controls, with refs to persist across renders
-  const aCtx = useRef(null);
-  const destination = useRef(null);
-  const audioInputSource = useRef(null);
-  const audioOutputSource = useRef(null);
-  const audioInputGain = useRef(null);
-  const audioOutputGain = useRef(null);
+  const aCtx = useRef<AudioContext | null>(null);
+  const destination = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const audioInputSource = useRef<MediaStreamAudioSourceNode | null>(null);
+  const audioOutputSource = useRef<MediaStreamAudioSourceNode | null>(null);
+  const audioInputGain = useRef<GainNode | null>(null);
+  const audioOutputGain = useRef<GainNode | null>(null);
 
-  const recorder = useRef(null);
+  const recorder = useRef<MediaRecorder | null>(null);
 
   // Target
-  const target = useRef(null);
+  const target = useRef<CropTarget | null>(null);
 
   // Recording ref
-  const recordingRef = useRef();
-  const regionRef = useRef();
-  const backupRef = useRef(false);
+  const recordingRef = useRef<boolean>();
+  const regionRef = useRef<boolean>();
+  const backupRef = useRef<boolean>(false);
 
-  const pending = useRef([]);
-  const draining = useRef(false);
-  const lowStorageAbort = useRef(false);
-  const savedCount = useRef(0);
+  const pending = useRef<BlobEventWithTimecode[]>([]);
+  const draining = useRef<boolean>(false);
+  const lowStorageAbort = useRef<boolean>(false);
+  const savedCount = useRef<number>(0);
 
-  const lastEstimateAt = useRef(0);
-  const ESTIMATE_INTERVAL_MS = 5000;
-  const MIN_HEADROOM = 25 * 1024 * 1024;
-  const MAX_PENDING_BYTES = 8 * 1024 * 1024;
-  const pendingBytes = useRef(0);
+  const lastEstimateAt = useRef<number>(0);
+  const ESTIMATE_INTERVAL_MS: number = 5000;
+  const MIN_HEADROOM: number = 25 * 1024 * 1024;
+  const MAX_PENDING_BYTES: number = 8 * 1024 * 1024;
+  const pendingBytes = useRef<number>(0);
 
-  async function canFitChunk(byteLength) {
+  async function canFitChunk(byteLength?: number): Promise<boolean> {
     const now = performance.now();
     if (now - lastEstimateAt.current < ESTIMATE_INTERVAL_MS) {
       return !lowStorageAbort.current;
@@ -74,7 +135,7 @@ const Recorder = () => {
     lastEstimateAt.current = now;
 
     try {
-      const { usage = 0, quota = 0 } = await navigator.storage.estimate();
+      const { usage = 0, quota = 0 }: StorageEstimate = await navigator.storage.estimate();
       const remaining = quota - usage;
       return remaining > MIN_HEADROOM + (byteLength || 0);
     } catch {
@@ -82,7 +143,7 @@ const Recorder = () => {
     }
   }
 
-  async function saveChunk(e, i) {
+  async function saveChunk(e: BlobEventWithTimecode, i: number): Promise<boolean> {
     const ts = e.timecode ?? 0;
 
     if (
@@ -112,7 +173,7 @@ const Recorder = () => {
         index: i,
         chunk: e.data,
         timestamp: ts,
-      });
+      } as ChunkData);
     } catch (err) {
       lowStorageAbort.current = true;
       chrome.storage.local.set({
@@ -137,7 +198,7 @@ const Recorder = () => {
     return true;
   }
 
-  async function drainQueue() {
+  async function drainQueue(): Promise<void> {
     if (draining.current) return;
     draining.current = true;
 
@@ -149,7 +210,7 @@ const Recorder = () => {
           break;
         }
 
-        const e = pending.current.shift();
+        const e = pending.current.shift()!;
         pendingBytes.current -= e.data.size;
 
         if (!(await canFitChunk(e.data.size))) {
@@ -177,7 +238,7 @@ const Recorder = () => {
     }
   }
 
-  async function waitForDrain() {
+  async function waitForDrain(): Promise<void> {
     while (draining.current || pending.current.length) {
       await new Promise((r) => setTimeout(r, 10));
     }
@@ -194,9 +255,9 @@ const Recorder = () => {
 
   // Receive post message from parent (this is an iframe)
   useEffect(() => {
-    const onMessage = (event) => {
+    const onMessage = (event: MessageEvent<PostMessageData>): void => {
       if (event.data.type === "crop-target") {
-        target.current = event.data.target;
+        target.current = event.data.target!;
         regionRef.current = true;
       } else if (event.data.type === "restart-recording") {
         restartRecording();
@@ -211,7 +272,7 @@ const Recorder = () => {
     };
   }, []);
 
-  async function startRecording() {
+  async function startRecording(): Promise<void> {
     // Check that a recording is not already in progress
     if (recorder.current !== null) return;
     navigator.storage.persist();
@@ -228,7 +289,7 @@ const Recorder = () => {
     pendingBytes.current = 0;
     // Check if the stream actually has data in it
     try {
-      if (helperVideoStream.current.getVideoTracks().length === 0) {
+      if (helperVideoStream.current!.getVideoTracks().length === 0) {
         chrome.runtime.sendMessage({
           type: "recording-error",
           error: "stream-error",
@@ -254,10 +315,10 @@ const Recorder = () => {
     chunksStore.clear();
 
     try {
-      const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
+      const { qualityValue }: QualityValue = await chrome.storage.local.get(["qualityValue"]) as QualityValue;
 
-      let audioBitsPerSecond = 128000;
-      let videoBitsPerSecond = 5000000;
+      let audioBitsPerSecond: number = 128000;
+      let videoBitsPerSecond: number = 5000000;
 
       if (qualityValue === "4k") {
         audioBitsPerSecond = 192000;
@@ -280,7 +341,7 @@ const Recorder = () => {
       }
 
       // List all mimeTypes
-      const mimeTypes = [
+      const mimeTypes: string[] = [
         "video/webm;codecs=avc1",
         "video/webm;codecs=vp8,opus",
         "video/webm;codecs=vp9,opus",
@@ -291,7 +352,7 @@ const Recorder = () => {
       ];
 
       // Check if the browser supports any of the mimeTypes, make sure to select the first one that is supported from the list
-      let mimeType = mimeTypes.find((mimeType) =>
+      let mimeType: string | undefined = mimeTypes.find((mimeType) =>
         MediaRecorder.isTypeSupported(mimeType)
       );
 
@@ -308,7 +369,7 @@ const Recorder = () => {
         return;
       }
 
-      recorder.current = new MediaRecorder(liveStream.current, {
+      recorder.current = new MediaRecorder(liveStream.current!, {
         mimeType: mimeType,
         audioBitsPerSecond: audioBitsPerSecond,
         videoBitsPerSecond: videoBitsPerSecond,
@@ -351,15 +412,15 @@ const Recorder = () => {
       return;
     }
 
-    recorder.current.onerror = (ev) => {
+    recorder.current.onerror = (ev: Event): void => {
       chrome.runtime.sendMessage({
         type: "recording-error",
         error: "mediarecorder",
-        why: String(ev?.error || "unknown"),
+        why: String((ev as ErrorEvent)?.error || "unknown"),
       });
     };
 
-    recorder.current.onstop = async () => {
+    recorder.current.onstop = async (): Promise<void> => {
       regionRef.current = false;
       recordingRef.current = false;
       if (isRestarting.current) return;
@@ -378,9 +439,9 @@ const Recorder = () => {
       }
     };
 
-    const checkMaxMemory = () => {
+    const checkMaxMemory = (): void => {
       try {
-        navigator.storage.estimate().then(({ usage = 0, quota = 0 }) => {
+        navigator.storage.estimate().then(({ usage = 0, quota = 0 }: StorageEstimate) => {
           const remaining = quota - usage;
           const minHeadroom = 25 * 1024 * 1024;
           if (remaining < minHeadroom) {
@@ -408,7 +469,7 @@ const Recorder = () => {
       }
     };
 
-    recorder.current.ondataavailable = (e) => {
+    recorder.current.ondataavailable = (e: BlobEvent): void => {
       if (!e || !e.data || !e.data.size) {
         if (recorder.current && recorder.current.state === "inactive") {
           chrome.storage.local.set({
@@ -427,25 +488,25 @@ const Recorder = () => {
 
       if (!hasChunks.current) {
         hasChunks.current = true;
-        lastTimecode.current = e.timecode ?? 0;
+        lastTimecode.current = (e as BlobEventWithTimecode).timecode ?? 0;
         lastSize.current = e.data.size;
       }
 
-      pending.current.push(e);
+      pending.current.push(e as BlobEventWithTimecode);
       pendingBytes.current += e.data.size;
       void drainQueue();
     };
 
-    recorder.current.onpause = () => {
+    recorder.current.onpause = (): void => {
       lastTimecode.current = 0;
     };
 
-    recorder.current.onresume = () => {
+    recorder.current.onresume = (): void => {
       lastTimecode.current = 0;
       lastSize.current = 0;
     };
 
-    liveStream.current.getVideoTracks()[0].onended = () => {
+    liveStream.current!.getVideoTracks()[0].onended = (): void => {
       regionRef.current = false;
       chrome.storage.local.set({
         recording: false,
@@ -455,7 +516,7 @@ const Recorder = () => {
       chrome.runtime.sendMessage({ type: "stop-recording-tab" });
     };
 
-    helperVideoStream.current.getVideoTracks()[0].onended = () => {
+    helperVideoStream.current!.getVideoTracks()[0].onended = (): void => {
       regionRef.current = false;
       chrome.storage.local.set({
         recording: false,
@@ -466,7 +527,7 @@ const Recorder = () => {
     };
   }
 
-  async function stopRecording() {
+  async function stopRecording(): Promise<void> {
     isFinishing.current = true;
     regionRef.current = false;
 
@@ -501,7 +562,7 @@ const Recorder = () => {
     }
   }
 
-  const dismissRecording = async () => {
+  const dismissRecording = async (): Promise<void> => {
     regionRef.current = false;
     chrome.runtime.sendMessage({ type: "handle-dismiss" });
     isRestarting.current = true;
@@ -532,7 +593,7 @@ const Recorder = () => {
     }
   };
 
-  const restartRecording = async () => {
+  const restartRecording = async (): Promise<void> => {
     isRestarting.current = true;
     isDismissing.current = false;
     if (recorder.current) {
@@ -546,9 +607,8 @@ const Recorder = () => {
     //chrome.runtime.sendMessage({ type: "reset-active-tab-restart" });
   };
 
-  async function startAudioStream(id) {
-    const audioStreamOptions = {
-      mimeType: "video/webm;codecs=vp8,opus",
+  async function startAudioStream(id: string): Promise<MediaStream | null> {
+    const audioStreamOptions: MediaStreamConstraints = {
       audio: {
         deviceId: {
           exact: id,
@@ -563,8 +623,7 @@ const Recorder = () => {
       })
       .catch((err) => {
         // Try again without the device ID
-        const audioStreamOptions = {
-          mimeType: "video/webm;codecs=vp8,opus",
+        const audioStreamOptions: MediaStreamConstraints = {
           audio: true,
         };
 
@@ -581,22 +640,22 @@ const Recorder = () => {
     return result;
   }
   // Set audio input volume
-  function setAudioInputVolume(volume) {
-    audioInputGain.current.gain.value = volume;
+  function setAudioInputVolume(volume: number): void {
+    audioInputGain.current!.gain.value = volume;
   }
 
   // Set audio output volume
-  function setAudioOutputVolume(volume) {
-    audioOutputGain.current.gain.value = volume;
+  function setAudioOutputVolume(volume: number): void {
+    audioOutputGain.current!.gain.value = volume;
   }
 
-  async function startStreaming(data) {
+  async function startStreaming(data: StreamingData): Promise<void> {
     try {
       // Get quality value
-      const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
+      const { qualityValue }: QualityValue = await chrome.storage.local.get(["qualityValue"]) as QualityValue;
 
-      let width = 1920;
-      let height = 1080;
+      let width: number = 1920;
+      let height: number = 1080;
 
       if (qualityValue === "4k") {
         width = 4096;
@@ -618,17 +677,17 @@ const Recorder = () => {
         height = 240;
       }
 
-      const { fpsValue } = await chrome.storage.local.get(["fpsValue"]);
-      let fps = parseInt(fpsValue);
+      const { fpsValue }: FpsValue = await chrome.storage.local.get(["fpsValue"]) as FpsValue;
+      let fps: number = parseInt(fpsValue);
 
       // Check if fps is a number
       if (isNaN(fps)) {
         fps = 30;
       }
 
-      let stream;
+      let stream: MediaStream;
 
-      const constraints = {
+      const constraints: ExtendedDisplayMediaStreamOptions = {
         preferCurrentTab: true,
         audio: data.systemAudio,
         video: {
@@ -704,7 +763,7 @@ const Recorder = () => {
 
       try {
         if (target.current) {
-          const track = liveStream.current.getVideoTracks()[0];
+          const track = liveStream.current.getVideoTracks()[0] as MediaTrackWithCrop;
           await track.cropTo(target.current);
         } else {
           // No target
@@ -743,7 +802,7 @@ const Recorder = () => {
   }
 
   useEffect(() => {
-    chrome.storage.local.get(["backup"], (result) => {
+    chrome.storage.local.get(["backup"], (result: BackupValue) => {
       if (result.backup) {
         backupRef.current = true;
       } else {
@@ -753,7 +812,7 @@ const Recorder = () => {
   }, []);
 
   useEffect(() => {
-    window.addEventListener("beforeunload", (e) => {
+    window.addEventListener("beforeunload", (e: BeforeUnloadEvent) => {
       if (recordingRef.current && regionRef.current) {
         e.preventDefault();
         e.returnValue = "";
@@ -764,7 +823,7 @@ const Recorder = () => {
     });
   }, []);
 
-  const setMic = async (result) => {
+  const setMic = async (result: ChromeMessage): Promise<void> => {
     if (helperAudioStream.current != null) {
       if (result.active) {
         setAudioInputVolume(1);
@@ -777,16 +836,16 @@ const Recorder = () => {
   };
 
   const onMessage = useCallback(
-    (request, sender, sendResponse) => {
+    (request: ChromeMessage, sender: chrome.runtime.MessageSender, sendResponse: (response?: unknown) => void): void | boolean => {
       if (request.type === "loaded") {
-        backupRef.current = request.backup;
+        backupRef.current = request.backup!;
         if (request.region) {
           chrome.runtime.sendMessage({ type: "get-streaming-data" });
         }
       }
       if (request.type === "streaming-data") {
         if (regionRef.current) {
-          startStreaming(JSON.parse(request.data));
+          startStreaming(JSON.parse(request.data!));
         }
       } else if (request.type === "start-recording-tab") {
         if (regionRef.current) {
@@ -798,7 +857,7 @@ const Recorder = () => {
       } else if (request.type === "set-mic-active-tab") {
         setMic(request);
       } else if (request.type === "set-audio-output-volume") {
-        setAudioOutputVolume(request.volume);
+        setAudioOutputVolume(request.volume!);
       } else if (request.type === "pause-recording-tab") {
         if (!recorder.current) return;
         recorder.current.pause();

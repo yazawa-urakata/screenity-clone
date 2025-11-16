@@ -12,7 +12,7 @@ import styles from "../../styles/player/_Player.module.scss";
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 
-const Player = () => {
+const Player: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
 
   return (
