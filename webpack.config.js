@@ -13,9 +13,9 @@ require("dotenv").config();
 
 // Entry points for the different pages
 const entryPoints = {
-  background: path.join(__dirname, "src", "pages", "Background", "index.js"),
+  background: path.join(__dirname, "src", "pages", "Background", "index.ts"),
   contentScript: path.join(__dirname, "src", "pages", "Content", "index.jsx"),
-  recorder: path.join(__dirname, "src", "pages", "Recorder", "index.jsx"),
+  recorder: path.join(__dirname, "src", "pages", "Recorder", "index.tsx"),
   cloudrecorder: path.join(
     __dirname,
     "src",
@@ -30,12 +30,11 @@ const entryPoints = {
     "RecorderOffscreen",
     "index.jsx"
   ),
-  camera: path.join(__dirname, "src", "pages", "Camera", "index.jsx"),
   waveform: path.join(__dirname, "src", "pages", "Waveform", "index.jsx"),
   sandbox: path.join(__dirname, "src", "pages", "Sandbox", "index.jsx"),
   permissions: path.join(__dirname, "src", "pages", "Permissions", "index.jsx"),
   setup: path.join(__dirname, "src", "pages", "Setup", "index.jsx"),
-  playground: path.join(__dirname, "src", "pages", "Playground", "index.jsx"),
+  playground: path.join(__dirname, "src", "pages", "Playground", "index.tsx"),
   editor: path.join(__dirname, "src", "pages", "Editor", "index.jsx"),
   region: path.join(__dirname, "src", "pages", "Region", "index.jsx"),
   download: path.join(__dirname, "src", "pages", "Download", "index.jsx"),
