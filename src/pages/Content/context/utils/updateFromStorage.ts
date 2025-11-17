@@ -62,6 +62,10 @@ export const updateFromStorage = (
       "instantMode",
       "hasSeenInstantModeModal",
       "hasSubscribedBefore",
+      "clips",
+      "clipRecording",
+      "clipStartTime",
+      "clipCrop",
     ],
     (result: { [key: string]: unknown }) => {
       setContentState((prevContentState) => {
@@ -268,6 +272,10 @@ export const updateFromStorage = (
         onboarding: result.onboarding || false,
         hasSubscribedBefore: result.hasSubscribedBefore || false,
         showProSplash: result.showProSplash || false,
+        clips: result.clips || [],
+        clipRecording: result.clipRecording || false,
+        clipStartTime: result.clipStartTime !== undefined ? result.clipStartTime : null,
+        clipCrop: result.clipCrop !== undefined ? result.clipCrop : null,
       } as any;
       });
 

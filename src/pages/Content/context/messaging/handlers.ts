@@ -445,4 +445,65 @@ export const setupHandlers = (): void => {
       showPopup: false,
     }));
   });
+
+  // クリップ録画関連のメッセージハンドラー
+  registerMessage("clip-saved", (message: BaseMessage) => {
+    const msg = message as unknown as {
+      payload: {
+        clipId: string;
+        clipNumber: number;
+        duration: number;
+      };
+    };
+
+    // Chrome Storage から最新の clips を取得して ContentState に反映
+    chrome.storage.local.get(['clips'], (result) => {
+      const clips = (result.clips || []) as import('../../../../types/clip').ClipList;
+
+      setContentState((prev) => ({
+        ...prev,
+        clips: clips,
+        clipRecording: false,
+        clipStartTime: null,
+        clipCrop: null,
+        customRegion: false,
+      }));
+
+      console.log('[ClipRecording] クリップが保存されました:', msg.payload, 'Total clips:', clips.length);
+    });
+
+    // Toast 通知
+    if (contentStateRef.current?.openToast) {
+      contentStateRef.current.openToast(
+        `クリップ ${msg.payload.clipNumber} を保存しました (${msg.payload.duration}秒)`
+      );
+    }
+
+    return { success: true };
+  });
+
+  registerMessage("clip-error", (message: BaseMessage) => {
+    const msg = message as unknown as {
+      payload: {
+        code: string;
+        message: string;
+      };
+    };
+
+    // 状態をリセット
+    setContentState((prev) => ({
+      ...prev,
+      clipRecording: false,
+      clipStartTime: null,
+      customRegion: false,
+    }));
+
+    // Toast 通知
+    if (contentStateRef.current?.openToast) {
+      contentStateRef.current.openToast(`クリップエラー: ${msg.payload.message}`);
+    }
+
+    console.error('[ClipRecording] クリップエラー:', msg.payload);
+    return { success: true };
+  });
 };

@@ -3,6 +3,7 @@ import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocument
 import { sendMessageRecord } from "./sendMessageRecord";
 import { sendChunks } from "./sendChunks";
 import { waitForContentScript } from "../utils/waitForContentScript";
+import { clearClips } from "../clip/clipHandlers";
 
 export const stopRecording = async () => {
   chrome.action.setIcon({ path: "assets/icon-34.png" });
@@ -23,9 +24,16 @@ export const stopRecording = async () => {
     recording: false,
     recordingDuration: duration,
     tabRecordedID: null,
+    clipRecording: false,
+    clipStartTime: null,
+    clipCrop: null,
   });
 
   chrome.storage.local.set({ recordingStartTime: 0 });
+
+  // クリップはクリアしない（Editor で使用するため）
+  // 次の録画開始時にクリアする
+  // await clearClips();
 
   if (isSubscribed) {
     chrome.alarms.clear("recording-alarm");

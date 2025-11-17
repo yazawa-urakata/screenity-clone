@@ -8,6 +8,9 @@ import React, {
 } from "react";
 
 import { updateFromStorage } from "./utils/updateFromStorage";
+import type { ClipMetadata, ClipList } from "../../../types/clip";
+import { createClipMetadata, validateClip, MAX_CLIPS } from "../../../utils/clipUtils";
+import { ClipValidationError } from "../../../types/clip";
 
 // Shortcuts
 import Shortcuts from "../shortcuts/Shortcuts";
@@ -176,6 +179,19 @@ export interface ContentStateType {
     updater: (prev: ContentStateType) => Partial<ContentStateType>
   ) => void;
   shortcuts?: unknown[];
+  // クリップ録画関連
+  clipRecording: boolean;
+  clipStartTime: number | null;
+  clipCrop: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+  clips: ClipList;
+  startClipRecording: () => void;
+  endClipRecording: () => void;
+  setClipCrop: (crop: { x: number; y: number; width: number; height: number } | null) => void;
 }
 
 type ContextValue = [
@@ -440,6 +456,166 @@ const ContentState: FC<ContentStateProps> = (props) => {
       element.classList.remove("screenity-blur");
     });
     setTimer(0);
+  }, []);
+
+  // クリップ録画関数
+  const startClipRecording = useCallback((): void => {
+    const currentState = contentStateRef.current;
+    if (!currentState) return;
+
+    // 録画中チェック
+    if (!currentState.recording) {
+      console.warn('[ClipRecording] 録画を開始してください');
+      if (currentState.openToast) {
+        currentState.openToast('録画を開始してください');
+      }
+      return;
+    }
+
+    // 最大数チェック
+    if (currentState.clips.length >= MAX_CLIPS) {
+      console.warn(`[ClipRecording] クリップは最大${MAX_CLIPS}つまでです`);
+      if (currentState.openToast) {
+        currentState.openToast(`クリップは最大${MAX_CLIPS}つまでです`);
+      }
+      return;
+    }
+
+    // 録画開始時刻を取得して、そこからの経過時間を計算
+    chrome.storage.local.get(['recordingStartTime'], (result) => {
+      const recordingStartTime = result.recordingStartTime as number;
+      const clipStartTime = Date.now() - recordingStartTime;
+
+      // 現在の Region 情報を clipCrop として保存
+      const clipCrop = {
+        x: currentState.regionX,
+        y: currentState.regionY,
+        width: currentState.regionWidth,
+        height: currentState.regionHeight,
+      };
+
+      // クリップ録画を開始
+      setContentState((prev) => ({
+        ...prev,
+        clipRecording: true,
+        clipStartTime: clipStartTime,
+        clipCrop: clipCrop,
+        customRegion: true,
+        recordingType: 'region',
+      }));
+
+      chrome.storage.local.set({
+        clipRecording: true,
+        clipStartTime: clipStartTime,
+        clipCrop: clipCrop,
+      });
+
+      console.log('[ClipRecording] クリップ録画を開始しました', {
+        clipStartTime,
+        recordingStartTime,
+        clipCrop,
+      });
+    });
+  }, []);
+
+  const endClipRecording = useCallback((): void => {
+    const currentState = contentStateRef.current;
+    if (!currentState) return;
+
+    // クリップ録画中チェック
+    if (!currentState.clipRecording) {
+      console.warn('[ClipRecording] クリップ録画が開始されていません');
+      return;
+    }
+
+    // 録画開始時刻を取得して、そこからの経過時間を計算
+    chrome.storage.local.get(['recordingStartTime', 'projectId'], (result) => {
+      try {
+        const recordingStartTime = result.recordingStartTime as number;
+        const projectId = result.projectId as string;
+        const clipStartTime = currentState.clipStartTime!;
+        const clipEndTime = Date.now() - recordingStartTime;
+
+        console.log('[ClipRecording] クリップ録画を終了', {
+          clipStartTime,
+          clipEndTime,
+          duration: clipEndTime - clipStartTime,
+        });
+
+        // バリデーション
+        validateClip(
+          currentState.clips,
+          clipStartTime,
+          clipEndTime,
+          currentState.recording
+        );
+
+        const clipData = createClipMetadata(
+          recordingStartTime,
+          clipStartTime,
+          clipEndTime,
+          currentState.clipCrop || undefined,
+          projectId
+        );
+
+        // Background に保存リクエストを送信
+        chrome.runtime.sendMessage(
+          {
+            type: 'save-clip',
+            payload: {
+              clipData,
+            },
+          },
+          () => {
+            // 応答を受け取るためのコールバック（エラー抑制）
+            if (chrome.runtime.lastError) {
+              console.warn('[ClipRecording] メッセージ送信エラー:', chrome.runtime.lastError.message);
+            }
+          }
+        );
+
+        // ローカル状態を更新（楽観的UI更新）
+        setContentState((prev) => ({
+          ...prev,
+          clips: [...prev.clips, clipData],
+          clipRecording: false,
+          clipStartTime: null,
+          clipCrop: null,
+          customRegion: false,
+        }));
+
+        console.log('[ClipRecording] クリップ録画を終了しました:', clipData);
+      } catch (error) {
+        console.error('[ClipRecording] クリップ録画終了エラー:', error);
+
+        let errorMessage = 'クリップの保存に失敗しました';
+        if (error instanceof ClipValidationError) {
+          errorMessage = error.message;
+        }
+
+        if (contentStateRef.current?.openToast) {
+          contentStateRef.current.openToast(errorMessage);
+        }
+
+        // 状態をリセット
+        setContentState((prev) => ({
+          ...prev,
+          clipRecording: false,
+          clipStartTime: null,
+          clipCrop: null,
+          customRegion: false,
+        }));
+      }
+    });
+  }, []);
+
+  const setClipCrop = useCallback((crop: { x: number; y: number; width: number; height: number } | null): void => {
+    setContentState((prev) => ({
+      ...prev,
+      clipCrop: crop,
+    }));
+
+    chrome.storage.local.set({ clipCrop: crop });
   }, []);
 
   const checkChromeCapturePermissions = useCallback(async (): Promise<boolean> => {
@@ -1069,6 +1245,14 @@ const ContentState: FC<ContentStateProps> = (props) => {
         countdownCancelled: false,
       }));
     },
+    // クリップ録画関連の初期値
+    clipRecording: false,
+    clipStartTime: null,
+    clipCrop: null,
+    clips: [],
+    startClipRecording: startClipRecording,
+    endClipRecording: endClipRecording,
+    setClipCrop: setClipCrop,
   });
   contentStateRef.current = contentState;
 

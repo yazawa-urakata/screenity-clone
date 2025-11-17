@@ -12,6 +12,7 @@ import fixWebmDuration from "fix-webm-duration";
 import { default as fixWebmDurationFallback } from "webm-duration-fix";
 
 import localforage from "localforage";
+import type { ClipList } from "../../../types/clip";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -93,6 +94,7 @@ export interface SandboxContentStateType {
   chunkCount: number;
   chunkIndex: number;
   bannerSupport: boolean;
+  clips: ClipList;
   // Functions
   undo?: () => void;
   redo?: () => void;
@@ -198,6 +200,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     chunkCount: 0,
     chunkIndex: 0,
     bannerSupport: false,
+    clips: [],
   };
 
   const [contentState, setContentState] = useState<SandboxContentStateType>(defaultState);
@@ -239,6 +242,19 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
       ...prevState,
       title: `Screenity video - ${formattedDate}`,
     }));
+  }, []);
+
+  // Load clips from chrome.storage.local
+  useEffect(() => {
+    chrome.storage.local.get(["clips"], (result) => {
+      const storedClips = result.clips as ClipList;
+      if (storedClips && storedClips.length > 0) {
+        setContentState((prevState) => ({
+          ...prevState,
+          clips: storedClips,
+        }));
+      }
+    });
   }, []);
 
   // Show a popup when attempting to close the tab if the user has not downloaded their video

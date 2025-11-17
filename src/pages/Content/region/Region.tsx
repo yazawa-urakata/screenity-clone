@@ -17,6 +17,8 @@ interface ContentStateType {
   drawingMode: boolean;
   blurMode: boolean;
   cropTarget?: any;
+  clipRecording?: boolean;
+  clipCrop?: { x: number; y: number; width: number; height: number } | null;
 }
 
 const ResizableBox: React.FC = () => {
@@ -127,6 +129,23 @@ const ResizableBox: React.FC = () => {
       regionY: position.y,
     });
     setCropTarget();
+
+    // Update clipCrop if clip recording is active
+    if (contentState.clipRecording) {
+      const clipCrop = {
+        x: position.x,
+        y: position.y,
+        width: width,
+        height: height,
+      };
+
+      setContentState((prevContentState: ContentStateType) => ({
+        ...prevContentState,
+        clipCrop: clipCrop,
+      }));
+
+      chrome.storage.local.set({ clipCrop: clipCrop });
+    }
   };
 
   const handleMove = (e: any, d: DraggableData): void => {
@@ -141,6 +160,23 @@ const ResizableBox: React.FC = () => {
       regionY: d.y,
     });
     setCropTarget();
+
+    // Update clipCrop if clip recording is active
+    if (contentState.clipRecording) {
+      const clipCrop = {
+        x: d.x,
+        y: d.y,
+        width: contentState.regionWidth,
+        height: contentState.regionHeight,
+      };
+
+      setContentState((prevContentState: ContentStateType) => ({
+        ...prevContentState,
+        clipCrop: clipCrop,
+      }));
+
+      chrome.storage.local.set({ clipCrop: clipCrop });
+    }
   };
 
   useEffect(() => {

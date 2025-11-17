@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 16 16">
+  <g clip-path="url(#clip-stop-icon)">
+    <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" fill="none"/>
+    <rect x="5.5" y="5.5" width="5" height="5" rx="0.5" fill="currentColor"/>
+  </g>
+  <defs>
+    <clipPath id="clip-stop-icon">
+      <rect width="16" height="16" fill="white"/>
+    </clipPath>
+  </defs>
+</svg>

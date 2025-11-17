@@ -17,7 +17,7 @@ import Toast from "../components/Toast";
 import { contentStateContext } from "../../context/ContentState";
 
 // Icons
-import { GrabIcon, StopIcon } from "../components/SVG";
+import { GrabIcon, StopIcon, ClipIcon, ClipStopIcon } from "../components/SVG";
 
 const ToolbarWrap: React.FC = () => {
   const contextValue = useContext(contentStateContext);
@@ -331,6 +331,30 @@ const ToolbarWrap: React.FC = () => {
               ref={timeRef}
             >
               {timestamp}
+            </div>
+            <div className={contentState.clipRecording ? "ClipRecordingActive" : ""}>
+              <ToolTrigger
+                type="button"
+                content={
+                  contentState.clipRecording
+                    ? "クリップ録画を終了"
+                    : `クリップ録画を開始 (${contentState.clips?.length || 0}/5)`
+                }
+                disabled={!contentState.recording || contentState.paused}
+                onClick={() => {
+                  if (contentState.clipRecording) {
+                    contentState.endClipRecording();
+                  } else {
+                    contentState.startClipRecording();
+                  }
+                }}
+              >
+                {contentState.clipRecording ? (
+                  <ClipStopIcon width="20" height="20" />
+                ) : (
+                  <ClipIcon width="20" height="20" />
+                )}
+              </ToolTrigger>
             </div>
           </div>
         </Toolbar.Root>

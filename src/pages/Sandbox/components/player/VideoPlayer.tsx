@@ -5,6 +5,7 @@ import { ContentStateContext } from "../../context/ContentState";
 
 // Components
 import Title from "./Title";
+import ClipsPanel from "../editor/ClipsPanel";
 
 interface PlyrSource {
   type: string;
@@ -210,6 +211,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
           />
         )}
         {contentState.mode === "player" && <Title />}
+        {contentState.mode === "player" && <ClipsPanel />}
       </div>
       <style>
         {`

@@ -489,3 +489,16 @@ iframe {
 .ArrowShape {
   margin-left: -15px;
 }
+
+// Clip recording button active state
+.ClipRecordingActive {
+  background: rgba(247, 56, 125, 0.1) !important;
+
+  svg {
+    color: #f7387d !important;
+  }
+
+  &:hover {
+    background: rgba(247, 56, 125, 0.15) !important;
+  }
+}

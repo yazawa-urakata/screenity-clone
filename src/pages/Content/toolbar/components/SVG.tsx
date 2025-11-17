@@ -579,6 +579,26 @@ const AudioIcon: FC<SVGIconProps> = (props) => {
   );
 };
 
+const ClipIcon: FC<SVGIconProps> = (props) => {
+  return (
+    <ReactSVG
+      src={URL + "tool-icons/clip-icon.svg"}
+      width={props.width || "20"}
+      height={props.height || "20"}
+    />
+  );
+};
+
+const ClipStopIcon: FC<SVGIconProps> = (props) => {
+  return (
+    <ReactSVG
+      src={URL + "tool-icons/clip-stop-icon.svg"}
+      width={props.width || "20"}
+      height={props.height || "20"}
+    />
+  );
+};
+
 const NotSupportedIcon: FC<SVGIconProps> = (props) => {
   return (
     <ReactSVG
@@ -645,4 +665,6 @@ export {
   MoreIconPopup,
   AudioIcon,
   NotSupportedIcon,
+  ClipIcon,
+  ClipStopIcon,
 };

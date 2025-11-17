@@ -1,6 +1,10 @@
 import { sendMessageRecord } from "./sendMessageRecord";
+import { clearClips } from "../clip/clipHandlers";
 
 export const startRecording = async () => {
+  // 前回の録画のクリップをクリア
+  await clearClips();
+
   chrome.storage.local.set({
     recordingStartTime: Date.now(),
     restarting: false,

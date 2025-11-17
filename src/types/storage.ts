@@ -1,5 +1,7 @@
 // Chrome Storage関連の型定義
 
+import type { ClipList } from './clip';
+
 // Chrome Storageに保存されるデータの型
 export interface StorageData {
   // 録画設定
@@ -20,6 +22,17 @@ export interface StorageData {
   region: boolean;
   wasRegion: boolean;
   restarting: boolean;
+
+  // クリップ録画関連
+  clips: ClipList;
+  clipRecording: boolean;
+  clipStartTime: number | null;
+  clipCrop: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
 
   // カメラ・オーディオ設定
   audioInput: string;

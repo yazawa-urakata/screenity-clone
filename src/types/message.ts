@@ -187,7 +187,14 @@ export type MessageType =
   | 'click-event'
   | 'crop-target'
   // Region Capture関連
-  | 'screenity-region-capture-loaded';
+  | 'screenity-region-capture-loaded'
+  // クリップ録画関連
+  | 'start-clip-recording'
+  | 'end-clip-recording'
+  | 'save-clip'
+  | 'clip-saved'
+  | 'clip-error'
+  | 'set-clip-crop';
 
 // メッセージペイロードの基本インターフェース
 export interface BaseMessage {
@@ -435,6 +442,64 @@ export interface ClickEventMessage extends BaseMessage {
   timestamp?: number;
 }
 
+// クリップ録画関連メッセージ
+export interface StartClipRecordingMessage extends BaseMessage {
+  type: 'start-clip-recording';
+}
+
+export interface EndClipRecordingMessage extends BaseMessage {
+  type: 'end-clip-recording';
+}
+
+export interface SaveClipMessage extends BaseMessage {
+  type: 'save-clip';
+  payload: {
+    clipData: {
+      id: string;
+      startTime: number;
+      endTime: number;
+      duration: number;
+      crop?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      };
+      createdAt: number;
+      recordingId?: string;
+    };
+  };
+}
+
+export interface ClipSavedMessage extends BaseMessage {
+  type: 'clip-saved';
+  payload: {
+    clipId: string;
+    clipNumber: number;
+    duration: number;
+  };
+}
+
+export interface ClipErrorMessage extends BaseMessage {
+  type: 'clip-error';
+  payload: {
+    code: string;
+    message: string;
+  };
+}
+
+export interface SetClipCropMessage extends BaseMessage {
+  type: 'set-clip-crop';
+  payload: {
+    crop: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } | null;
+  };
+}
+
 // メッセージの型ガード（よく使用されるもののみ）
 export function isStartRecordingMessage(
   message: BaseMessage
@@ -466,12 +531,36 @@ export function isPingMessage(
   return message.type === 'ping';
 }
 
+export function isStartClipRecordingMessage(
+  message: BaseMessage
+): message is StartClipRecordingMessage {
+  return message.type === 'start-clip-recording';
+}
+
+export function isSaveClipMessage(
+  message: BaseMessage
+): message is SaveClipMessage {
+  return message.type === 'save-clip';
+}
+
+export function isClipSavedMessage(
+  message: BaseMessage
+): message is ClipSavedMessage {
+  return message.type === 'clip-saved';
+}
+
+export function isClipErrorMessage(
+  message: BaseMessage
+): message is ClipErrorMessage {
+  return message.type === 'clip-error';
+}
+
 // メッセージハンドラーの型
 export type MessageHandler<T extends BaseMessage = BaseMessage> = (
   message: T,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void
-) => void | boolean | Promise<any>;
+) => void | boolean | unknown | Promise<any>;
 
 // メッセージレスポンスの型
 export interface MessageResponse<T = any> {

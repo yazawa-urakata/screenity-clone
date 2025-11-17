@@ -6,6 +6,8 @@ import {
   resetActiveTabRestart,
   setSurface,
 } from "../tabManagement";
+import { handleSaveClip } from "../clip/clipHandlers";
+import type { SaveClipMessage } from "../../../types/message";
 
 import { startRecording } from "../recording/startRecording";
 import {
@@ -149,6 +151,12 @@ export const setupHandlers = (): void => {
     async () => await handleRecordingComplete()
   );
   registerMessage("check-recording", () => checkRecording());
+
+  // クリップ録画関連
+  registerMessage("save-clip", async (message, sender) => {
+    await handleSaveClip(message as SaveClipMessage, sender);
+    return { success: true }; // メッセージポートを開いたままにする
+  });
 
   registerMessage("review-screenity", () =>
     createTab(
