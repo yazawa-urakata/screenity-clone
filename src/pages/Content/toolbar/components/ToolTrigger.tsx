@@ -13,17 +13,19 @@ interface ToolTriggerProps {
   disabled?: boolean;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   children: ReactNode;
+  className?: string;
 }
 
 const ToolTrigger: FC<ToolTriggerProps> = (props) => {
   const grab = props.grab ? " grab" : "";
   const resume = props.resume ? " resume" : "";
+  const customClass = props.className ? " " + props.className : "";
 
   return (
     <TooltipWrap content={props.content}>
       {props.type === "button" ? (
         <Toolbar.Button
-          className={"ToolbarButton" + grab + resume}
+          className={"ToolbarButton" + grab + resume + customClass}
           onClick={props.onClick}
           disabled={props.disabled}
         >

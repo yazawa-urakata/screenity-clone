@@ -17,7 +17,8 @@ import Toast from "../components/Toast";
 import { contentStateContext } from "../../context/ContentState";
 
 // Icons
-import { GrabIcon, StopIcon, ClipIcon, ClipStopIcon } from "../components/SVG";
+import { GrabIcon, StopIcon, ClipIcon, ClipStopIcon, CheckIcon, CloseIcon } from "../components/SVG";
+import { MAX_CLIPS } from '../../../../utils/clipUtils';
 
 const ToolbarWrap: React.FC = () => {
   const contextValue = useContext(contentStateContext);
@@ -332,30 +333,68 @@ const ToolbarWrap: React.FC = () => {
             >
               {timestamp}
             </div>
-            <div className={contentState.clipRecording ? "ClipRecordingActive" : ""}>
+            {/* === クリップ録画ボタン === */}
+
+            {/* 状態: 初期（クリップ選択前） */}
+            {!contentState.clipSelecting && !contentState.clipRecording && (
               <ToolTrigger
                 type="button"
-                content={
-                  contentState.clipRecording
-                    ? "クリップ録画を終了"
-                    : `クリップ録画を開始 (${contentState.clips?.length || 0}/5)`
+                content={`クリップ範囲を選択 (${contentState.clips?.length || 0}/${MAX_CLIPS})`}
+                disabled={
+                  !contentState.recording ||
+                  contentState.paused ||
+                  (contentState.clips?.length || 0) >= MAX_CLIPS
                 }
-                disabled={!contentState.recording || contentState.paused}
                 onClick={() => {
-                  if (contentState.clipRecording) {
-                    contentState.endClipRecording();
-                  } else {
-                    contentState.startClipRecording();
-                  }
+                  contentState.startClipSelection();
                 }}
               >
-                {contentState.clipRecording ? (
-                  <ClipStopIcon width="20" height="20" />
-                ) : (
-                  <ClipIcon width="20" height="20" />
-                )}
+                <ClipIcon width="20" height="20" />
               </ToolTrigger>
-            </div>
+            )}
+
+            {/* 状態: クロップ選択中 */}
+            {contentState.clipSelecting && (
+              <>
+                {/* 決定ボタン */}
+                <ToolTrigger
+                  type="button"
+                  content="クロップを確定してクリップ録画開始"
+                  onClick={() => {
+                    contentState.confirmClipSelection();
+                  }}
+                  className="clip-confirm-button"
+                >
+                  <CheckIcon width="20" height="20" />
+                </ToolTrigger>
+
+                {/* キャンセルボタン */}
+                <ToolTrigger
+                  type="button"
+                  content="クリップ選択をキャンセル"
+                  onClick={() => {
+                    contentState.cancelClipSelection();
+                  }}
+                  className="clip-cancel-button"
+                >
+                  <CloseIcon width="20" height="20" />
+                </ToolTrigger>
+              </>
+            )}
+
+            {/* 状態: クリップ録画中 */}
+            {contentState.clipRecording && (
+              <ToolTrigger
+                type="button"
+                content="クリップ録画を終了"
+                onClick={() => {
+                  contentState.endClipRecording();
+                }}
+                className="clip-stop-button"
+              >
+                <ClipStopIcon width="20" height="20" />
+              </ToolTrigger>
+            )}
           </div>
         </Toolbar.Root>
       </Rnd>

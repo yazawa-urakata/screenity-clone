@@ -599,6 +599,38 @@ const ClipStopIcon: FC<SVGIconProps> = (props) => {
   );
 };
 
+// チェックアイコン（決定ボタン用）
+const CheckIcon: FC<SVGIconProps> = (props) => {
+  return (
+    <svg
+      width={props.width || "20"}
+      height={props.height || "20"}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={props.className}
+      style={props.style}
+    >
+      <path d="M7.5 13.5L3.5 9.5L4.91 8.09L7.5 10.67L15.09 3.09L16.5 4.5L7.5 13.5Z" />
+    </svg>
+  );
+};
+
+// クローズアイコン（キャンセルボタン用）
+const CloseIcon: FC<SVGIconProps> = (props) => {
+  return (
+    <svg
+      width={props.width || "20"}
+      height={props.height || "20"}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={props.className}
+      style={props.style}
+    >
+      <path d="M15.5 5.91L14.09 4.5L10 8.59L5.91 4.5L4.5 5.91L8.59 10L4.5 14.09L5.91 15.5L10 11.41L14.09 15.5L15.5 14.09L11.41 10L15.5 5.91Z" />
+    </svg>
+  );
+};
+
 const NotSupportedIcon: FC<SVGIconProps> = (props) => {
   return (
     <ReactSVG
@@ -667,4 +699,6 @@ export {
   NotSupportedIcon,
   ClipIcon,
   ClipStopIcon,
+  CheckIcon,
+  CloseIcon,
 };

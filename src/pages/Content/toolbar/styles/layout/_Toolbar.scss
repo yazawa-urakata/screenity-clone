@@ -502,3 +502,40 @@ iframe {
     background: rgba(247, 56, 125, 0.15) !important;
   }
 }
+
+/* クリップ選択中のボタンスタイル */
+.clip-confirm-button {
+  background-color: rgba(76, 175, 80, 0.1) !important;
+
+  &:hover {
+    background-color: rgba(76, 175, 80, 0.2) !important;
+  }
+
+  svg {
+    color: #4caf50;
+  }
+}
+
+.clip-cancel-button {
+  background-color: rgba(158, 158, 158, 0.1) !important;
+
+  &:hover {
+    background-color: rgba(158, 158, 158, 0.2) !important;
+  }
+
+  svg {
+    color: #9e9e9e;
+  }
+}
+
+.clip-stop-button {
+  background-color: rgba(255, 76, 76, 0.1) !important;
+
+  &:hover {
+    background-color: rgba(255, 76, 76, 0.2) !important;
+  }
+
+  svg {
+    color: #ff4c4c;
+  }
+}

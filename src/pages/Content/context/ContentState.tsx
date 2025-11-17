@@ -180,6 +180,7 @@ export interface ContentStateType {
   ) => void;
   shortcuts?: unknown[];
   // クリップ録画関連
+  clipSelecting: boolean;
   clipRecording: boolean;
   clipStartTime: number | null;
   clipCrop: {
@@ -189,7 +190,9 @@ export interface ContentStateType {
     height: number;
   } | null;
   clips: ClipList;
-  startClipRecording: () => void;
+  startClipSelection: () => void;
+  confirmClipSelection: () => void;
+  cancelClipSelection: () => void;
   endClipRecording: () => void;
   setClipCrop: (crop: { x: number; y: number; width: number; height: number } | null) => void;
 }
@@ -459,63 +462,138 @@ const ContentState: FC<ContentStateProps> = (props) => {
   }, []);
 
   // クリップ録画関数
-  const startClipRecording = useCallback((): void => {
-    const currentState = contentStateRef.current;
-    if (!currentState) return;
-
-    // 録画中チェック
-    if (!currentState.recording) {
-      console.warn('[ClipRecording] 録画を開始してください');
-      if (currentState.openToast) {
-        currentState.openToast('録画を開始してください');
+  /**
+   * クリップ選択開始（ステップ①）
+   */
+  const startClipSelection = useCallback((): void => {
+    // 録画中かチェック
+    if (!contentStateRef.current?.recording) {
+      console.warn('⚠️ クリップ選択を開始できません: 録画中ではありません');
+      if (contentStateRef.current?.openToast) {
+        contentStateRef.current.openToast('先に録画を開始してください', () => {});
       }
       return;
     }
 
-    // 最大数チェック
-    if (currentState.clips.length >= MAX_CLIPS) {
-      console.warn(`[ClipRecording] クリップは最大${MAX_CLIPS}つまでです`);
-      if (currentState.openToast) {
-        currentState.openToast(`クリップは最大${MAX_CLIPS}つまでです`);
+    // 最大クリップ数チェック
+    if (contentStateRef.current.clips.length >= MAX_CLIPS) {
+      console.warn(`⚠️ 最大${MAX_CLIPS}個のクリップに達しました`);
+      if (contentStateRef.current.openToast) {
+        contentStateRef.current.openToast(
+          `最大${MAX_CLIPS}個までクリップを記録できます`,
+          () => {}
+        );
       }
       return;
     }
 
-    // 録画開始時刻を取得して、そこからの経過時間を計算
+    // デフォルトの Region サイズと位置を計算
+    const defaultRegionWidth = 640;   // 640px
+    const defaultRegionHeight = 360;  // 360px (16:9)
+    const defaultRegionX = Math.max(0, (window.innerWidth - defaultRegionWidth) / 2);
+    const defaultRegionY = Math.max(0, (window.innerHeight - defaultRegionHeight) / 2);
+
+    // クリップ選択モードに移行
+    setContentState((prev) => ({
+      ...prev,
+      clipSelecting: true,        // クロップ選択中フラグON
+      customRegion: true,          // Region UI を表示
+      recordingType: 'region',     // Region モードに切り替え
+      regionWidth: defaultRegionWidth,   // Region の幅を設定
+      regionHeight: defaultRegionHeight, // Region の高さを設定
+      regionX: defaultRegionX,           // Region のX座標を設定
+      regionY: defaultRegionY,           // Region のY座標を設定
+      fromRegion: false,                 // Region からの更新ではない
+    }));
+
+    // Chrome Storage に保存
+    chrome.storage.local.set({
+      clipSelecting: true,
+      regionWidth: defaultRegionWidth,
+      regionHeight: defaultRegionHeight,
+      regionX: defaultRegionX,
+      regionY: defaultRegionY,
+    });
+
+    console.log('📐 クリップ選択を開始しました', {
+      width: defaultRegionWidth,
+      height: defaultRegionHeight,
+      x: defaultRegionX,
+      y: defaultRegionY,
+    });
+  }, []);
+
+  /**
+   * クリップ選択確定（ステップ③）
+   */
+  const confirmClipSelection = useCallback((): void => {
+    if (!contentStateRef.current?.clipSelecting) {
+      console.warn('⚠️ クリップ選択中ではありません');
+      return;
+    }
+
+    // 録画開始時刻を取得して、現在の経過時間を計算
     chrome.storage.local.get(['recordingStartTime'], (result) => {
       const recordingStartTime = result.recordingStartTime as number;
-      const clipStartTime = Date.now() - recordingStartTime;
+      if (!recordingStartTime) {
+        console.error('⚠️ recordingStartTime が見つかりません');
+        return;
+      }
 
-      // 現在の Region 情報を clipCrop として保存
+      // 現在の経過時間（ミリ秒）= Date.now() - 録画開始時刻
+      const currentTime = Date.now() - recordingStartTime;
+
+      // 現在のRegion座標をclipCropとして保存
       const clipCrop = {
-        x: currentState.regionX,
-        y: currentState.regionY,
-        width: currentState.regionWidth,
-        height: currentState.regionHeight,
+        x: contentStateRef.current!.regionX,
+        y: contentStateRef.current!.regionY,
+        width: contentStateRef.current!.regionWidth,
+        height: contentStateRef.current!.regionHeight,
       };
 
-      // クリップ録画を開始
+      // クリップ録画モードに移行
       setContentState((prev) => ({
         ...prev,
-        clipRecording: true,
-        clipStartTime: clipStartTime,
-        clipCrop: clipCrop,
-        customRegion: true,
-        recordingType: 'region',
+        clipSelecting: false,        // 選択終了
+        clipRecording: true,         // 録画開始
+        clipStartTime: currentTime,  // この時点で時刻記録
+        clipCrop: clipCrop,          // クロップ範囲を確定
       }));
 
+      // Chrome Storage に保存
       chrome.storage.local.set({
+        clipSelecting: false,
         clipRecording: true,
-        clipStartTime: clipStartTime,
+        clipStartTime: currentTime,
         clipCrop: clipCrop,
       });
 
-      console.log('[ClipRecording] クリップ録画を開始しました', {
-        clipStartTime,
-        recordingStartTime,
-        clipCrop,
-      });
+      console.log('▶️ クリップ録画を開始しました', currentTime, 'ms, クロップ:', clipCrop);
     });
+  }, []);
+
+  /**
+   * クリップ選択キャンセル
+   */
+  const cancelClipSelection = useCallback((): void => {
+    if (!contentStateRef.current?.clipSelecting) {
+      console.warn('⚠️ クリップ選択中ではありません');
+      return;
+    }
+
+    // 選択モードを終了し、通常状態に戻る
+    setContentState((prev) => ({
+      ...prev,
+      clipSelecting: false,
+      customRegion: false,  // Region UI を非表示
+    }));
+
+    // Chrome Storage に保存
+    chrome.storage.local.set({
+      clipSelecting: false,
+    });
+
+    console.log('❌ クリップ選択をキャンセルしました');
   }, []);
 
   const endClipRecording = useCallback((): void => {
@@ -1246,11 +1324,14 @@ const ContentState: FC<ContentStateProps> = (props) => {
       }));
     },
     // クリップ録画関連の初期値
+    clipSelecting: false,
     clipRecording: false,
     clipStartTime: null,
     clipCrop: null,
     clips: [],
-    startClipRecording: startClipRecording,
+    startClipSelection: startClipSelection,
+    confirmClipSelection: confirmClipSelection,
+    cancelClipSelection: cancelClipSelection,
     endClipRecording: endClipRecording,
     setClipCrop: setClipCrop,
   });

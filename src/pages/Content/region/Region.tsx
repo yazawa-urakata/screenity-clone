@@ -17,6 +17,7 @@ interface ContentStateType {
   drawingMode: boolean;
   blurMode: boolean;
   cropTarget?: any;
+  clipSelecting?: boolean;
   clipRecording?: boolean;
   clipCrop?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -26,16 +27,65 @@ const ResizableBox: React.FC = () => {
   const parentRef = useRef<HTMLDivElement>(null);
   const cropRef = useRef<HTMLDivElement>(null);
   const recordingRef = useRef<boolean>(false);
+  const clipSelectingRef = useRef<boolean>(false);
   const [contentState, setContentState] = useContext(contentStateContext);
 
   useEffect(() => {
     recordingRef.current = contentState.recording;
   }, [contentState.recording]);
 
+  useEffect(() => {
+    clipSelectingRef.current = contentState.clipSelecting || false;
+  }, [contentState.clipSelecting]);
+
+  // デバッグ用: clipSelecting の変更を監視
+  useEffect(() => {
+    console.log('[Region Debug] clipSelecting:', contentState.clipSelecting);
+    console.log('[Region Debug] recording:', contentState.recording);
+    console.log('[Region Debug] clipRecording:', contentState.clipRecording);
+    console.log('[Region Debug] drawingMode:', contentState.drawingMode);
+    console.log('[Region Debug] blurMode:', contentState.blurMode);
+
+    const shouldEnablePointerEvents = !(
+      contentState.clipRecording ||
+      (contentState.recording && !contentState.clipSelecting) ||
+      contentState.drawingMode ||
+      contentState.blurMode
+    );
+    console.log('[Region Debug] pointerEvents should be:', shouldEnablePointerEvents ? 'auto' : 'none');
+
+    const shouldEnableDragging = !(
+      contentState.clipRecording ||
+      (contentState.recording && !contentState.clipSelecting) ||
+      contentState.drawingMode ||
+      contentState.blurMode
+    );
+    console.log('[Region Debug] disableDragging should be:', !shouldEnableDragging);
+
+    const shouldEnableResizing = (
+      !contentState.clipRecording &&
+      (!contentState.recording || contentState.clipSelecting) &&
+      !contentState.drawingMode &&
+      !contentState.blurMode
+    );
+    console.log('[Region Debug] enableResizing should be:', shouldEnableResizing);
+  }, [contentState.clipSelecting, contentState.recording, contentState.clipRecording, contentState.drawingMode, contentState.blurMode]);
+
   // Check for contentState.regionDimensions to update the Rnd component width and height
   useEffect(() => {
-    if (contentState.recordingType != "region") return;
-    if (!contentState.customRegion) return;
+    // clipSelecting または clipRecording の場合も Region を表示
+    if (
+      contentState.recordingType != "region" &&
+      !contentState.clipSelecting &&
+      !contentState.clipRecording
+    ) return;
+
+    if (
+      !contentState.customRegion &&
+      !contentState.clipSelecting &&
+      !contentState.clipRecording
+    ) return;
+
     if (regionRef.current === null) return;
     if (
       contentState.regionWidth === 0 ||
@@ -86,6 +136,8 @@ const ResizableBox: React.FC = () => {
   }, [
     contentState.recordingType,
     contentState.customRegion,
+    contentState.clipSelecting,
+    contentState.clipRecording,
     contentState.regionWidth,
     contentState.regionHeight,
     contentState.regionX,
@@ -129,23 +181,6 @@ const ResizableBox: React.FC = () => {
       regionY: position.y,
     });
     setCropTarget();
-
-    // Update clipCrop if clip recording is active
-    if (contentState.clipRecording) {
-      const clipCrop = {
-        x: position.x,
-        y: position.y,
-        width: width,
-        height: height,
-      };
-
-      setContentState((prevContentState: ContentStateType) => ({
-        ...prevContentState,
-        clipCrop: clipCrop,
-      }));
-
-      chrome.storage.local.set({ clipCrop: clipCrop });
-    }
   };
 
   const handleMove = (e: any, d: DraggableData): void => {
@@ -160,23 +195,6 @@ const ResizableBox: React.FC = () => {
       regionY: d.y,
     });
     setCropTarget();
-
-    // Update clipCrop if clip recording is active
-    if (contentState.clipRecording) {
-      const clipCrop = {
-        x: d.x,
-        y: d.y,
-        width: contentState.regionWidth,
-        height: contentState.regionHeight,
-      };
-
-      setContentState((prevContentState: ContentStateType) => ({
-        ...prevContentState,
-        clipCrop: clipCrop,
-      }));
-
-      chrome.storage.local.set({ clipCrop: clipCrop });
-    }
   };
 
   useEffect(() => {
@@ -209,13 +227,14 @@ const ResizableBox: React.FC = () => {
         height: "100%",
         zIndex: -1,
         pointerEvents:
-          recordingRef.current ||
+          contentState.clipRecording ||
+          (contentState.recording && !contentState.clipSelecting) ||
           contentState.drawingMode ||
           contentState.blurMode
             ? "none"
             : "auto",
       }}
-      className={recordingRef.current ? "region-recording" : ""}
+      className={recordingRef.current && !clipSelectingRef.current ? "region-recording" : ""}
       onClick={(e: React.MouseEvent) => {
         // showExtension false, as long as not clicking on the region
         if (
@@ -240,7 +259,8 @@ const ResizableBox: React.FC = () => {
           height: "100%",
           zIndex: 1,
           pointerEvents:
-            recordingRef.current ||
+            contentState.clipRecording ||
+            (contentState.recording && !contentState.clipSelecting) ||
             contentState.drawingMode ||
             contentState.blurMode
               ? "none"
@@ -255,7 +275,8 @@ const ResizableBox: React.FC = () => {
           position: "relative",
           zIndex: 2,
           pointerEvents:
-            recordingRef.current ||
+            contentState.clipRecording ||
+            (contentState.recording && !contentState.clipSelecting) ||
             contentState.drawingMode ||
             contentState.blurMode
               ? "none"
@@ -284,15 +305,17 @@ const ResizableBox: React.FC = () => {
         onResizeStop={handleResize}
         onDragStop={handleMove}
         disableDragging={
-          contentState.recording ||
+          contentState.clipRecording ||
+          (contentState.recording && !contentState.clipSelecting) ||
           contentState.drawingMode ||
           contentState.blurMode
-        } // Disable dragging when recording
+        } // Disable dragging when recording (except during clip selection)
         enableResizing={
-          !contentState.recording &&
+          !contentState.clipRecording &&
+          (!contentState.recording || contentState.clipSelecting) &&
           !contentState.drawingMode &&
           !contentState.blurMode
-        } // Disable resizing when recording
+        } // Enable resizing during clip selection or when not recording
       >
         <div
           ref={cropRef}
@@ -307,7 +330,8 @@ const ResizableBox: React.FC = () => {
             zIndex: 2,
             boxSizing: "border-box",
             pointerEvents:
-              recordingRef.current ||
+              contentState.clipRecording ||
+              (contentState.recording && !contentState.clipSelecting) ||
               contentState.drawingMode ||
               contentState.blurMode
                 ? "none"

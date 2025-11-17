@@ -242,7 +242,7 @@ const Wrapper: React.FC = () => {
     width: "100%",
     height: "100%",
     position: "absolute",
-    pointerEvents: "none",
+    pointerEvents: "none", // オーバーレイはクリックを妨げない、UI要素は container で制御
     left: "0px",
     top: "0px",
     zIndex: 9999999999,
@@ -296,7 +296,12 @@ const Wrapper: React.FC = () => {
             style={rootContainerStyle}
             ref={shadowRef}
           >
-            <div className="container">
+            <div
+              className="container"
+              style={{
+                pointerEvents: "auto" // UI要素を常に操作可能にする（個々の要素で細かく制御）
+              }}
+            >
               <Warning />
               {contentState.recordingType === "region" &&
                 contentState.customRegion && <Region />}

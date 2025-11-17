@@ -25,6 +25,8 @@ export interface StorageData {
 
   // クリップ録画関連
   clips: ClipList;
+  /** クロップ選択中フラグ */
+  clipSelecting?: boolean;
   clipRecording: boolean;
   clipStartTime: number | null;
   clipCrop: {

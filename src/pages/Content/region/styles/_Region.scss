@@ -7,6 +7,7 @@
   width: 100%;
   height: 100%;
   z-index: 9999999999;
+  pointer-events: none; // オーバーレイはクリックイベントを透過させる
 }
 .resize-handle {
   position: absolute;
