@@ -1,6 +1,7 @@
 // Chrome Storage関連の型定義
 
 import type { ClipList } from './clip';
+import type { SupabaseUser } from './supabase';
 
 // Chrome Storageに保存されるデータの型
 export interface StorageData {
@@ -183,6 +184,13 @@ export interface StorageData {
   hasSeenInstantModeModal: boolean;
   sendingChunks: boolean;
   learntAboutPro: boolean;
+
+  // Supabase認証
+  supabase_access_token?: string;
+  supabase_refresh_token?: string;
+  supabase_user?: SupabaseUser;
+  supabase_expires_at?: number;
+  supabase_authenticated?: boolean;
 
   // 拡張性のため、追加のプロパティを許可
   [key: string]: unknown;

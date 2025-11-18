@@ -25,6 +25,9 @@ import { contentStateContext } from "./context/ContentState";
 
 import { startClickTracking } from "./cursor/trackClicks";
 
+// Supabase authentication
+import { AuthGuard } from "../Popup/components/AuthGuard";
+
 const RecordingLoader = () => {
   return (
     <div
@@ -240,16 +243,17 @@ const Wrapper = () => {
                   width: "100%",
                   height: "100%",
                   zIndex: 999999999,
-                  pointerEvents: "all",
+                  // Disable pointer events when popup is shown to allow AuthGuard interaction
+                  pointerEvents: contentState.showPopup ? "none" : "all",
                   position: "fixed",
                   background:
                     window.location.href.indexOf(
                       chrome.runtime.getURL("setup.html")
                     ) === -1 &&
-                    window.location.href.indexOf(
-                      chrome.runtime.getURL("playground.html")
-                    ) === -1 &&
-                    !contentState.pendingRecording
+                      window.location.href.indexOf(
+                        chrome.runtime.getURL("playground.html")
+                      ) === -1 &&
+                      !contentState.pendingRecording
                       ? "rgba(0,0,0,0.15)"
                       : "rgba(0,0,0,0)",
                   top: 0,
@@ -293,38 +297,28 @@ const Wrapper = () => {
             }}
             ref={shadowRef}
           >
-            <div className="container">
-              <Warning />
-              {contentState.recordingType === "region" &&
-                contentState.customRegion && <Region />}
-              {shadowRef.current && <Modal shadowRef={shadowRef} />}
-              {contentState.preparingRecording && <RecordingLoader />}
-              <Countdown />
-              {/* {contentState.recordingType != "camera" &&
-                !contentState.onboarding &&
-                !(
-                  contentState.isSubscribed === false &&
-                  contentState.isLoggedIn === true
-                ) &&
-                !(!contentState.isLoggedIn && contentState.wasLoggedIn) && (
-                  <Camera shadowRef={shadowRef} />
+            <AuthGuard>
+              <div className="container">
+                <Warning />
+                {contentState.recordingType === "region" &&
+                  contentState.customRegion && <Region />}
+                {shadowRef.current && <Modal shadowRef={shadowRef} />}
+                {contentState.preparingRecording && <RecordingLoader />}
+                <Countdown />
+                {!(contentState.hideToolbar && contentState.hideUI) &&
+                  !contentState.onboarding &&
+                  !(
+                    contentState.isSubscribed === false &&
+                    contentState.isLoggedIn === true
+                  ) &&
+                  !(!contentState.isLoggedIn && contentState.wasLoggedIn) && (
+                    <Toolbar />
+                  )}
+                {contentState.showPopup && (
+                  <PopupContainer shadowRef={shadowRef} />
                 )}
-              {contentState.recordingType === "camera" && (
-                <CameraOnly shadowRef={shadowRef} />
-              )} */}
-              {!(contentState.hideToolbar && contentState.hideUI) &&
-                !contentState.onboarding &&
-                !(
-                  contentState.isSubscribed === false &&
-                  contentState.isLoggedIn === true
-                ) &&
-                !(!contentState.isLoggedIn && contentState.wasLoggedIn) && (
-                  <Toolbar />
-                )}
-              {contentState.showPopup && (
-                <PopupContainer shadowRef={shadowRef} />
-              )}
-            </div>
+              </div>
+            </AuthGuard>
             <style type="text/css">{styles}</style>
           </root.div>
         </div>

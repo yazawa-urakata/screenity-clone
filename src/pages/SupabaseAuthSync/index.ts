@@ -1,0 +1,85 @@
+/**
+ * Supabase認証同期Content Script
+ *
+ * このスクリプトはWebアプリケーションのドメインでのみ実行され、
+ * Cookie-based認証を利用してSupabaseセッションを取得し、
+ * Chrome拡張機能のStorageに同期する。
+ */
+
+import { getWebAppUrl } from '../../utils/supabaseClient';
+import { syncSession } from './sessionSync';
+
+const WEB_APP_URL = getWebAppUrl();
+
+// Webアプリのドメインでのみ実行
+if (window.location.origin === WEB_APP_URL) {
+  console.log('🔐 Supabase Auth Sync: Initialized');
+  console.log('   Current URL:', window.location.href);
+  console.log('   Expected WEB_APP_URL:', WEB_APP_URL);
+
+  /**
+   * ログインページでの状態リセット
+   * Mem0パターンと同じロジック
+   */
+  if (window.location.pathname === '/login') {
+    chrome.storage.sync.set({
+      supabase_authenticated: false,
+    });
+    console.log('🔐 Supabase Auth Sync: Login page detected, reset auth state');
+  }
+
+  /**
+   * 初回セッション同期
+   */
+  syncSession();
+
+  /**
+   * カスタムログインイベントをリスン
+   * Webアプリ側でログインしたときに即座に同期
+   */
+  console.log('🔐 Supabase Auth Sync: Registering login event listener');
+  window.addEventListener('supabase:login', async () => {
+    console.log('🔐 Supabase Auth Sync: Login event detected from web app');
+
+    // セッションを同期
+    await syncSession();
+
+    console.log('🔐 Supabase Auth Sync: Login session synced');
+  });
+
+  /**
+   * カスタムログアウトイベントをリスン
+   * Webアプリ側でログアウトしたときに即座に同期
+   */
+  console.log('🔐 Supabase Auth Sync: Registering logout event listener');
+  window.addEventListener('supabase:logout', async () => {
+    console.log('🔐 Supabase Auth Sync: Logout event detected from web app');
+
+    // 認証情報をクリア
+    await chrome.storage.sync.remove([
+      'supabase_access_token',
+      'supabase_refresh_token',
+      'supabase_user',
+      'supabase_expires_at',
+    ]);
+
+    // 認証状態をfalseに設定
+    await chrome.storage.sync.set({
+      supabase_authenticated: false,
+    });
+
+    console.log('🔐 Supabase Auth Sync: Auth state cleared');
+
+    // Background scriptに通知
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'SUPABASE_SESSION_EXPIRED',
+      });
+    } catch (err) {
+      // Background scriptが応答しない場合は無視
+      console.warn('🔐 Background script not available:', err);
+    }
+  });
+
+  console.log('🔐 Supabase Auth Sync: Session sync completed');
+}

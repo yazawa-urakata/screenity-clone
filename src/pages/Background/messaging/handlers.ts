@@ -55,6 +55,14 @@ import { newChunk, clearAllRecordings } from "../recording/chunkHandler";
 import { setMicActiveTab } from "../tabManagement/tabHelpers";
 import { handleSignOutDrive } from "../drive/handleSignOutDrive";
 import { loginWithWebsite } from "../auth/loginWithWebsite";
+import { checkSupabaseAuth, openLoginPage } from '../auth/supabaseAuth';
+import { supabaseLogout } from '../auth/supabaseLogout';
+import type {
+  SupabaseAuthCheckMessage,
+  SupabaseLoginRequestMessage,
+  SupabaseLogoutMessage,
+  SupabaseSessionSyncedMessage,
+} from '../../../types/message';
 
 const API_BASE = process.env.SCREENITY_API_BASE_URL;
 const CLOUD_FEATURES_ENABLED =
@@ -937,5 +945,51 @@ export const setupHandlers = (): void => {
     if (!CLOUD_FEATURES_ENABLED)
       return { success: false, message: "Cloud features disabled" };
     return await loginWithWebsite();
+  });
+
+  /**
+   * Supabaseセッション同期通知ハンドラー
+   */
+  registerMessage('SUPABASE_SESSION_SYNCED', async (message: SupabaseSessionSyncedMessage) => {
+    console.log('✅ Background: Supabase session synced', message.payload.user.email);
+
+    // 必要に応じて他のタブに通知
+    const tabs = await chrome.tabs.query({});
+    tabs.forEach((tab) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'AUTH_STATE_CHANGED',
+          payload: { authenticated: true },
+        }).catch(() => {
+          // タブがメッセージを受け取れない場合は無視
+        });
+      }
+    });
+
+    return { success: true };
+  });
+
+  /**
+   * Supabase認証状態チェックハンドラー
+   */
+  registerMessage('SUPABASE_AUTH_CHECK', async (message: SupabaseAuthCheckMessage) => {
+    const authState = await checkSupabaseAuth();
+    return authState;
+  });
+
+  /**
+   * Supabaseログインリクエストハンドラー
+   */
+  registerMessage('SUPABASE_LOGIN_REQUEST', async (message: SupabaseLoginRequestMessage) => {
+    await openLoginPage();
+    return { success: true };
+  });
+
+  /**
+   * Supabaseログアウトハンドラー
+   */
+  registerMessage('SUPABASE_LOGOUT', async (message: SupabaseLogoutMessage) => {
+    await supabaseLogout();
+    return { success: true };
   });
 };

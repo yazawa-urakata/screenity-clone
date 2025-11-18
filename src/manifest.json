@@ -13,12 +13,29 @@
   "icons": {
     "128": "assets/img/icon-128.png"
   },
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["contentScript.bundle.js"],
-      "css": ["assets/fonts/fonts.css"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "contentScript.bundle.js"
+      ],
+      "css": [
+        "assets/fonts/fonts.css"
+      ]
+    },
+    {
+      "matches": [
+        "http://localhost:3000/*"
+      ],
+      "js": [
+        "supabaseAuthSync.bundle.js"
+      ],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
@@ -44,12 +61,16 @@
         "download.html",
         "*"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "oauth2": {
     "client_id": "560517327251-m7n1k3kddknu7s9s4ejvrs1bj91gutd7.apps.googleusercontent.com",
-    "scopes": ["https://www.googleapis.com/auth/drive.file"]
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
   },
   "cross_origin_embedder_policy": {
     "value": "require-corp"
@@ -62,7 +83,9 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; media-src 'self' data: blob: *; img-src 'self' https: data: blob:"
   },
   "sandbox": {
-    "pages": ["editor.html"]
+    "pages": [
+      "editor.html"
+    ]
   },
   "commands": {
     "start-recording": {
@@ -99,7 +122,9 @@
     "managed_schema": "schema.json"
   },
   "externally_connectable": {
-    "matches": ["https://app.screenity.io/*"]
+    "matches": [
+      "https://app.screenity.io/*"
+    ]
   },
   "optional_permissions": [
     "offscreen",

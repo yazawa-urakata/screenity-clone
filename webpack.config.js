@@ -9,7 +9,9 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const ASSET_PATH = process.env.ASSET_PATH || "/";
 
-require("dotenv").config();
+// Load .env.local first (higher priority), then .env as fallback
+require("dotenv").config({ path: '.env.local' });
+require("dotenv").config(); // Fallback to .env if variables not found in .env.local
 
 // Entry points for the different pages
 const entryPoints = {
@@ -46,12 +48,19 @@ const entryPoints = {
     "index.jsx"
   ),
   backup: path.join(__dirname, "src", "pages", "Backup", "index.jsx"),
+  supabaseAuthSync: path.join(
+    __dirname,
+    "src",
+    "pages",
+    "SupabaseAuthSync",
+    "index.ts"
+  ),
 };
 
 const htmlPlugins = Object.keys(entryPoints)
   .map((entryName) => {
-    // Skip background script as it doesn't need an HTML file
-    if (entryName === "background" || entryName === "contentScript") {
+    // Skip background script and content scripts as they don't need an HTML file
+    if (entryName === "background" || entryName === "contentScript" || entryName === "supabaseAuthSync") {
       return null;
     }
 
@@ -183,6 +192,19 @@ const config = {
       ),
       "process.env.RECORDING_WARNING_THRESHOLD": JSON.stringify(
         process.env.RECORDING_WARNING_THRESHOLD || 60 // Default to 1 minute
+      ),
+      // Supabase環境変数
+      "process.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(
+        process.env.NEXT_PUBLIC_SUPABASE_URL
+      ),
+      "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": JSON.stringify(
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      ),
+      "process.env.WEBAPP_URL_DEV": JSON.stringify(
+        process.env.WEBAPP_URL_DEV
+      ),
+      "process.env.WEBAPP_URL_PROD": JSON.stringify(
+        process.env.WEBAPP_URL_PROD
       ),
     }),
 

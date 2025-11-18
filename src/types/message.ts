@@ -1,5 +1,7 @@
 // メッセージング関連の型定義
 
+import type { SupabaseUser } from './supabase';
+
 // メッセージタイプの定義
 export type MessageType =
   // 録画制御関連
@@ -194,7 +196,13 @@ export type MessageType =
   | 'save-clip'
   | 'clip-saved'
   | 'clip-error'
-  | 'set-clip-crop';
+  | 'set-clip-crop'
+  // Supabase認証関連
+  | 'SUPABASE_SESSION_SYNCED'
+  | 'SUPABASE_SESSION_EXPIRED'
+  | 'SUPABASE_AUTH_CHECK'
+  | 'SUPABASE_LOGOUT'
+  | 'SUPABASE_LOGIN_REQUEST';
 
 // メッセージペイロードの基本インターフェース
 export interface BaseMessage {
@@ -553,6 +561,31 @@ export function isClipErrorMessage(
   message: BaseMessage
 ): message is ClipErrorMessage {
   return message.type === 'clip-error';
+}
+
+// Supabase認証関連メッセージ
+export interface SupabaseSessionSyncedMessage extends BaseMessage {
+  type: 'SUPABASE_SESSION_SYNCED';
+  payload: {
+    user: SupabaseUser;
+    expiresAt: number;
+  };
+}
+
+export interface SupabaseSessionExpiredMessage extends BaseMessage {
+  type: 'SUPABASE_SESSION_EXPIRED';
+}
+
+export interface SupabaseAuthCheckMessage extends BaseMessage {
+  type: 'SUPABASE_AUTH_CHECK';
+}
+
+export interface SupabaseLogoutMessage extends BaseMessage {
+  type: 'SUPABASE_LOGOUT';
+}
+
+export interface SupabaseLoginRequestMessage extends BaseMessage {
+  type: 'SUPABASE_LOGIN_REQUEST';
 }
 
 // メッセージハンドラーの型
