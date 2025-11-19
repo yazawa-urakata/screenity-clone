@@ -14,7 +14,6 @@ import {
   handleStopRecordingTab,
   handleStopRecordingTabBackup,
 } from "../recording/stopRecording";
-import { handleSaveToDrive } from "../drive/handleSaveToDrive";
 import { addAlarmListener } from "../alarms/addAlarmListener";
 import { cancelRecording, handleDismiss } from "../recording/cancelRecording";
 import { handleDismissRecordingTab } from "../recording/discardRecording";
@@ -53,7 +52,6 @@ import {
 } from "../recording/recordingHelpers";
 import { newChunk, clearAllRecordings } from "../recording/chunkHandler";
 import { setMicActiveTab } from "../tabManagement/tabHelpers";
-import { handleSignOutDrive } from "../drive/handleSignOutDrive";
 import { loginWithWebsite } from "../auth/loginWithWebsite";
 import { checkSupabaseAuth, openLoginPage } from '../auth/supabaseAuth';
 import { supabaseLogout } from '../auth/supabaseLogout';
@@ -213,7 +211,6 @@ export const setupHandlers = (): void => {
   registerMessage("set-surface", (message) => setSurface((message as unknown) as Record<string, unknown>));
   registerMessage("pip-ended", () => handlePip(false));
   registerMessage("pip-started", () => handlePip(true));
-  registerMessage("sign-out-drive", () => handleSignOutDrive());
   registerMessage("open-help", () =>
     createTab("https://help.screenity.io/", true, true)
   );
@@ -268,20 +265,6 @@ export const setupHandlers = (): void => {
     }
   );
   registerMessage("is-pinned", async () => await isPinned());
-  registerMessage(
-    "save-to-drive",
-    async (message) => {
-      const msg = (message as unknown) as Record<string, unknown>;
-      return await handleSaveToDrive({ base64: msg.base64 as string, title: msg.title as string }, false);
-    }
-  );
-  registerMessage(
-    "save-to-drive-fallback",
-    async (message) => {
-      const msg = (message as unknown) as Record<string, unknown>;
-      return await handleSaveToDrive({ base64: msg.base64 as string, title: msg.title as string }, true);
-    }
-  );
   registerMessage("request-download", (message) => {
     const msg = (message as unknown) as Record<string, unknown>;
     return requestDownload(msg.base64 as string, msg.title as string);

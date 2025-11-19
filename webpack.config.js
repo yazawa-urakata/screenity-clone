@@ -37,7 +37,7 @@ const entryPoints = {
   permissions: path.join(__dirname, "src", "pages", "Permissions", "index.tsx"),
   setup: path.join(__dirname, "src", "pages", "Setup", "index.tsx"),
   playground: path.join(__dirname, "src", "pages", "Playground", "index.tsx"),
-  editor: path.join(__dirname, "src", "pages", "Editor", "index.jsx"),
+  editor: path.join(__dirname, "src", "pages", "Editor", "index.tsx"),
   region: path.join(__dirname, "src", "pages", "Region", "index.tsx"),
   download: path.join(__dirname, "src", "pages", "Download", "index.jsx"),
   editorfallback: path.join(

@@ -11,7 +11,20 @@ delete config.custom;
 
 config.mode = "production";
 
-webpack(config, (err) => {
-  if (err) throw err;
+webpack(config, (err, stats) => {
+  if (err) {
+    console.error("Webpack compilation error:", err);
+    throw err;
+  }
+
+  if (stats.hasErrors()) {
+    console.error("Webpack compilation errors:");
+    const info = stats.toJson();
+    info.errors.forEach(error => console.error(error));
+    process.exit(1);
+  }
+
   console.log("Production build completed successfully!");
+  console.log("Output path:", stats.compilation.outputOptions.path);
+  console.log("Assets created:", Object.keys(stats.compilation.assets).length);
 });

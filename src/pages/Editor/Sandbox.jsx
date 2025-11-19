@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
 // Import all the utils
-import addAudioToVideo from "./utils/addAudioToVideo";
 import base64ToBlob from "./utils/base64toBlob";
 import blobToArrayBuffer from "./utils/blobToArrayBuffer";
 import cropVideo from "./utils/cropVideo";
@@ -83,21 +82,6 @@ const Sandbox = () => {
     if (message.type === "load-ffmpeg") {
       triggerLoad.current = true;
       loadFfmpeg();
-    } else if (message.type === "add-audio-to-video") {
-      try {
-        const blob = await addAudioToVideo(
-          ffmpegInstance.current,
-          message.blob,
-          message.audio,
-          message.duration,
-          message.volume,
-          message.replaceAudio
-        );
-        const base64 = await toBase64(blob);
-        sendMessage({ type: "updated-blob", base64: base64 });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
     } else if (message.type === "base64-to-blob") {
       try {
         const blob = await base64ToBlob(ffmpegInstance.current, message.base64);
