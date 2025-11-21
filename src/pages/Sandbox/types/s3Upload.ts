@@ -3,32 +3,6 @@
  */
 
 /**
- * Request payload for obtaining a presigned URL from the API
- */
-export interface PresignedUrlRequest {
-  /** Name of the file to upload (e.g., "recording.webm") */
-  fileName: string;
-  /** MIME type of the file (e.g., "video/webm") */
-  fileType: string;
-  /** File size in bytes */
-  fileSize: number;
-  /** S3 directory path (default: "uploads") */
-  uploadPath?: string;
-}
-
-/**
- * Response from the presigned URL API endpoint
- */
-export interface PresignedUrlResponse {
-  /** Presigned URL for uploading to S3 */
-  url: string;
-  /** S3 object key where the file will be stored */
-  key: string;
-  /** Expiration time in seconds (default: 300 = 5 minutes) */
-  expiresIn: number;
-}
-
-/**
  * Upload status states throughout the upload lifecycle
  */
 export type UploadStatus =

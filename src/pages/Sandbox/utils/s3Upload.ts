@@ -1,69 +1,9 @@
 /**
  * S3アップロードユーティリティ関数
  *
- * Presigned URLの取得、S3キーの保存、ファイル名生成などの
+ * S3キーの保存、ファイル名生成などの
  * S3アップロードに関連するユーティリティ関数を提供します。
  */
-
-import type { PresignedUrlRequest, PresignedUrlResponse } from "../types/s3Upload";
-import { getWebAppUrl } from "../../../utils/supabaseClient";
-
-/**
- * APIからPresigned URLを取得
- *
- * @param request - Presigned URLリクエストパラメータ
- * @param accessToken - Supabaseアクセストークン
- * @returns Presigned URLレスポンス
- * @throws Error - API呼び出しが失敗した場合
- */
-export async function getPresignedUrl(
-  request: PresignedUrlRequest,
-  accessToken: string
-): Promise<PresignedUrlResponse> {
-  const webAppUrl = getWebAppUrl();
-  const endpoint = `${webAppUrl}/api/s3/presigned-url`;
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      // エラーレスポンスを解析
-      let errorMessage = `Failed to get presigned URL: ${response.status} ${response.statusText}`;
-      try {
-        const errorData = await response.json();
-        if (errorData.error) {
-          errorMessage = `Failed to get presigned URL: ${errorData.error}`;
-        }
-      } catch {
-        // JSON解析失敗時はデフォルトメッセージを使用
-      }
-      throw new Error(errorMessage);
-    }
-
-    // レスポンスを型安全に解析
-    const data: PresignedUrlResponse = await response.json();
-
-    // 必須フィールドの検証
-    if (!data.url || !data.key || typeof data.expiresIn !== "number") {
-      throw new Error("Invalid presigned URL response format");
-    }
-
-    return data;
-  } catch (error) {
-    // ネットワークエラーやJSON解析エラーをハンドリング
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(`Failed to get presigned URL: ${String(error)}`);
-  }
-}
 
 /**
  * S3キーをChrome Storageに保存

@@ -53,21 +53,6 @@ const RightPanel: React.FC = () => {
               </div>
             </div>
           )}
-          {contentState.fallback && (
-            <div className={styles.alert}>
-              <div className={styles.buttonLeft}>
-                <ReactSVG src={URL + "editor/icons/alert.svg"} />
-              </div>
-              <div className={styles.buttonMiddle}>
-                <div className={styles.buttonTitle}>
-                  {chrome.i18n.getMessage("recoveryModeTitle")}
-                </div>
-                <div className={styles.buttonDescription}>
-                  {chrome.i18n.getMessage("overLimitLabelDescription")}
-                </div>
-              </div>
-            </div>
-          )}
           {!contentState.fallback &&
             contentState.updateChrome &&
             !contentState.offline &&
@@ -88,86 +73,6 @@ const RightPanel: React.FC = () => {
                   className={styles.buttonRight}
                   onClick={() => {
                     chrome.runtime.sendMessage({ type: "chrome-update-info" });
-                  }}
-                >
-                  {chrome.i18n.getMessage("learnMoreLabel")}
-                </div>
-              </div>
-            )}
-          {!contentState.fallback &&
-            contentState.duration > contentState.editLimit &&
-            !contentState.override &&
-            !contentState.offline &&
-            !contentState.updateChrome && (
-              <div className={styles.alert}>
-                <div className={styles.buttonLeft}>
-                  <ReactSVG src={URL + "editor/icons/alert.svg"} />
-                </div>
-                <div className={styles.buttonMiddle}>
-                  <div className={styles.buttonTitle}>
-                    {chrome.i18n.getMessage("overLimitLabelTitle")}
-                  </div>
-                  <div className={styles.buttonDescription}>
-                    {chrome.i18n.getMessage("overLimitLabelDescription")}
-                  </div>
-                </div>
-                <div
-                  className={styles.buttonRight}
-                  onClick={() => {
-                    //chrome.runtime.sendMessage({ type: "upgrade-info" });
-                    if (typeof contentState.openModal === "function") {
-                      contentState.openModal(
-                        chrome.i18n.getMessage("overLimitModalTitle"),
-                        chrome.i18n.getMessage("overLimitModalDescription"),
-                        chrome.i18n.getMessage("overLimitModalButton"),
-                        chrome.i18n.getMessage("sandboxEditorCancelButton"),
-                        () => {
-                          setContentState((prevContentState: any) => ({
-                            ...prevContentState,
-                            saved: true,
-                          }));
-                          chrome.runtime.sendMessage({
-                            type: "force-processing",
-                          });
-                        },
-                        () => { },
-                        null,
-                        chrome.i18n.getMessage("overLimitModalLearnMore"),
-                        () => {
-                          chrome.runtime.sendMessage({ type: "upgrade-info" });
-                        }
-                      );
-                    }
-                  }}
-                >
-                  {chrome.i18n.getMessage("learnMoreLabel")}
-                </div>
-              </div>
-            )}
-          {(!contentState.mp4ready || contentState.isFfmpegRunning) &&
-            (contentState.duration <= contentState.editLimit ||
-              contentState.override) &&
-            !contentState.offline &&
-            !contentState.updateChrome &&
-            !contentState.noffmpeg && (
-              <div className={styles.alert}>
-                <div className={styles.buttonLeft}>
-                  <ReactSVG src={URL + "editor/icons/alert.svg"} />
-                </div>
-                <div className={styles.buttonMiddle}>
-                  <div className={styles.buttonTitle}>
-                    {chrome.i18n.getMessage("videoProcessingLabelTitle")}
-                  </div>
-                  <div className={styles.buttonDescription}>
-                    {chrome.i18n.getMessage("videoProcessingLabelDescription")}
-                  </div>
-                </div>
-                <div
-                  className={styles.buttonRight}
-                  onClick={() => {
-                    chrome.runtime.sendMessage({
-                      type: "pricing",
-                    });
                   }}
                 >
                   {chrome.i18n.getMessage("learnMoreLabel")}
@@ -205,48 +110,6 @@ const RightPanel: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              <div
-                role="button"
-                className={styles.button}
-                onClick={() => {
-                  if (!contentState.mp4ready) return;
-                  contentState.download();
-                }}
-                {...({
-                  disabled:
-                    contentState.isFfmpegRunning ||
-                    contentState.noffmpeg ||
-                    !contentState.mp4ready ||
-                    contentState.noffmpeg
-                } as any)}
-              >
-                <div className={styles.buttonLeft}>
-                  <ReactSVG src={URL + "editor/icons/download.svg"} />
-                </div>
-                <div className={styles.buttonMiddle}>
-                  <div className={styles.buttonTitle}>
-                    {contentState.downloading
-                      ? chrome.i18n.getMessage("downloadingLabel")
-                      : chrome.i18n.getMessage("downloadMP4ButtonTitle")}
-                  </div>
-                  <div className={styles.buttonDescription}>
-                    {contentState.offline && !contentState.ffmpegLoaded
-                      ? chrome.i18n.getMessage("noConnectionLabel")
-                      : contentState.updateChrome ||
-                        contentState.noffmpeg ||
-                        (contentState.duration > contentState.editLimit &&
-                          !contentState.override)
-                        ? chrome.i18n.getMessage("notAvailableLabel")
-                        : contentState.mp4ready && !contentState.isFfmpegRunning
-                          ? chrome.i18n.getMessage("downloadMP4ButtonDescription")
-                          : chrome.i18n.getMessage("preparingLabel")}
-                  </div>
-                </div>
-                <div className={styles.buttonRight}>
-                  <ReactSVG src={URL + "editor/icons/right-arrow.svg"} />
-                </div>
-              </div>
 
               {!contentState.fallback && (
                 <div

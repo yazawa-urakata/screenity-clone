@@ -10,11 +10,58 @@ import { MultipartUploader } from "../utils/multipartUploader";
 import type { MultipartUploadConfig, UploadProgress, UploadError } from "../types/s3Upload";
 
 /**
+ * ファイルサイズに基づいて最適なpartSizeを計算
+ *
+ * AWS S3の制約:
+ * - 最小partSize: 5MB
+ * - 最大パート数: 10,000
+ * - 最大partSize: 100MB（推奨）
+ *
+ * AWS ベストプラクティス (2024-2025):
+ * - 推奨partSize: 16-64MB（API呼び出し削減と並列化のバランス）
+ * - 大きいpartSizeはAPI呼び出し回数を削減し、スループット向上
+ *
+ * @param fileSize - ファイルサイズ（バイト）
+ * @returns 最適なpartSize（バイト）
+ */
+function calculateOptimalPartSize(fileSize: number): number {
+  const MIN_PART_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_PART_SIZE = 100 * 1024 * 1024; // 100MB
+  const MAX_PARTS = 10000;
+
+  // 100MB未満: 25MB（小さいファイルでも効率的に）
+  if (fileSize < 100 * 1024 * 1024) {
+    return 25 * 1024 * 1024;
+  }
+
+  // 100MB～1GB: 50MB（API呼び出し削減）
+  if (fileSize < 1 * 1024 * 1024 * 1024) {
+    return 50 * 1024 * 1024;
+  }
+
+  // 1GB以上: 100MB（最大パートサイズで最速アップロード）
+  if (fileSize < 10 * 1024 * 1024 * 1024) {
+    return 100 * 1024 * 1024;
+  }
+
+  // 10GB以上: ファイルサイズ / MAX_PARTSで計算
+  // ただし、MIN_PART_SIZE～MAX_PART_SIZEの範囲内に収める
+  const calculatedSize = Math.ceil(fileSize / MAX_PARTS);
+  return Math.min(Math.max(calculatedSize, MIN_PART_SIZE), MAX_PART_SIZE);
+}
+
+/**
  * デフォルトのアップロード設定
+ *
+ * 並列数の根拠:
+ * - HTTP/1.1: 同一ドメインへの最大接続数は6（Chrome）
+ * - AWS推奨: max_concurrent_requests = 10
+ * - メモリ効率: partSize × queueSize = 最大同時メモリ使用量
+ * - 6並列 × 50MB = 300MB（メモリ使用量の上限目安）
  */
 const DEFAULT_CONFIG: MultipartUploadConfig = {
-  partSize: 10 * 1024 * 1024, // 10MB
-  queueSize: 3, // 3並列アップロード
+  partSize: 50 * 1024 * 1024, // 50MB（動的に上書きされる）
+  queueSize: 6, // 6並列アップロード（HTTP/1.1の最大接続数に合わせて最適化）
   retryAttempts: 3, // 3回までリトライ
   retryDelay: 1000, // 1秒（指数バックオフで増加）
 };
@@ -78,11 +125,23 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
       setProgress(null);
       setIsUploading(true);
 
-      // 設定をマージ
+      // ファイルサイズに応じて最適なpartSizeを計算
+      const optimalPartSize = calculateOptimalPartSize(blob.size);
+
+      // 設定をマージ（動的partSizeを使用）
       const mergedConfig: MultipartUploadConfig = {
         ...DEFAULT_CONFIG,
-        ...config,
+        partSize: optimalPartSize, // 動的に計算されたpartSizeを使用
+        ...config, // ユーザー指定の設定で上書き可能
       };
+
+      // デバッグログ（開発時のみ）
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `[S3 Upload] File size: ${(blob.size / 1024 / 1024).toFixed(2)}MB, ` +
+            `Part size: ${(optimalPartSize / 1024 / 1024).toFixed(2)}MB`
+        );
+      }
 
       try {
         // MultipartUploaderインスタンス作成

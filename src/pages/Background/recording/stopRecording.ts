@@ -38,35 +38,9 @@ export const stopRecording = async () => {
   if (isSubscribed) {
     chrome.alarms.clear("recording-alarm");
     discardOffscreenDocuments();
-  } else if (duration > maxDuration) {
-    // Open fallback editor
-    chrome.tabs.create({ url: "editorfallback.html", active: true }, (tab) => {
-      chrome.tabs.onUpdated.addListener(function _(
-        tabId,
-        changeInfo,
-        updatedTab
-      ) {
-        if (tabId === tab.id && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(_);
-          chrome.storage.local.set({ sandboxTab: tab.id });
-          waitForContentScript(tab.id)
-            .then(() => {
-              sendMessageTab(tab.id, { type: "large-recording" });
-            })
-            .catch((err) => {
-              console.error(
-                "❌ Failed to wait for content script:",
-                err.message
-              );
-            });
-        }
-      });
-    });
-
-    chrome.runtime.sendMessage({ type: "turn-off-pip" });
   } else {
-    // Open normal editor
-    chrome.tabs.create({ url: "editor.html", active: true }, (tab) => {
+    // 常に fallback editor を開く（mp4変換を無効化）
+    chrome.tabs.create({ url: "editorfallback.html", active: true }, (tab) => {
       chrome.tabs.onUpdated.addListener(function _(
         tabId,
         changeInfo,

@@ -384,65 +384,25 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
             blob,
             recordingDuration,
             async (fixedWebm: Blob) => {
-              if (
-                contentStateRef.current.fallback ||
-                contentStateRef.current.updateChrome ||
-                contentStateRef.current.noffmpeg ||
-                (contentStateRef.current.duration >
-                  contentStateRef.current.editLimit &&
-                  !contentStateRef.current.override)
-              ) {
-                setContentState((prevState) => ({
-                  ...prevState,
-                  webm: fixedWebm,
-                  ready: true,
-                }));
-                chrome.runtime.sendMessage({ type: "recording-complete" });
-                return;
-              }
-
-              const reader = new FileReader();
-              reader.onloadend = function () {
-                const base64data = reader.result as string;
-                setContentState((prevContentState) => ({
-                  ...prevContentState,
-                  base64: base64data,
-                  driveEnabled: driveEnabled,
-                }));
-              };
-              reader.readAsDataURL(fixedWebm);
+              // MP4変換を無効化: 常にWebMのみを保存
+              setContentState((prevState) => ({
+                ...prevState,
+                webm: fixedWebm,
+                ready: true,
+              }));
+              chrome.runtime.sendMessage({ type: "recording-complete" });
             }
           );
         } else {
           const fixedWebm = await fixWebmDurationFallback(blob) as Blob;
 
-          if (
-            contentStateRef.current.fallback ||
-            contentStateRef.current.updateChrome ||
-            contentStateRef.current.noffmpeg ||
-            (contentStateRef.current.duration >
-              contentStateRef.current.editLimit &&
-              !contentStateRef.current.override)
-          ) {
-            setContentState((prevState) => ({
-              ...prevState,
-              webm: fixedWebm,
-              ready: true,
-            }));
-            chrome.runtime.sendMessage({ type: "recording-complete" });
-            return;
-          }
-
-          const reader = new FileReader();
-          reader.onloadend = function () {
-            const base64data = reader.result as string;
-            setContentState((prevContentState) => ({
-              ...prevContentState,
-              base64: base64data,
-              driveEnabled: driveEnabled,
-            }));
-          };
-          reader.readAsDataURL(fixedWebm);
+          // MP4変換を無効化: 常にWebMのみを保存
+          setContentState((prevState) => ({
+            ...prevState,
+            webm: fixedWebm,
+            ready: true,
+          }));
+          chrome.runtime.sendMessage({ type: "recording-complete" });
         }
       } else {
         if (
@@ -797,14 +757,15 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
       ready: true,
     }));
 
-    if (contentState.offline && contentState.ffmpeg === true) {
-      // Offline
-    } else if (
-      !contentState.updateChrome &&
-      (contentState.duration <= contentState.editLimit || contentState.override)
-    ) {
-      sendMessage({ type: "base64-to-blob", base64: contentState.base64 });
-    }
+    // MP4変換を無効化: FFmpegへの変換リクエストを送信しない
+    // if (contentState.offline && contentState.ffmpeg === true) {
+    //   // Offline
+    // } else if (
+    //   !contentState.updateChrome &&
+    //   (contentState.duration <= contentState.editLimit || contentState.override)
+    // ) {
+    //   sendMessage({ type: "base64-to-blob", base64: contentState.base64 });
+    // }
 
     chrome.runtime.sendMessage({ type: "recording-complete" });
   };

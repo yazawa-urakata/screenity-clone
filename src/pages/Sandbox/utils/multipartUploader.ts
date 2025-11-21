@@ -31,6 +31,10 @@ export class MultipartUploader {
   private startTime: number = 0;
   private totalParts: number = 0;
 
+  // プログレス更新のスロットリング用
+  private lastProgressUpdate: number = 0;
+  private readonly PROGRESS_THROTTLE_MS = 200; // 200ms間隔（1秒に最大5回）
+
   // Multipart upload state
   private uploadId: string | null = null;
   private s3Key: string | null = null;
@@ -132,6 +136,7 @@ export class MultipartUploader {
         fileType: this.getNormalizedMimeType(this.blob.type),
         fileSize: this.blob.size,
         uploadPath: this.uploadPath,
+        partSize: this.config.partSize, // 動的partSizeを送信
       }),
       signal: this.abortController.signal,
     });
@@ -178,10 +183,23 @@ export class MultipartUploader {
         partIndex++;
       }
 
+      // All parts have been queued, wait for remaining uploads to complete
+      if (partIndex >= this.totalParts) {
+        break;
+      }
+
       // Wait for at least one upload to complete
       if (activeTasks.size > 0) {
         await Promise.race(activeTasks.values());
+        // Flush microtask queue to ensure finally() has executed
+        // This guarantees activeTasks.delete() has been called before next iteration
+        await Promise.resolve();
       }
+    }
+
+    // Wait for all remaining uploads to complete
+    if (activeTasks.size > 0) {
+      await Promise.all(activeTasks.values());
     }
   }
 
@@ -212,6 +230,9 @@ export class MultipartUploader {
             "Content-Type": this.getNormalizedMimeType(this.blob.type),
           },
           signal: this.abortController.signal,
+          // Note: keepalive is NOT used here because Chrome limits keepalive requests to 64KiB
+          // Our part sizes (10MB-100MB) far exceed this limit
+          cache: "no-store", // キャッシュ無効化（presigned URLは一度きり）
         });
 
         if (!response.ok) {
@@ -337,12 +358,24 @@ export class MultipartUploader {
 
   /**
    * Updates progress and notifies via callback
+   * Throttled to reduce UI updates (max 5 updates per second)
    * @param currentPart - Current part number being uploaded
    */
   private updateProgress(currentPart: number): void {
+    // スロットリング: 200ms以内の連続更新はスキップ
+    const now = Date.now();
+    const isLastPart = currentPart === this.totalParts;
+
+    // 最後のパートは必ず通知、それ以外はスロットリング
+    if (!isLastPart && now - this.lastProgressUpdate < this.PROGRESS_THROTTLE_MS) {
+      return; // スキップ
+    }
+
+    this.lastProgressUpdate = now;
+
     const totalBytes = this.blob.size;
     const percentage = Math.min(100, Math.round((this.uploadedBytes / totalBytes) * 100));
-    const elapsedSeconds = (Date.now() - this.startTime) / 1000;
+    const elapsedSeconds = (now - this.startTime) / 1000;
     const bytesPerSecond = elapsedSeconds > 0 ? this.uploadedBytes / elapsedSeconds : 0;
     const remainingBytes = totalBytes - this.uploadedBytes;
     const estimatedTimeRemaining = bytesPerSecond > 0 ? remainingBytes / bytesPerSecond : 0;
