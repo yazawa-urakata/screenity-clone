@@ -1,13 +1,27 @@
 // RecorderUI.tsx
 import React from "react";
 import Warning from "./warning/Warning";
+import type {
+  InstantUploadState,
+  InstantUploadProgress,
+  InstantUploadError,
+} from "../../types/instantUpload";
 
 interface RecorderUIProps {
   started: boolean;
   isTab: boolean;
+  uploadState?: InstantUploadState;
+  uploadProgress?: InstantUploadProgress | null;
+  uploadError?: InstantUploadError | null;
 }
 
-const RecorderUI: React.FC<RecorderUIProps> = ({ started, isTab }) => {
+const RecorderUI: React.FC<RecorderUIProps> = ({
+  started,
+  isTab,
+  uploadState,
+  uploadProgress,
+  uploadError,
+}) => {
   return (
     <div className="wrap">
       <img
@@ -29,6 +43,40 @@ const RecorderUI: React.FC<RecorderUIProps> = ({ started, isTab }) => {
           {chrome.i18n.getMessage("recorderSelectDescription")}
         </div>
       </div>
+
+      {uploadState && uploadState !== "idle" && uploadProgress && (
+        <div className="upload-progress-container">
+          <div className="upload-status">
+            {uploadState === "uploading" && "📤 リアルタイムアップロード中"}
+            {uploadState === "finalizing" && "⏳ 完了処理中"}
+            {uploadState === "completed" && "✅ アップロード完了"}
+            {uploadState === "error" && "❌ アップロードエラー"}
+          </div>
+
+          {(uploadState === "uploading" || uploadState === "finalizing") && (
+            <>
+              <div className="progress-bar-container">
+                <div
+                  className="progress-bar-fill"
+                  style={{ width: `${uploadProgress.percentage}%` }}
+                />
+              </div>
+
+              <div className="upload-details">
+                {Math.round(uploadProgress.percentage)}%
+                ({Math.round(uploadProgress.uploadedBytes / 1024 / 1024)} MB
+                / {Math.round(uploadProgress.totalBytes / 1024 / 1024)} MB)
+              </div>
+            </>
+          )}
+
+          {uploadError && (
+            <div className="upload-error">
+              {uploadError.message}
+            </div>
+          )}
+        </div>
+      )}
 
       {!isTab && !started && <Warning />}
 
@@ -117,6 +165,53 @@ const RecorderUI: React.FC<RecorderUIProps> = ({ started, isTab }) => {
             margin-bottom: 24px;
             font-family: Satoshi-Medium, sans-serif;
             text-align: center;
+          }
+          .upload-progress-container {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 320px;
+            z-index: 999999;
+          }
+          .upload-status {
+            font-family: "Satoshi Medium", sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #29292F;
+            margin-bottom: 12px;
+            text-align: center;
+          }
+          .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #E8E8E8;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+          }
+          .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+          }
+          .upload-details {
+            font-family: "Satoshi Regular", sans-serif;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+          }
+          .upload-error {
+            font-family: "Satoshi Regular", sans-serif;
+            font-size: 12px;
+            color: #EF4444;
+            text-align: center;
+            margin-top: 8px;
           }
         `}
       </style>

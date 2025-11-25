@@ -4,6 +4,7 @@ import RecorderUI from "./RecorderUI";
 import { createMediaRecorder } from "./mediaRecorderUtils";
 import { sendRecordingError, sendStopRecording } from "./messaging";
 import { getBitrates, getResolutionForQuality } from "./recorderConfig";
+import { useInstantUpload } from "./useInstantUpload";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -80,10 +81,22 @@ const Recorder: React.FC = () => {
 
   const backupRef = useRef<boolean>(false);
 
+  const {
+    uploaderRef,
+    state: uploadState,
+    progress: uploadProgress,
+    error: uploadError,
+    isEnabled: isUploadEnabled,
+    initializeUpload,
+    finalizeUpload,
+    cancelUpload,
+  } = useInstantUpload();
+
   const pending = useRef<BlobEvent[]>([]);
   const draining = useRef<boolean>(false);
   const lowStorageAbort = useRef<boolean>(false);
   const savedCount = useRef<number>(0);
+  const totalRecordedBytes = useRef<number>(0);
 
   const lastEstimateAt = useRef<number>(0);
   const ESTIMATE_INTERVAL_MS = 5000;
@@ -235,6 +248,16 @@ const Recorder: React.FC = () => {
     draining.current = false;
     lowStorageAbort.current = false;
     pendingBytes.current = 0;
+    totalRecordedBytes.current = 0;
+
+    const videoId = `recording-${Date.now()}`;
+
+    try {
+      await initializeUpload(videoId);
+      console.log("✅ Real-time upload initialized");
+    } catch (err) {
+      console.warn("⚠️ Failed to initialize real-time upload, falling back to normal recording:", err);
+    }
 
     try {
       const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
@@ -277,7 +300,21 @@ const Recorder: React.FC = () => {
 
     recorder.current.onstop = async () => {
       if (isRestarting.current) return;
+      console.log("[Recorder] onstop fired");
       await waitForDrain();
+      console.log("[Recorder] onstop: drain completed");
+
+      // Finalize upload after all chunks are processed
+      if (uploaderRef.current && isFinishing.current) {
+        try {
+          console.log("[Recorder] onstop: Starting finalize upload...");
+          await finalizeUpload();
+          console.log("✅ Real-time upload finalized from onstop");
+        } catch (err) {
+          console.error("❌ Failed to finalize upload from onstop:", err);
+        }
+      }
+
       if (!sentLast.current) {
         sentLast.current = true;
         isFinishing.current = false;
@@ -332,6 +369,12 @@ const Recorder: React.FC = () => {
 
       pending.current.push(e);
       void drainQueue();
+
+      if (uploaderRef.current && e.data.size > 0) {
+        totalRecordedBytes.current += e.data.size;
+        uploaderRef.current.handleChunk(e.data, totalRecordedBytes.current);
+        console.log(`[InstantUpload] Chunk sent: ${(e.data.size / 1024 / 1024).toFixed(2)}MB, Total: ${(totalRecordedBytes.current / 1024 / 1024).toFixed(2)}MB`);
+      }
     };
 
     recorder.current.onpause = () => {
@@ -379,7 +422,11 @@ const Recorder: React.FC = () => {
         recorder.current.requestData();
       } catch {}
       recorder.current.stop();
-      await waitForDrain();
+      console.log("[Recorder] Recording stopped, waiting for onstop event...");
+
+      // Note: finalize() is now called in onstop handler
+      // to ensure all ondataavailable events have fired
+
       recorder.current = null;
     }
 
@@ -753,7 +800,15 @@ const Recorder: React.FC = () => {
     };
   }, [onMessage]);
 
-  return <RecorderUI started={started} isTab={isTab.current} />;
+  return (
+    <RecorderUI
+      started={started}
+      isTab={isTab.current}
+      uploadState={uploadState}
+      uploadProgress={uploadProgress}
+      uploadError={uploadError}
+    />
+  );
 };
 
 export default Recorder;
