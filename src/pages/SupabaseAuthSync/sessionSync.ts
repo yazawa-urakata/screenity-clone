@@ -1,5 +1,8 @@
 /**
  * Supabaseセッション同期ロジック
+ * 
+ * Content Script から呼ばれるため、chrome.storage.session に直接アクセスせず、
+ * Background Script にメッセージを送信して処理する
  */
 
 import type { SupabaseSessionResponse } from '../../types/supabase';
@@ -36,16 +39,15 @@ export async function syncSession(): Promise<void> {
       }
 
       // セッションが無効な場合は削除
-      await chrome.storage.sync.remove([
-        'supabase_access_token',
-        'supabase_refresh_token',
-        'supabase_user',
-        'supabase_expires_at',
-      ]);
-
-      await chrome.storage.sync.set({
-        supabase_authenticated: false,
-      });
+      // Content Script から chrome.storage.session に直接アクセスできないため、
+      // Background Script にメッセージを送信してクリアする
+      try {
+        await chrome.runtime.sendMessage({
+          type: 'SUPABASE_CLEAR_AUTH',
+        });
+      } catch (err) {
+        console.warn('⚠️ Could not send clear auth message:', err);
+      }
 
       return;
     }
@@ -62,34 +64,42 @@ export async function syncSession(): Promise<void> {
     const data: SupabaseSessionResponse = await response.json();
 
     if (data && data.access_token) {
-      // トークンをChrome Storageに保存
-      await chrome.storage.sync.set({
-        supabase_access_token: data.access_token,
-        supabase_refresh_token: data.refresh_token,
-        supabase_user: data.user,
-        supabase_expires_at: data.expires_at,
-        supabase_authenticated: true,
-      });
-
-      console.log('✅ Supabase Auth Sync: Session synced successfully');
-      console.log('   User:', data.user.email);
-      console.log('   Expires at:', new Date(data.expires_at * 1000).toISOString());
-
-      // Background scriptに通知
+      // トークンを chrome.storage.session に保存
+      // Content Script から chrome.storage.session に直接アクセスできないため、
+      // Background Script にメッセージを送信して保存する
       try {
         await chrome.runtime.sendMessage({
-          type: 'SUPABASE_SESSION_SYNCED',
+          type: 'SUPABASE_SET_AUTH',
           payload: {
+            accessToken: data.access_token,
             user: data.user,
             expiresAt: data.expires_at,
           },
         });
+
+        console.log('✅ Supabase Auth Sync: Session synced successfully');
+        console.log('   User:', data.user.email);
+        console.log('   Expires at:', new Date(data.expires_at * 1000).toISOString());
+
+        // Background scriptに通知
+        try {
+          await chrome.runtime.sendMessage({
+            type: 'SUPABASE_SESSION_SYNCED',
+            payload: {
+              user: data.user,
+              expiresAt: data.expires_at,
+            },
+          });
+        } catch (err) {
+          // Background scriptが応答しない場合は無視
+          console.warn('🔐 Background script not available:', err);
+        }
       } catch (err) {
-        // Background scriptが応答しない場合は無視
-        console.warn('🔐 Background script not available:', err);
+        console.warn('⚠️ Could not send session synced message:', err);
       }
     }
   } catch (error) {
     console.error('❌ Supabase Auth Sync: Error syncing session:', error);
+    throw error;
   }
 }

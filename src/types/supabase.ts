@@ -22,7 +22,6 @@ export interface SupabaseSession {
 
 export interface SupabaseSessionResponse {
   access_token: string;
-  refresh_token: string;
   expires_in: number;
   expires_at: number;
   user: SupabaseUser;

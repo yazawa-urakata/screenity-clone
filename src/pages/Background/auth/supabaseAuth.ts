@@ -5,7 +5,7 @@
  */
 
 import type { SupabaseUser } from '../../../types/supabase';
-import { getSupabaseAuthState } from '../../../utils/supabaseClient';
+import { getAuthTokens } from '../../../utils/supabaseTokenStorage';
 
 /**
  * 認証状態をチェック
@@ -16,28 +16,20 @@ export async function checkSupabaseAuth(): Promise<{
   isAuthenticated: boolean;
   user: SupabaseUser | null;
 }> {
-  const authState = await getSupabaseAuthState();
+  const { isAuthenticated, user, expiresAt } = await getAuthTokens();
 
   // トークンの有効期限チェック
-  if (authState.isAuthenticated) {
-    const expiresAt = await new Promise<number | null>((resolve) => {
-      chrome.storage.sync.get(['supabase_expires_at'], (data) => {
-        resolve((data['supabase_expires_at'] as number | undefined) || null);
-      });
-    });
-
-    if (expiresAt) {
-      const now = Math.floor(Date.now() / 1000);
-      if (now > expiresAt) {
-        console.warn('⚠️ Supabase token expired');
-        return { isAuthenticated: false, user: null };
-      }
+  if (isAuthenticated && expiresAt) {
+    const now = Math.floor(Date.now() / 1000);
+    if (now > expiresAt) {
+      console.warn('⚠️ Supabase token expired');
+      return { isAuthenticated: false, user: null };
     }
   }
 
   return {
-    isAuthenticated: authState.isAuthenticated,
-    user: authState.user,
+    isAuthenticated,
+    user,
   };
 }
 
@@ -45,10 +37,24 @@ export async function checkSupabaseAuth(): Promise<{
  * ログインページを開く
  */
 export async function openLoginPage(): Promise<void> {
-  const { getWebAppUrl } = await import('../../../utils/supabaseClient');
-  const webAppUrl = getWebAppUrl();
+  console.log('🔐 openLoginPage: Starting...');
 
-  chrome.tabs.create({
-    url: `${webAppUrl}/login?source=chrome-extension`,
+  // Service Workerでは document が存在しないため、dynamic importせず直接実装
+  // 開発環境判定（拡張機能IDや他の条件でも可）
+  const isDev = !('update_url' in chrome.runtime.getManifest());
+  const webAppUrl = isDev
+    ? process.env.WEBAPP_URL_DEV!
+    : process.env.WEBAPP_URL_PROD!;
+
+  console.log('🔐 openLoginPage: webAppUrl =', webAppUrl);
+  console.log('🔐 openLoginPage: isDev =', isDev);
+
+  const loginUrl = `${webAppUrl}/login?source=chrome-extension`;
+  console.log('🔐 openLoginPage: Opening URL =', loginUrl);
+
+  const tab = await chrome.tabs.create({
+    url: loginUrl,
   });
+
+  console.log('✅ openLoginPage: Tab created, ID =', tab.id);
 }

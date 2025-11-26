@@ -54,12 +54,11 @@ import { newChunk, clearAllRecordings } from "../recording/chunkHandler";
 import { setMicActiveTab } from "../tabManagement/tabHelpers";
 import { loginWithWebsite } from "../auth/loginWithWebsite";
 import { checkSupabaseAuth, openLoginPage } from '../auth/supabaseAuth';
-import { supabaseLogout } from '../auth/supabaseLogout';
 import type {
-  SupabaseAuthCheckMessage,
-  SupabaseLoginRequestMessage,
-  SupabaseLogoutMessage,
   SupabaseSessionSyncedMessage,
+  SupabaseAuthCheckMessage,
+  SupabaseClearAuthMessage,
+  SupabaseLoginRequestMessage,
 } from '../../../types/message';
 
 const API_BASE = process.env.SCREENITY_API_BASE_URL;
@@ -227,7 +226,7 @@ export const setupHandlers = (): void => {
   registerMessage("report-bug", () =>
     createTab(
       "https://tally.so/r/3ElpXq?version=" +
-        chrome.runtime.getManifest().version,
+      chrome.runtime.getManifest().version,
       false,
       true
     )
@@ -936,6 +935,18 @@ export const setupHandlers = (): void => {
   registerMessage('SUPABASE_SESSION_SYNCED', async (message: SupabaseSessionSyncedMessage) => {
     console.log('✅ Background: Supabase session synced', message.payload.user.email);
 
+    // Popupに直接通知（chrome.runtime.sendMessageですべてのリスナーに届く）
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'AUTH_STATE_CHANGED',
+        payload: { authenticated: true },
+      });
+      console.log('📢 Background: Notified Popup of auth state change');
+    } catch (err) {
+      // Popupが開いていない場合はエラーを無視
+      console.log('ℹ️ Background: Popup not open, notification skipped');
+    }
+
     // 必要に応じて他のタブに通知
     const tabs = await chrome.tabs.query({});
     tabs.forEach((tab) => {
@@ -964,15 +975,33 @@ export const setupHandlers = (): void => {
    * Supabaseログインリクエストハンドラー
    */
   registerMessage('SUPABASE_LOGIN_REQUEST', async (message: SupabaseLoginRequestMessage) => {
-    await openLoginPage();
+    console.log('🔐 Background: Received SUPABASE_LOGIN_REQUEST');
+    try {
+      await openLoginPage();
+      console.log('✅ Background: openLoginPage() executed successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Background: Error in openLoginPage():', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  // Supabase 認証クリア（Content Script からの要求）
+  // Content Script は chrome.storage.session に直接アクセスできないため、
+  // Background Script 経由でクリアする
+  registerMessage('SUPABASE_CLEAR_AUTH', async () => {
+    const { clearAuthTokens } = await import('../../../utils/supabaseTokenStorage');
+    await clearAuthTokens();
     return { success: true };
   });
 
-  /**
-   * Supabaseログアウトハンドラー
-   */
-  registerMessage('SUPABASE_LOGOUT', async (message: SupabaseLogoutMessage) => {
-    await supabaseLogout();
+  // Supabase 認証設定（Content Script からの要求）
+  // Content Script は chrome.storage.session に直接アクセスできないため、
+  // Background Script 経由で保存する
+  registerMessage('SUPABASE_SET_AUTH', async (message: any) => {
+    const { setAuthTokens } = await import('../../../utils/supabaseTokenStorage');
+    const { accessToken, user, expiresAt } = message.payload;
+    await setAuthTokens({ accessToken, user, expiresAt });
     return { success: true };
   });
 };

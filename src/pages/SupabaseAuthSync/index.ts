@@ -20,12 +20,19 @@ if (window.location.origin === WEB_APP_URL) {
   /**
    * ログインページでの状態リセット
    * Mem0パターンと同じロジック
+   * 
+   * Content Script から chrome.storage.session に直接アクセスできないため、
+   * Background Script にメッセージを送信してクリアする
    */
   if (window.location.pathname === '/login') {
-    chrome.storage.sync.set({
-      supabase_authenticated: false,
-    });
-    console.log('🔐 Supabase Auth Sync: Login page detected, reset auth state');
+    try {
+      chrome.runtime.sendMessage({
+        type: 'SUPABASE_CLEAR_AUTH',
+      });
+      console.log('🔐 Supabase Auth Sync: Login page detected, requesting auth state reset');
+    } catch (err) {
+      console.warn('🔐 Could not send auth clear message:', err);
+    }
   }
 
   /**
@@ -56,19 +63,16 @@ if (window.location.origin === WEB_APP_URL) {
     console.log('🔐 Supabase Auth Sync: Logout event detected from web app');
 
     // 認証情報をクリア
-    await chrome.storage.sync.remove([
-      'supabase_access_token',
-      'supabase_refresh_token',
-      'supabase_user',
-      'supabase_expires_at',
-    ]);
-
-    // 認証状態をfalseに設定
-    await chrome.storage.sync.set({
-      supabase_authenticated: false,
-    });
-
-    console.log('🔐 Supabase Auth Sync: Auth state cleared');
+    // Content Script から chrome.storage.session に直接アクセスできないため、
+    // Background Script にメッセージを送信してクリアする
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'SUPABASE_CLEAR_AUTH',
+      });
+      console.log('🔐 Supabase Auth Sync: Auth state cleared');
+    } catch (err) {
+      console.warn('🔐 Could not send auth clear message:', err);
+    }
 
     // Background scriptに通知
     try {

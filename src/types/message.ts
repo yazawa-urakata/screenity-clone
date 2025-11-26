@@ -201,7 +201,8 @@ export type MessageType =
   | 'SUPABASE_SESSION_SYNCED'
   | 'SUPABASE_SESSION_EXPIRED'
   | 'SUPABASE_AUTH_CHECK'
-  | 'SUPABASE_LOGOUT'
+  | 'SUPABASE_CLEAR_AUTH'
+  | 'SUPABASE_SET_AUTH'
   | 'SUPABASE_LOGIN_REQUEST';
 
 // メッセージペイロードの基本インターフェース
@@ -580,8 +581,17 @@ export interface SupabaseAuthCheckMessage extends BaseMessage {
   type: 'SUPABASE_AUTH_CHECK';
 }
 
-export interface SupabaseLogoutMessage extends BaseMessage {
-  type: 'SUPABASE_LOGOUT';
+export interface SupabaseClearAuthMessage extends BaseMessage {
+  type: 'SUPABASE_CLEAR_AUTH';
+}
+
+export interface SupabaseSetAuthMessage extends BaseMessage {
+  type: 'SUPABASE_SET_AUTH';
+  payload: {
+    accessToken: string;
+    user: any;
+    expiresAt: number;
+  };
 }
 
 export interface SupabaseLoginRequestMessage extends BaseMessage {

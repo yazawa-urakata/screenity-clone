@@ -1,8 +1,9 @@
 /**
  * Supabase認証状態管理Hook（Sandbox用）
  *
- * Chrome Storageからトークンを取得し、認証状態を管理します。
- * トークンの有効期限チェックやストレージ変更監視を含みます。
+ * Important: SandboxページはExtension Pageですが、chrome.storage.sessionへの
+ * 直接アクセスではなく、Background Script経由でアクセスすることを推奨します。
+ * これにより、Content Scriptとの整合性を保ち、アクセス制御を統一できます。
  */
 
 import { useState, useEffect } from "react";
@@ -42,11 +43,10 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
       changes: { [key: string]: chrome.storage.StorageChange },
       namespace: string
     ) => {
-      // sync storageの認証関連の変更を検知
-      if (namespace === "sync") {
+      // session storage の認証関連の変更を検知
+      if (namespace === "session") {
         const authKeys = [
           "supabase_access_token",
-          "supabase_refresh_token",
           "supabase_expires_at",
           "supabase_authenticated",
         ];
@@ -67,36 +67,35 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
   }, []);
 
   /**
-   * Chrome Storageから認証状態を読み込む
+   * Background Scriptから認証状態を読み込む
    */
-  const loadAuthState = (): void => {
-    chrome.storage.sync.get(
-      [
-        "supabase_access_token",
-        "supabase_refresh_token",
-        "supabase_expires_at",
-        "supabase_authenticated",
-      ],
-      (data) => {
-        const accessToken = (data["supabase_access_token"] as string | undefined) || null;
-        const refreshToken = (data["supabase_refresh_token"] as string | undefined) || null;
-        const expiresAt = (data["supabase_expires_at"] as number | undefined) || null;
-        const authenticated = !!data["supabase_authenticated"];
+  const loadAuthState = async (): Promise<void> => {
+    try {
+      // Background Script経由で認証状態を取得
+      const response = await chrome.runtime.sendMessage({
+        type: 'SUPABASE_AUTH_CHECK',
+      });
 
-        // トークンの有効期限チェック
-        const now = Math.floor(Date.now() / 1000); // 現在時刻（Unix秒）
-        const isTokenValid = expiresAt ? now < expiresAt : false;
-
+      if (response) {
+        // Background Script側で有効期限チェックも行われる
         setAuthState({
-          isAuthenticated: authenticated && isTokenValid && !!accessToken,
-          accessToken,
-          refreshToken,
-          expiresAt,
+          isAuthenticated: response.isAuthenticated || false,
+          accessToken: null, // セキュリティのため、アクセストークンはSandboxには渡さない
+          refreshToken: null,
+          expiresAt: null,
         });
-
-        setLoading(false);
       }
-    );
+    } catch (error) {
+      console.error('⚠️ Failed to load auth state:', error);
+      setAuthState({
+        isAuthenticated: false,
+        accessToken: null,
+        refreshToken: null,
+        expiresAt: null,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   /**
