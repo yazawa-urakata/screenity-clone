@@ -32,52 +32,7 @@ const ToolbarWrap: React.FC = () => {
   const [shake, setShake] = useState<string>("");
   const [dragging, setDragging] = useState<string>("");
   const [timestamp, setTimestamp] = useState<string>("00:00");
-  const [transparent, setTransparent] = useState<string | boolean>(false);
-  const [forceTransparent, setForceTransparent] = useState<string>("");
   const timeRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (contentState.toolbarHover && contentState.hideUI) {
-      setTransparent("ToolbarTransparent");
-    } else {
-      setTransparent(false);
-      setForceTransparent("");
-    }
-  }, [contentState.toolbarHover, contentState.hideUI]);
-
-  // If mouse is down and toolbarHover is true, set forceTransparent
-  useEffect(() => {
-    if (!contentState.toolbarHover) return;
-    if (!contentState.shadowRef) return;
-    if (!contentState.hideUI) return;
-    const handleMouseDown = (e: MouseEvent): void => {
-      if (contentState.toolbarHover && contentState.hideUI) {
-        // check if mouse is over toolbar
-        if (ToolbarRef.current && ToolbarRef.current.contains(e.target as Node)) return;
-        if (
-          contentState.shadowRef &&
-          (contentState.shadowRef.contains(e.target as Node) ||
-            contentState.shadowRef === e.target ||
-            contentState.shadowRef === (e.target as HTMLElement).parentNode)
-        )
-          return;
-
-        setForceTransparent("ForceTransparent");
-      }
-    };
-
-    const handleMouseUp = (e: MouseEvent): void => {
-      setForceTransparent("");
-    };
-
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [contentState.toolbarHover, contentState.shadowRef, contentState.hideUI]);
 
   useEffect(() => {
     if (!isNaN(t)) {
@@ -307,7 +262,7 @@ const ToolbarWrap: React.FC = () => {
       >
         <Toolbar.Root
           className={
-            "ToolbarRoot" + " " + side + " " + transparent + " " + forceTransparent
+            "ToolbarRoot" + " " + side
           }
           ref={ToolbarRef}
         >

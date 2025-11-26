@@ -45,100 +45,69 @@ export const LoginPrompt: React.FC = () => {
         zIndex: 99999999999,
         pointerEvents: 'auto',
       }}>
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '24px',
-      }}>
-        <img
-          src={chrome.runtime.getURL('assets/img/icon-128.png')}
-          alt="Screenity"
-          style={{
-            width: '64px',
-            height: '64px',
-            marginBottom: '16px',
-          }}
-        />
-        <h1 style={{
-          fontSize: '20px',
-          fontWeight: 600,
-          color: '#1a1a1a',
-          margin: 0,
-        }}>Screenity へようこそ</h1>
-      </div>
-
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '24px',
-      }}>
-        <p style={{
-          fontSize: '14px',
-          color: '#666',
+        <div style={{
+          textAlign: 'center',
           marginBottom: '24px',
         }}>
-          画面録画を開始するにはログインしてください
-        </p>
-
-        <button
-          onClick={requestLogin}
-          style={{
-            background: '#4285f4',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '12px 32px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'background 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#3367d6';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#4285f4';
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.background = '#2952a3';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.background = '#3367d6';
-          }}
-        >
-          ログイン
-        </button>
-      </div>
-
-      <div style={{
-        textAlign: 'center',
-      }}>
-        <p style={{
-          fontSize: '12px',
-          color: '#666',
-        }}>
-          アカウントをお持ちでない場合
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              requestLogin();
-            }}
+          <img
+            src={chrome.runtime.getURL('assets/img/icon-128.png')}
+            alt="Screenity"
             style={{
-              color: '#4285f4',
-              textDecoration: 'none',
-              marginLeft: '4px',
+              width: '64px',
+              height: '64px',
+              marginBottom: '16px',
+            }}
+          />
+          <h1 style={{
+            fontSize: '20px',
+            fontWeight: 600,
+            color: '#1a1a1a',
+            margin: 0,
+          }}>Screenity へようこそ</h1>
+        </div>
+
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '24px',
+        }}>
+          <p style={{
+            fontSize: '14px',
+            color: '#666',
+            marginBottom: '24px',
+          }}>
+            画面録画を開始するにはログインしてください
+          </p>
+
+          <button
+            onClick={requestLogin}
+            style={{
+              background: '#4285f4',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '12px 32px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'background 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.textDecoration = 'underline';
+              e.currentTarget.style.background = '#3367d6';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.textDecoration = 'none';
+              e.currentTarget.style.background = '#4285f4';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.background = '#2952a3';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.background = '#3367d6';
             }}
           >
-            新規登録
-          </a>
-        </p>
+            ログイン
+          </button>
+        </div>
       </div>
-    </div>
     </>
   );
 };

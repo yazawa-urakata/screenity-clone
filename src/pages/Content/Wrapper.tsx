@@ -308,8 +308,7 @@ const Wrapper: React.FC = () => {
               {shadowRef.current && <Modal shadowRef={shadowRef} />}
               {contentState.preparingRecording && <RecordingLoader />}
               <Countdown />
-              {!(contentState.hideToolbar && contentState.hideUI) &&
-                !contentState.onboarding &&
+              {!contentState.onboarding &&
                 !(
                   contentState.isSubscribed === false &&
                   contentState.isLoggedIn === true

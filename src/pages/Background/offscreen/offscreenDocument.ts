@@ -65,12 +65,9 @@ const openRecorderTab = async (
             type: "loaded",
             request: request,
             backup: backup,
-            ...(isRegion
-              ? {
-                  isTab: true,
-                  tabID: activeTab.id,
-                }
-              : {}),
+            // Always set isTab and tabID for tab recording (no dialog)
+            isTab: !camera,
+            tabID: !camera ? activeTab.id : undefined,
           });
         }
       });

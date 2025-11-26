@@ -348,7 +348,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       chrome.runtime.sendMessage({ type: "restart-recording-tab" });
       // Check if custom region is set
       if (
-        currentState.recordingType === "region" &&
+        currentState.customRegion &&
         currentState.cropTarget &&
         currentState.regionCaptureRef
       ) {
@@ -498,7 +498,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       ...prev,
       clipSelecting: true,        // クロップ選択中フラグON
       customRegion: true,          // Region UI を表示
-      recordingType: 'region',     // Region モードに切り替え
+      recordingType: 'region',     // Region コンポーネント表示のため一時的に region に切り替え
       regionWidth: defaultRegionWidth,   // Region の幅を設定
       regionHeight: defaultRegionHeight, // Region の高さを設定
       regionX: defaultRegionX,           // Region のX座標を設定
@@ -558,6 +558,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
         clipRecording: true,         // 録画開始
         clipStartTime: currentTime,  // この時点で時刻記録
         clipCrop: clipCrop,          // クロップ範囲を確定
+        // recordingType は 'region' のまま維持して Region コンポーネントを表示し続ける
       }));
 
       // Chrome Storage に保存
@@ -586,6 +587,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       ...prev,
       clipSelecting: false,
       customRegion: false,  // Region UI を非表示
+      recordingType: 'screen',  // 通常の screen モードに戻す
     }));
 
     // Chrome Storage に保存
@@ -660,6 +662,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           clipStartTime: null,
           clipCrop: null,
           customRegion: false,
+          recordingType: 'screen',  // 通常の screen モードに戻す
         }));
 
         console.log('[ClipRecording] クリップ録画を終了しました:', clipData);
@@ -682,6 +685,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           clipStartTime: null,
           clipCrop: null,
           customRegion: false,
+          recordingType: 'screen',  // 通常の screen モードに戻す
         }));
       }
     });
@@ -921,7 +925,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     });
 
     if (
-      currentState.recordingType === "region" &&
+      currentState.customRegion &&
       currentState.cropTarget &&
       currentState.regionCaptureRef
     ) {
@@ -950,7 +954,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
         () => {
           chrome.runtime.sendMessage({
             type: "desktop-capture",
-            region: currentState.recordingType === "region" ? true : false,
+            region: currentState.customRegion ? true : false,
             customRegion: currentState.customRegion,
             offscreenRecording: currentState.offscreenRecording,
             camera: false,
@@ -987,7 +991,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     } else {
       chrome.runtime.sendMessage({
         type: "desktop-capture",
-        region: currentState.recordingType === "region" ? true : false,
+        region: currentState.customRegion ? true : false,
         customRegion: currentState.customRegion,
         offscreenRecording: currentState.offscreenRecording,
         camera: false,
@@ -1393,36 +1397,8 @@ const ContentState: FC<ContentStateProps> = (props) => {
 
   useEffect(() => {
     if (typeof contentState.openWarning === "function") {
-      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-      const warningList = [
-        "youtube.com",
-        "meet.google.com",
-        "zoom.us",
-        "hangouts.google.com",
-        "teams.microsoft.com",
-        "web.whatsapp.com",
-        "web.skype.com",
-        "discord.com",
-        "vimeo.com",
-      ];
-
+      // Check if url contains "playground.html" and "chrome-extension://"
       if (
-        !contentState.recording &&
-        isMac &&
-        warningList.some((el) => window.location.href.includes(el)) &&
-        contentState.recordingType !== "region"
-      ) {
-        contentState.openWarning(
-          chrome.i18n.getMessage("audioWarningTitle"),
-          chrome.i18n.getMessage(
-            "audioWarningDescription",
-            chrome.i18n.getMessage("tabType")
-          ),
-          "AudioIcon",
-          10000
-        );
-        // Check if url contains "playground.html" and "chrome-extension://"
-      } else if (
         window.location.href.includes("playground.html") &&
         window.location.href.includes("chrome-extension://") &&
         !contentState.recording
@@ -1438,7 +1414,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
   }, [
     contentState.openWarning,
     contentState.recording,
-    contentState.recordingType,
   ]);
 
   useEffect(() => {

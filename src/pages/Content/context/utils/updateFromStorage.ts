@@ -26,7 +26,6 @@ export const updateFromStorage = (
       "regionHeight",
       "regionX",
       "regionY",
-      "hideToolbar",
       "alarm",
       "alarmTime",
       "pendingRecording",
@@ -38,10 +37,8 @@ export const updateFromStorage = (
       "setDevices",
       "popupPosition",
       "surface",
-      "hideUIAlerts",
       "hideUI",
       "bigTab",
-      "toolbarHover",
       "askDismiss",
       "swatch",
       "color",
@@ -154,10 +151,6 @@ export const updateFromStorage = (
           result.regionY !== undefined && result.regionY !== null
             ? (result.regionY as any)
             : prevContentState.regionY,
-        hideToolbar:
-          result.hideToolbar !== undefined && result.hideToolbar !== null
-            ? (result.hideToolbar as any)
-            : prevContentState.hideToolbar,
         alarm:
           result.alarm !== undefined && result.alarm !== null
             ? (result.alarm as any)
@@ -205,10 +198,6 @@ export const updateFromStorage = (
           result.surface !== undefined && result.surface !== null
             ? (result.surface as any)
             : prevContentState.surface,
-        hideUIAlerts:
-          result.hideUIAlerts !== undefined && result.hideUIAlerts !== null
-            ? (result.hideUIAlerts as any)
-            : prevContentState.hideUIAlerts,
         hideUI:
           result.hideUI !== undefined && result.hideUI !== null
             ? (result.hideUI as any)
@@ -217,10 +206,6 @@ export const updateFromStorage = (
           result.bigTab !== undefined && result.bigTab !== null
             ? (result.bigTab as any)
             : prevContentState.bigTab,
-        toolbarHover:
-          result.toolbarHover !== undefined && result.toolbarHover !== null
-            ? (result.toolbarHover as any)
-            : prevContentState.toolbarHover,
         askDismiss:
           result.askDismiss !== undefined && result.askDismiss !== null
             ? (result.askDismiss as any)

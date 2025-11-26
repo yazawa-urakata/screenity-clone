@@ -19,7 +19,6 @@ interface RecordingTypeProps {
 
 const RecordingType: React.FC<RecordingTypeProps> = (props) => {
   const [contentState, setContentState] = useContext(contentStateContext);
-  const [cropActive, setCropActive] = useState<boolean>(false);
   const [time, setTime] = useState<string>("0:00");
   const [URL, setURL] = useState<string>(
     "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9"
@@ -69,19 +68,6 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
   };
 
   useEffect(() => {
-    // Check if CropTarget is null
-    if (typeof (window as any).CropTarget === "undefined") {
-      setCropActive(false);
-      setContentState((prevContentState: any) => ({
-        ...prevContentState,
-        customRegion: false,
-      }));
-    } else {
-      setCropActive(true);
-    }
-  }, []);
-
-  useEffect(() => {
     if (contentState.recording) {
       setContentState((prevContentState: any) => ({
         ...prevContentState,
@@ -112,49 +98,6 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
           </div>
         </div>
       )}
-      {/*contentState.offline && (
-        <div className="popup-warning">
-          <div className="popup-warning-left">
-            <NoInternet />
-          </div>
-          <div className="popup-warning-middle">
-            <div className="popup-warning-title">You are currently offline</div>
-            <div className="popup-warning-description">
-              Some features are unavailable
-            </div>
-          </div>
-          <div className="popup-warning-right">
-            <a href="#">Try again</a>
-          </div>
-        </div>
-			)*/}
-      {!cropActive &&
-        contentState.recordingType === "region" &&
-        !contentState.offline && (
-          <div className="popup-warning">
-            <div className="popup-warning-left">
-              <AlertIcon />
-            </div>
-            <div className="popup-warning-middle">
-              <div className="popup-warning-title">
-                {chrome.i18n.getMessage("customAreaRecordingDisabledTitle")}
-              </div>
-              <div className="popup-warning-description">
-                {chrome.i18n.getMessage(
-                  "customAreaRecordingDisabledDescription"
-                )}
-              </div>
-            </div>
-            <div className="popup-warning-right">
-              <a
-                href="https://support.google.com/chrome/answer/95414?hl=en-GB&co=GENIE.Platform%3DDesktop"
-                target="_blank"
-              >
-                {chrome.i18n.getMessage("customAreaRecordingDisabledAction")}
-              </a>
-            </div>
-          </div>
-        )}
       {!contentState.microphonePermission && (
         <button
           className="permission-button"
@@ -170,7 +113,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
                     type: "extension-media-permissions",
                   });
                 },
-                () => {},
+                () => { },
                 chrome.runtime.getURL("assets/helper/permissions.webp"),
                 chrome.i18n.getMessage("learnMoreDot"),
                 URL2,
@@ -187,17 +130,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
       {contentState.microphonePermission && (
         <Dropdown type="mic" shadowRef={props.shadowRef} />
       )}
-      {contentState.recordingType === "region" && cropActive && (
-        <div>
-          <div className="popup-content-divider"></div>
-          <Switch
-            label={chrome.i18n.getMessage("customAreaLabel")}
-            name="customRegion"
-            value="customRegion"
-          />
-          {contentState.customRegion && <RegionDimensions />}
-        </div>
-      )}
+      {contentState.customRegion && <RegionDimensions />}
       {contentState.isLoggedIn &&
         !contentState.recordingToScene &&
         CLOUD_FEATURES_ENABLED && (
@@ -223,17 +156,17 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
                     if (checked) {
                       contentState.openModal(
                         chrome.i18n.getMessage("instantRecordingModeTitle") ||
-                          "Instant recording mode",
+                        "Instant recording mode",
                         chrome.i18n.getMessage(
                           "instantRecordingModeDescription"
                         ) ||
-                          "This records everything into one video for instant download and sharing. You won't be able to change the camera layout afterward, but other edits are still possible.",
+                        "This records everything into one video for instant download and sharing. You won't be able to change the camera layout afterward, but other edits are still possible.",
                         chrome.i18n.getMessage("instantRecordingModeAction") ||
-                          "Got it",
+                        "Got it",
                         chrome.i18n.getMessage("permissionsModalDismiss") ||
-                          "Dismiss",
-                        () => {},
-                        () => {},
+                        "Dismiss",
+                        () => { },
+                        () => { },
                         null,
                         "",
                         "",

@@ -11,8 +11,6 @@ const CheckWhiteIcon = `${URL}/check-white.svg`;
 const Waveform = `${URL}/waveform.svg`;
 const ScreenTabOn = `${URL}/screen-tab-on.svg`;
 const ScreenTabOff = `${URL}/screen-tab-off.svg`;
-const RegionTabOn = `${URL}/region-tab-on.svg`;
-const RegionTabOff = `${URL}/region-tab-off.svg`;
 const TempFigma = `${URL}/temp/figma.webp`;
 const TempTwitter = `${URL}/temp/twitter.webp`;
 const TempDesignSystem = `${URL}/temp/designsystem.webp`;
@@ -39,8 +37,6 @@ export {
   Waveform,
   ScreenTabOn,
   ScreenTabOff,
-  RegionTabOn,
-  RegionTabOff,
   TempFigma,
   TempTwitter,
   TempDesignSystem,

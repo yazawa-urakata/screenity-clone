@@ -59,17 +59,6 @@ const VideoItem: FC<VideoItemProps> = ({ title, date, thumbnail, onOpen, onCopyL
     >
       <div className="video-item">
         <div className="video-item-left">
-          {/*
-					Need a better way to handle thumbnails - proxy from server?
-
-					<div
-            className="video-item-thumbnail"
-            style={{
-              backgroundImage: `url(${thumbnail})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          ></div> */}
           <div className="video-item-info">
             <div className="video-item-info-title">{title}</div>
             <div className="video-item-info-date">
@@ -90,18 +79,6 @@ const VideoItem: FC<VideoItemProps> = ({ title, date, thumbnail, onOpen, onCopyL
           >
             <img src={CopyLinkIcon} alt="Copy link" />
           </button>
-          {/* <button
-            role="button"
-            tabIndex={0}
-            title="More actions"
-            className="more-actions"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <img src={MoreActionsIcon} alt="More actions" />
-          </button> */}
         </div>
       </div>
     </div>

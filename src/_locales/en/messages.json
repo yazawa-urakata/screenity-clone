@@ -19,10 +19,6 @@
     "message": "Screen",
     "description": "Screen recording type label on popup"
   },
-  "tabType": {
-    "message": "Tab area",
-    "description": "Tab area recording type label on popup"
-  },
   "cameraType": {
     "message": "Camera",
     "description": "Camera recording type label on popup"
@@ -1113,10 +1109,6 @@
     "message": "Recording stopped due to 90 minute limit",
     "description": "Toast message shown when the recording limit is reached"
   },
-  "tabRecordingDisabledToast": {
-    "message": "Tab recording is disabled on this page. Defaulted to screen recording.",
-    "description": "Toast message shown when tab recording is disabled on a page"
-  },
   "projectRecordingCancelledToast": {
     "message": "Video recording cancelled",
     "description": "Toast message shown when the user cancels project recording"
@@ -1276,10 +1268,6 @@
   "instantRecordingModeAction": {
     "message": "Got it",
     "description": "Action button for the instant recording mode"
-  },
-  "tabRecordingDisabledTooltip": {
-    "message": "Tab recording is disabled on this page",
-    "description": "Tooltip shown when tab recording is disabled on a page"
   },
   "addingToLabel": {
     "message": "Adding to: ",
