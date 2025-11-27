@@ -28,7 +28,7 @@ const STORAGE_KEYS = {
 /**
  * 認証トークンの型定義
  */
-export interface AuthTokens {
+interface AuthTokens {
   accessToken: string;
   user: SupabaseUser;
   expiresAt: number;
@@ -37,7 +37,7 @@ export interface AuthTokens {
 /**
  * 認証状態の型定義
  */
-export interface AuthState {
+interface AuthState {
   isAuthenticated: boolean;
   accessToken: string | null;
   user: SupabaseUser | null;

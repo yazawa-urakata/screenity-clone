@@ -20,12 +20,7 @@ const openRecorderTab = async (
 ): Promise<void> => {
   let switchTab = true;
 
-  // Check subscription status
-  const { authenticated, subscribed } = await loginWithWebsite();
-  const recorderUrl =
-    authenticated && subscribed
-      ? chrome.runtime.getURL("cloudrecorder.html")
-      : chrome.runtime.getURL("recorder.html");
+  const recorderUrl = chrome.runtime.getURL("recorder.html");
 
   if (!isRegion) {
     if (camera) {

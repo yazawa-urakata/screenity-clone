@@ -18,13 +18,6 @@ const entryPoints = {
   background: path.join(__dirname, "src", "pages", "Background", "index.ts"),
   contentScript: path.join(__dirname, "src", "pages", "Content", "index.jsx"),
   recorder: path.join(__dirname, "src", "pages", "Recorder", "index.tsx"),
-  cloudrecorder: path.join(
-    __dirname,
-    "src",
-    "pages",
-    "CloudRecorder",
-    "index.jsx"
-  ),
   recorderoffscreen: path.join(
     __dirname,
     "src",
@@ -38,7 +31,6 @@ const entryPoints = {
   playground: path.join(__dirname, "src", "pages", "Playground", "index.tsx"),
   editor: path.join(__dirname, "src", "pages", "Editor", "index.tsx"),
   region: path.join(__dirname, "src", "pages", "Region", "index.tsx"),
-  download: path.join(__dirname, "src", "pages", "Download", "index.jsx"),
   editorfallback: path.join(
     __dirname,
     "src",

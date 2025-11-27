@@ -48,7 +48,6 @@
         "setup.html",
         "worker.js",
         "vendor/*",
-        "cloudrecorder.html",
         "recorder.html",
         "recorderoffscreen.html",
         "sandbox.html",
@@ -57,7 +56,6 @@
         "region.html",
         "playground.html",
         "editorfallback.html",
-        "download.html",
         "*"
       ],
       "matches": [

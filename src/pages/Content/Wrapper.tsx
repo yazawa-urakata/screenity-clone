@@ -130,10 +130,10 @@ const Wrapper: React.FC = () => {
       window.location.href.indexOf(
         chrome.runtime.getURL("setup.html")
       ) === -1 &&
-      window.location.href.indexOf(
-        chrome.runtime.getURL("playground.html")
-      ) === -1 &&
-      !contentState.pendingRecording
+        window.location.href.indexOf(
+          chrome.runtime.getURL("playground.html")
+        ) === -1 &&
+        !contentState.pendingRecording
         ? "rgba(0,0,0,0.15)"
         : "rgba(0,0,0,0)",
     top: 0,
@@ -190,11 +190,7 @@ const Wrapper: React.FC = () => {
             visibility: "hidden",
           }}
           ref={regionCaptureRef}
-          src={
-            contentState.isSubscribed
-              ? chrome.runtime.getURL("cloudrecorder.html?injected=true")
-              : chrome.runtime.getURL("region.html")
-          }
+          src={chrome.runtime.getURL("region.html")}
           allow="camera *; microphone *; display-capture *"
         ></iframe>
       )}
