@@ -8,7 +8,6 @@ const MicOffIcon = `${URL}/mic-off.svg`;
 const CameraOnIcon = `${URL}/camera-on.svg`;
 const CameraOffIcon = `${URL}/camera-off.svg`;
 const CheckWhiteIcon = `${URL}/check-white.svg`;
-const Waveform = `${URL}/waveform.svg`;
 const ScreenTabOn = `${URL}/screen-tab-on.svg`;
 const ScreenTabOff = `${URL}/screen-tab-off.svg`;
 const TempFigma = `${URL}/temp/figma.webp`;
@@ -34,7 +33,6 @@ export {
   CameraOnIcon,
   CameraOffIcon,
   CheckWhiteIcon,
-  Waveform,
   ScreenTabOn,
   ScreenTabOff,
   TempFigma,

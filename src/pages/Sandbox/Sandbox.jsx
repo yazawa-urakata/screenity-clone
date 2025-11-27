@@ -7,15 +7,12 @@ import Editor from "./layout/editor/Editor";
 import Player from "./layout/player/Player";
 import Modal from "./components/global/Modal";
 
-import HelpButton from "./components/player/HelpButton";
-
 // Context
 import { ContentStateContext } from "./context/ContentState"; // Import the ContentState context
 
 const Sandbox = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
   const parentRef = useRef(null);
-  const progress = useRef("");
 
   const getChromeVersion = () => {
     var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -89,15 +86,6 @@ const Sandbox = () => {
   }, [parentRef.current]);
 
   useEffect(() => {
-    if (contentState.chunkCount > 0) {
-      progress.current = `(${Math.min(
-        100,
-        Math.round((contentState.chunkIndex / contentState.chunkCount) * 100)
-      )}%)`;
-    }
-  }, [contentState.chunkIndex, contentState.chunkCount]);
-
-  useEffect(() => {
     // Check if we need to show support banner
     chrome.runtime.sendMessage({ type: "check-banner-support" }, (response) => {
       if (response && response.bannerSupport) {
@@ -117,132 +105,16 @@ const Sandbox = () => {
       {contentState.ffmpeg &&
         contentState.ready &&
         contentState.mode === "edit" && <Editor />}
-      {contentState.mode != "edit" && contentState.ready && <Player />}
-      {!contentState.ready && (
-        <div className="wrap">
-          <img className="logo" src="/assets/logo-text.svg" />
-          <div className="middle-area">
-            <img src="/assets/record-tab-active.svg" />
-            <div className="title">
-              {chrome.i18n.getMessage("sandboxProgressTitle") +
-                " " +
-                progress.current}
-            </div>
-            <div className="subtitle">
-              {chrome.i18n.getMessage("sandboxProgressDescription")}
-            </div>
-            {typeof contentState.openModal === "function" && (
-              <div
-                className="button-stop"
-                onClick={() => {
-                  contentState.openModal(
-                    chrome.i18n.getMessage("havingIssuesModalTitle"),
-                    chrome.i18n.getMessage("havingIssuesModalDescription"),
-                    chrome.i18n.getMessage("restoreRecording"),
-                    chrome.i18n.getMessage("havingIssuesModalButton2"),
-                    () => {
-                      chrome.runtime.sendMessage({ type: "restore-recording" });
-                    },
-                    () => {
-                      chrome.runtime.sendMessage({ type: "report-bug" });
-                    }
-                  );
-                }}
-              >
-                {chrome.i18n.getMessage("havingIssuesButton")}
-              </div>
-            )}
-          </div>
-          <HelpButton />
-          <div className="setupBackgroundSVG"></div>
-        </div>
-      )}
+      {/*
+        動画再生機能を削除:
+        - contentState.ready の条件を削除し、録画完了後すぐに Player を表示
+        - Player 内の SimpleResultPanel がタイトルとクリップ一覧を表示
+        - RightPanel で S3 アップロード状態が利用可能
+      */}
+      {contentState.mode != "edit" && <Player />}
       <style>
         {`
-				
-				.wrap {
-					overflow: hidden;
-				}
-				.setupBackgroundSVG {
-					position: absolute;
-					top: 0px;
-					left: 0px;
-					width: 100%;
-					height: 100%;
-					background: url(/assets/helper/pattern-svg.svg) repeat;
-					background-size: 62px 23.5px;
-					animation: moveBackground 138s linear infinite;
-				}
-				.button-stop {
-					padding: 10px 20px;
-					background: #FFF;
-					border-radius: 30px;
-					color: #29292F;
-					font-size: 14px;
-					font-weight: 500;
-					cursor: pointer;
-					margin-top: 0px;
-					border: 1px solid #E8E8E8;
-					margin-left: auto;
-					margin-right: auto;
-					z-index: 999999;
-				}
-				
-				@keyframes moveBackground {
-					0% {
-						background-position: 0 0;
-					}
-					100% {
-						background-position: 100% 0;
-					}
-				}
-
-				.logo {
-					position: absolute;
-					bottom: 30px;
-					left: 0px;
-					right: 0px;
-					margin: auto;
-					width: 120px;
-				}
-				.wrap {
-					position: absolute;
-					top: 0;
-					left: 0;
-					width: 100%;
-					height: 100%;
-					background-color: #F6F7FB;
-				}
-					.middle-area {
-						display: flex;
-						flex-direction: column;
-						align-items: center;
-						justify-content: center;
-						height: 100%;
-						font-family: Satoshi Medium, sans-serif;
-					}
-					.middle-area img {
-						width: 40px;
-						margin-bottom: 20px;
-					}
-					.title {
-						font-size: 24px;
-						font-weight: 700;
-						color: #1A1A1A;
-						margin-bottom: 14px;
-						font-family: Satoshi-Medium, sans-serif;
-						text-align: center;
-					}
-					.subtitle {
-						font-size: 14px;
-						font-weight: 400;
-						color: #6E7684;
-						margin-bottom: 24px;
-						font-family: Satoshi-Medium, sans-serif;
-						text-align: center;
-					}
-
-
+/* スクロールバーのカスタムスタイル（Windows用） */
 .screenity-scrollbar *::-webkit-scrollbar, .screenity-scrollbar::-webkit-scrollbar {
   background-color: rgba(0,0,0,0);
   width: 16px;
@@ -268,24 +140,7 @@ const Sandbox = () => {
     background-color:#a0a0a5;
     border:4px solid #f4f4f4
 }
-.videoBanner {
-	height: 40px!important;
-	width: 100%!important;
-	position: absolute!important;
-	top: 0px!important;
-	left: 0px!important;
-	background-color: #3080F8!important;
-	color: #FFF!important;
-	font-family: "Satoshi-Medium"!important;
-	z-index: 99999999999!important;
-	text-align: center!important;
-	display: flex!important;
-	align-items: center!important;
-	justify-content: center!important;
-	flex-direction: row!important;
-	gap: 6px!important;
-}
-					
+
 					`}
       </style>
     </div>

@@ -22,91 +22,13 @@ import { contentStateContext, ContentStateType } from "./context/ContentState";
 
 import { startClickTracking } from "./cursor/trackClicks";
 
-const RecordingLoader: React.FC = () => {
-  const loaderStyle: CSSProperties = {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0, 0, 0, 0.5)",
-    backdropFilter: "blur(20px) saturate(180%)",
-    WebkitBackdropFilter: "blur(20px) saturate(180%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 99999999999,
-  };
-
-  const contentStyle: CSSProperties = {
-    background: "rgba(255, 255, 255, 0.15)",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    borderRadius: 20,
-    padding: 40,
-    width: 160,
-    height: 160,
-    boxShadow: `
-      0 8px 32px 0 rgba(0, 0, 0, 0.1),
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1)
-    `,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily:
-      'Satoshi-Medium, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
-    userSelect: "none",
-    animation: "fadeIn 0.3s ease-out",
-  };
-
-  const spinnerStyle: CSSProperties = {
-    width: 60,
-    height: 60,
-    border: "3px solid rgba(255, 255, 255, 0.2)",
-    borderTop: "3px solid rgba(255, 255, 255, 0.8)",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  };
-
-  const textStyle: CSSProperties = {
-    marginTop: 20,
-    fontSize: 15,
-    fontWeight: 500,
-    color: "rgba(255, 255, 255, 0.9)",
-    textAlign: "center",
-    letterSpacing: "-0.01em",
-    animation: "pulse 2s ease-in-out infinite",
-  };
-
-  return (
-    <div
-      style={loaderStyle}
-      aria-label="Loading overlay"
-      role="alert"
-    >
-      <div style={contentStyle}>
-        <div style={spinnerStyle} />
-        <div style={textStyle}>
-          Preparing recording...
-        </div>
-        <style>
-          {`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 1; }
-        }
-      `}
-        </style>
-      </div>
-    </div>
-  );
-};
+/*
+ * RecordingLoader コンポーネントを削除
+ * 理由：
+ * - Sandbox.tsx で contentState.ready の条件を削除し、即座に結果画面を表示するようになった
+ * - "Preparing recording..." のローディング画面は不要
+ * - preparingRecording 状態は既存のメッセージングフローで使用されているため維持
+ */
 
 const Wrapper: React.FC = () => {
   const contextValue = useContext(contentStateContext);
@@ -306,7 +228,7 @@ const Wrapper: React.FC = () => {
               {contentState.recordingType === "region" &&
                 contentState.customRegion && <Region />}
               {shadowRef.current && <Modal shadowRef={shadowRef} />}
-              {contentState.preparingRecording && <RecordingLoader />}
+              {/* RecordingLoader を削除: 即座に結果画面を表示するため不要 */}
               <Countdown />
               {!contentState.onboarding &&
                 !(

@@ -518,12 +518,15 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
   const makeVideoTab = (sendResponse: ((response: { status: string }) => void) | null, message: { override: boolean }): void => {
     if (makeVideoCheck.current) return;
     makeVideoCheck.current = true;
+
+    // リアルタイムアップロードでは動画の再構築は不要
+    // 即座に ready 状態にして結果画面を表示
     setContentState((prevState) => ({
       ...prevState,
+      ready: true,
       override: message.override,
     }));
-    checkMemory();
-    reconstructVideo();
+
     if (sendResponse !== null) {
       sendResponse({ status: "ok" });
     }
@@ -544,15 +547,22 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     (request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): boolean | undefined => {
       const message = request;
       if (message.type === "chunk-count") {
+        // リアルタイムアップロードでは chunk 処理は不要
+        // 即座に ready 状態にする
         setContentState((prevState) => ({
           ...prevState,
-          chunkCount: message.count,
+          ready: true,
           override: message.override,
         }));
       } else if (message.type === "ping") {
         sendResponse({ status: "ready" });
       } else if (message.type === "new-chunk-tab") {
-        return handleBatch(message.chunks, sendResponse);
+        // リアルタイムアップロードでは chunk 処理は不要
+        // 即座に応答を返す
+        if (sendResponse) {
+          sendResponse({ status: "ok" });
+        }
+        return true;
       } else if (message.type === "make-video-tab") {
         makeVideoTab(sendResponse, message);
         return true;

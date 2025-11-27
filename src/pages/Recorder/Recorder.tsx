@@ -310,8 +310,20 @@ const Recorder: React.FC = () => {
           console.log("[Recorder] onstop: Starting finalize upload...");
           await finalizeUpload();
           console.log("✅ Real-time upload finalized from onstop");
+
+          // アップロード完了状態を Chrome Storage に保存
+          await chrome.storage.local.set({
+            instantUploadStatus: "completed",
+            instantUploadCompleteTime: Date.now(),
+          });
         } catch (err) {
           console.error("❌ Failed to finalize upload from onstop:", err);
+
+          // アップロード失敗状態を Chrome Storage に保存
+          await chrome.storage.local.set({
+            instantUploadStatus: "error",
+            instantUploadError: err instanceof Error ? err.message : String(err),
+          });
         }
       }
 

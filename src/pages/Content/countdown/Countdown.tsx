@@ -118,9 +118,8 @@ const Countdown: React.FC = () => {
 
   return (
     <div
-      className={`countdown ${
-        contentState.countdownActive ? "recording-countdown" : ""
-      }`}
+      className={`countdown ${contentState.countdownActive ? "recording-countdown" : ""
+        }`}
       onClick={handleCancel}
     >
       {contentState.isCountdownVisible && (

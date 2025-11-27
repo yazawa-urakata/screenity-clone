@@ -12,9 +12,6 @@ import type { ClipMetadata, ClipList } from "../../../types/clip";
 import { createClipMetadata, validateClip, MAX_CLIPS } from "../../../utils/clipUtils";
 import { ClipValidationError } from "../../../types/clip";
 
-// Shortcuts
-import Shortcuts from "../shortcuts/Shortcuts";
-
 import { setupHandlers } from "./messaging/handlers";
 
 import { checkAuthStatus } from "./utils/checkAuthStatus";
@@ -214,8 +211,8 @@ interface ContentStateRef {
 export const contentStateRef: ContentStateRef = { current: null };
 export let setContentState: (
   updater: ((prev: ContentStateType) => Partial<ContentStateType>) | ContentStateType
-) => void = () => {};
-export let setTimer: React.Dispatch<React.SetStateAction<number>> = () => {};
+) => void = () => { };
+export let setTimer: React.Dispatch<React.SetStateAction<number>> = () => { };
 
 interface ContentStateProps {
   children: ReactNode;
@@ -292,13 +289,13 @@ const ContentState: FC<ContentStateProps> = (props) => {
     if (!locale.includes("en")) {
       setURL(
         "https://translate.google.com/translate?sl=en&tl=" +
-          locale +
-          "&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1"
+        locale +
+        "&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1"
       );
       setURL2(
         "https://translate.google.com/translate?sl=en&tl=" +
-          locale +
-          "&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9"
+        locale +
+        "&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9"
       );
     }
   }, []);
@@ -421,7 +418,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (!dismiss && currentState.openToast) {
         currentState.openToast(
           chrome.i18n.getMessage("pausedRecordingToast"),
-          function () {}
+          function () { }
         );
       }
     }, 100);
@@ -470,7 +467,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     if (!contentStateRef.current?.recording) {
       console.warn('⚠️ クリップ選択を開始できません: 録画中ではありません');
       if (contentStateRef.current?.openToast) {
-        contentStateRef.current.openToast('先に録画を開始してください', () => {});
+        contentStateRef.current.openToast('先に録画を開始してください', () => { });
       }
       return;
     }
@@ -481,7 +478,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (contentStateRef.current.openToast) {
         contentStateRef.current.openToast(
           `最大${MAX_CLIPS}個までクリップを記録できます`,
-          () => {}
+          () => { }
         );
       }
       return;
@@ -789,7 +786,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           () => {
             window.open(process.env.SCREENITY_APP_BASE, "_blank");
           },
-          () => {}
+          () => { }
         );
       } else if (!success && currentState.openModal && currentState.setContentState) {
         const isSubError = error === "Subscription inactive";
@@ -823,7 +820,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           async () => {
             window.location.reload(); // or retry logic
           },
-          () => {}
+          () => { }
         );
       }
 
@@ -854,7 +851,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           await checkChromeCapturePermissionsSW();
           startStreaming(); // Retry streaming
         },
-        () => {},
+        () => { },
         null,
         chrome.i18n.getMessage("learnMoreDot"),
         URL,
@@ -879,7 +876,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     ) {
       if (typeof currentState.openModal === "function") {
         let clear: string | null = null;
-        let clearAction = (): void => {};
+        let clearAction = (): void => { };
         const locale = chrome.i18n.getMessage("@@ui_locale");
         let helpURL =
           "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/what-does-%E2%80%9Cmemory-limit-reached%E2%80%9D-mean-when-recording/8WkwHbt3puuXunYqQnyPcb";
@@ -907,7 +904,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           clear,
           chrome.i18n.getMessage("permissionsModalDismiss"),
           clearAction,
-          () => {},
+          () => { },
           null,
           chrome.i18n.getMessage("learnMoreDot"),
           helpURL
@@ -1127,7 +1124,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           chrome.i18n.getMessage("permissionsModalDescription"),
           chrome.i18n.getMessage("permissionsModalDismiss"),
           chrome.i18n.getMessage("permissionsModalNoShowAgain"),
-          () => {},
+          () => { },
           () => {
             noMorePermissions();
           },
@@ -1373,7 +1370,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
               () => {
                 chrome.storage.local.set({ firstTimePro: false });
               },
-              () => {}
+              () => { }
             );
           }
         }, 300);
@@ -1636,7 +1633,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
       value={[contentState, setContentState, timer, setTimer]}
     >
       {props.children}
-      <Shortcuts shortcuts={contentState.shortcuts} />
     </contentStateContext.Provider>
   );
 };

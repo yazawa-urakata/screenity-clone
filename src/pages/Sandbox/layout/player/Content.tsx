@@ -3,6 +3,7 @@ import styles from "../../styles/player/_Content.module.scss";
 
 // Components
 import VideoPlayer from "../../components/player/VideoPlayer";
+import SimpleResultPanel from "../../components/player/SimpleResultPanel";
 import CropperWrap from "../../components/editor/CropperWrap";
 
 // Context
@@ -14,7 +15,8 @@ const Content: React.FC = () => {
     <div className={styles.content}>
       <div className={styles.wrap}>
         {contentState.mode === "audio" && <VideoPlayer />}
-        {contentState.mode === "player" && <VideoPlayer />}
+        {/* player モードでは動画再生なしのSimpleResultPanelを表示 */}
+        {contentState.mode === "player" && <SimpleResultPanel />}
         {contentState.mode === "crop" && <CropperWrap />}
       </div>
     </div>
