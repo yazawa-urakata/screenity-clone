@@ -86,6 +86,9 @@ export const handleStopRecordingTab = async (request) => {
     });
   }
 
+  // 録画停止時に即座に stopRecording() を呼び出して editorfallback.html を開く
+  stopRecording();
+
   sendMessageRecord({ type: "stop-recording-tab" });
 };
 

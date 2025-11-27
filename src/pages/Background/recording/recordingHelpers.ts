@@ -127,7 +127,8 @@ export const videoReady = async () => {
   if (backupTab) {
     sendMessageTab(backupTab as number, { type: "close-writable" });
   }
-  stopRecording();
+  // stopRecording() は handleStopRecordingTab() で既に呼ばれているため、
+  // ここでは何もしない（重複したタブ作成を防ぐ）
 };
 
 export const writeFile = async (request: any) => {

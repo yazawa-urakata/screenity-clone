@@ -153,6 +153,7 @@ export interface ContentStateType {
   multiSceneCount: number;
   preparingRecording: boolean;
   wasLoggedIn: boolean;
+  skipLogin: boolean;
   hasSeenInstantModeModal: boolean;
   instantMode: boolean;
   onboarding: boolean;
@@ -252,36 +253,63 @@ const ContentState: FC<ContentStateProps> = (props) => {
     "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9"
   );
 
-  // Check if the user is logged in
+  /**
+   * Supabase認証状態をチェック
+   *
+   * 初期化時とログイン/ログアウト時に呼び出される
+   * 認証チェックは常に実行される（CLOUD_FEATURES_ENABLEDに依存しない）
+   */
   const verifyUser = async (): Promise<void> => {
-    if (!CLOUD_FEATURES_ENABLED) return;
-    const result = await checkAuthStatus();
+    try {
+      const result = await checkAuthStatus();
 
-    setContentState((prev) => ({
-      ...prev,
-      isLoggedIn: result.authenticated,
-      screenityUser: result.user,
-      isSubscribed: result.subscribed,
-      proSubscription: result.proSubscription,
-    } as any));
-
-    if (result.authenticated) {
-      // Offscreen recording and client-side zoom are not available
       setContentState((prev) => ({
         ...prev,
-        offscreenRecording: false,
-        zoomEnabled: false,
-      }));
+        isLoggedIn: result.authenticated,
+        screenityUser: result.user,
+        isSubscribed: result.subscribed,
+        proSubscription: result.proSubscription,
+      } as any));
 
-      chrome.storage.local.set({
-        offscreenRecording: false,
-        zoomEnabled: false,
-      });
+      if (result.authenticated) {
+        console.log('✅ Supabase authentication verified:', result.user);
+
+        // Offscreen recording and client-side zoom are not available for authenticated users
+        setContentState((prev) => ({
+          ...prev,
+          offscreenRecording: false,
+          zoomEnabled: false,
+        }));
+
+        chrome.storage.local.set({
+          offscreenRecording: false,
+          zoomEnabled: false,
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to verify Supabase auth:', error);
+      // 認証失敗時はログアウト状態として扱う
+      setContentState((prev) => ({
+        ...prev,
+        isLoggedIn: false,
+        screenityUser: null,
+        isSubscribed: false,
+        proSubscription: null,
+      } as any));
     }
   };
 
   useEffect(() => {
     verifyUser();
+
+    // skipLogin と wasLoggedIn の初期化
+    chrome.storage.local.get(["skipLogin", "wasLoggedIn"], (result: { skipLogin?: boolean; wasLoggedIn?: boolean }) => {
+      setContentState((prev) => ({
+        ...prev,
+        skipLogin: result.skipLogin || false,
+        wasLoggedIn: result.wasLoggedIn || false,
+      }));
+    });
   }, []);
 
   useEffect(() => {
@@ -1286,6 +1314,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     multiSceneCount: 0,
     preparingRecording: false,
     wasLoggedIn: false,
+    skipLogin: false,
     hasSeenInstantModeModal: false,
     instantMode: false,
     onboarding: false,
@@ -1376,7 +1405,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
         }, 300);
       }
     });
-  }, [contentState?.isLoggedIn, contentState?.isSubscribed, CLOUD_FEATURES_ENABLED]);
+  }, [contentState?.isLoggedIn, contentState?.isSubscribed]);
 
   // Check Chrome version
   useEffect(() => {

@@ -344,10 +344,45 @@ export const setupHandlers = (): void => {
     window.postMessage({ source: "get-project-info" }, "*");
   });
   registerMessage("check-auth", async () => {
-    if (!CLOUD_FEATURES_ENABLED) {
-      // Default to local user
+    // 認証チェックは常に実行（CLOUD_FEATURES_ENABLEDに依存しない）
+    try {
+      const result = await checkAuthStatus();
       const { recording } = await chrome.storage.local.get("recording");
 
+      setContentState((prev) => ({
+        ...prev,
+        isLoggedIn: result.authenticated,
+        screenityUser: result.user,
+        isSubscribed: result.subscribed,
+        proSubscription: result.proSubscription,
+        showExtension: true,
+        showPopup: !recording,
+      }));
+
+      if (result.authenticated) {
+        console.log('✅ User authenticated:', result.user);
+
+        // Offscreen recording and client-side zoom are not available for authenticated users
+        setContentState((prev) => ({
+          ...prev,
+          offscreenRecording: false,
+          onboarding: false,
+          showProSplash: false,
+          zoomEnabled: false,
+        }));
+
+        chrome.storage.local.set({
+          offscreenRecording: false,
+          zoomEnabled: false,
+        });
+      } else {
+        console.log('ℹ️ User not authenticated');
+      }
+    } catch (error) {
+      console.error('❌ Failed to check auth:', error);
+
+      // エラー時はログアウト状態として扱う
+      const { recording } = await chrome.storage.local.get("recording");
       setContentState((prev) => ({
         ...prev,
         isLoggedIn: false,
@@ -357,38 +392,47 @@ export const setupHandlers = (): void => {
         showExtension: true,
         showPopup: !recording,
       }));
-
-      return;
     }
+  });
 
-    const result = await checkAuthStatus();
+  // 認証状態変更通知ハンドラー
+  // Background ScriptからSUPABASE_SESSION_SYNCED後に送信される
+  registerMessage("AUTH_STATE_CHANGED", async () => {
+    console.log('📢 Content Script: Received AUTH_STATE_CHANGED');
 
-    const { recording } = await chrome.storage.local.get("recording");
+    try {
+      // 最新の認証状態を取得
+      const result = await checkAuthStatus();
 
-    setContentState((prev) => ({
-      ...prev,
-      isLoggedIn: result.authenticated,
-      screenityUser: result.user,
-      isSubscribed: result.subscribed,
-      proSubscription: result.proSubscription,
-      showExtension: true,
-      showPopup: !recording,
-    }));
-
-    if (result.authenticated) {
-      // Offscreen recording and client-side zoom are not available
       setContentState((prev) => ({
         ...prev,
-        offscreenRecording: false,
-        onboarding: false,
-        showProSplash: false,
-        zoomEnabled: false,
+        isLoggedIn: result.authenticated,
+        screenityUser: result.user,
+        isSubscribed: result.subscribed,
+        proSubscription: result.proSubscription,
       }));
 
-      chrome.storage.local.set({
-        offscreenRecording: false,
-        zoomEnabled: false,
-      });
+      if (result.authenticated) {
+        console.log('✅ Content Script: Auth state updated - User logged in:', (result.user as any)?.email);
+
+        // Offscreen recording and client-side zoom are not available for authenticated users
+        setContentState((prev) => ({
+          ...prev,
+          offscreenRecording: false,
+          onboarding: false,
+          showProSplash: false,
+          zoomEnabled: false,
+        }));
+
+        chrome.storage.local.set({
+          offscreenRecording: false,
+          zoomEnabled: false,
+        });
+      } else {
+        console.log('ℹ️ Content Script: Auth state updated - User logged out');
+      }
+    } catch (error) {
+      console.error('❌ Content Script: Failed to update auth state:', error);
     }
   });
   registerMessage(

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 
 import Welcome from "./layout/Welcome";
+import LoginPrompt from "./layout/LoginPrompt";
 
 import { Rnd } from "react-rnd";
 import type { DraggableData } from "react-rnd";
@@ -43,7 +44,6 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
   const [onboarding, setOnboarding] = useState<boolean>(false);
   const [showProSplash, setShowProSplash] = useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
-  const isCloudBuild = process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
 
   useEffect(() => {
     // Check chrome storage
@@ -314,8 +314,8 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
           </div>
           <div className="popup-nav"></div>
           <div className="popup-content">
-            {isCloudBuild &&
-              contentState.isSubscribed === false &&
+            {/* ケース1: ログイン済み + サブスクリプション無効 */}
+            {contentState.isSubscribed === false &&
               contentState.isLoggedIn === true ? (
               <InactiveSubscription
                 subscription={contentState.proSubscription}
@@ -327,15 +327,21 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                   chrome.runtime.sendMessage({ type });
                 }}
                 onDowngradeClick={async () => {
-                  chrome.runtime.sendMessage({ type: "handle-logout" });
+                  // Supabaseログアウト
+                  await chrome.runtime.sendMessage({ type: 'SUPABASE_CLEAR_AUTH' });
+
                   setContentState((prev: any) => ({
                     ...prev,
                     isLoggedIn: false,
                     isSubscribed: false,
                     screenityUser: null,
                     proSubscription: null,
-                    wasLoggedIn: false,
+                    wasLoggedIn: true,
                   }));
+
+                  // ストレージにも保存
+                  chrome.storage.local.set({ wasLoggedIn: true });
+
                   contentState.openToast(
                     chrome.i18n.getMessage("loggedOutToastTitle"),
                     () => { },
@@ -343,7 +349,8 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                   );
                 }}
               />
-            ) : isCloudBuild && (onboarding || showProSplash) ? (
+            ) : (onboarding || showProSplash) ? (
+              /* ケース2: オンボーディング中 */
               <Welcome
                 setOnboarding={setOnboarding}
                 setContentState={setContentState}
@@ -357,13 +364,12 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                   setShowProSplash(false);
                 }}
               />
-            ) : isCloudBuild &&
-              !contentState.isLoggedIn &&
-              contentState.wasLoggedIn ? (
+            ) : !contentState.isLoggedIn && contentState.wasLoggedIn ? (
+              /* ケース3: 過去にログインしていたがログアウトした */
               <LoggedOut
                 onManageClick={() => {
-                  // Log back in
-                  chrome.runtime.sendMessage({ type: "handle-login" });
+                  // Supabaseログインページを開く
+                  chrome.runtime.sendMessage({ type: 'SUPABASE_LOGIN_REQUEST' });
                 }}
                 onDowngradeClick={() => {
                   chrome.storage.local.set({ wasLoggedIn: false });
@@ -372,11 +378,18 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                     isLoggedIn: false,
                     wasLoggedIn: false,
                   }));
-
-                  chrome.runtime.sendMessage({ type: "handle-logout" });
+                }}
+              />
+            ) : !contentState.isLoggedIn && !contentState.wasLoggedIn && !contentState.skipLogin ? (
+              /* ケース4: 初回ユーザー（未ログイン） */
+              <LoginPrompt
+                onLoginClick={() => {
+                  // Supabaseログインページを開く
+                  chrome.runtime.sendMessage({ type: 'SUPABASE_LOGIN_REQUEST' });
                 }}
               />
             ) : (
+              /* ケース5: その他（ログイン済み、またはskipLogin: true） */
               <RecordingTab shadowRef={props.shadowRef} />
             )}
           </div>

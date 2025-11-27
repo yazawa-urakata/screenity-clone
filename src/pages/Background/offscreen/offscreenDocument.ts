@@ -1,7 +1,6 @@
 import { getCurrentTab } from "../tabManagement";
 import { sendMessageRecord } from "../recording/sendMessageRecord";
 import { closeOffscreenDocument } from "./closeOffscreenDocument";
-import { loginWithWebsite } from "../auth/loginWithWebsite";
 
 export interface RecordingRequest {
   region?: boolean;

@@ -5,7 +5,7 @@ import { ContentStateContext } from "../../context/ContentState";
 import Title from "./Title";
 import ClipsPanel from "../editor/ClipsPanel";
 
-interface SimpleResultPanelProps {}
+interface SimpleResultPanelProps { }
 
 interface UploadStatus {
   status: "completed" | "error" | "uploading" | "unknown";
@@ -41,26 +41,48 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
 
   useEffect(() => {
     // Chrome Storage からアップロード状態を読み取り
-    chrome.storage.local.get(
-      ["instantUploadStatus", "instantUploadCompleteTime", "instantUploadError"],
-      (result) => {
-        if (result.instantUploadStatus === "completed") {
-          setUploadStatus({
-            status: "completed",
-            completeTime: result.instantUploadCompleteTime as number,
-          });
-        } else if (result.instantUploadStatus === "error") {
-          setUploadStatus({
-            status: "error",
-            error: result.instantUploadError as string,
-          });
-        } else {
-          setUploadStatus({
-            status: "unknown",
-          });
+    const loadUploadStatus = () => {
+      chrome.storage.local.get(
+        ["instantUploadStatus", "instantUploadCompleteTime", "instantUploadError"],
+        (result) => {
+          if (result.instantUploadStatus === "completed") {
+            setUploadStatus({
+              status: "completed",
+              completeTime: result.instantUploadCompleteTime as number,
+            });
+          } else if (result.instantUploadStatus === "error") {
+            setUploadStatus({
+              status: "error",
+              error: result.instantUploadError as string,
+            });
+          } else {
+            setUploadStatus({
+              status: "unknown",
+            });
+          }
         }
+      );
+    };
+
+    // 初回読み込み
+    loadUploadStatus();
+
+    // Chrome Storage の変更を監視
+    const listener = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string
+    ) => {
+      if (areaName === "local" && changes.instantUploadStatus) {
+        console.log("[SimpleResultPanel] instantUploadStatus changed:", changes.instantUploadStatus.newValue);
+        loadUploadStatus();
       }
-    );
+    };
+
+    chrome.storage.onChanged.addListener(listener);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(listener);
+    };
   }, []);
 
   const getUploadStatusMessage = () => {
@@ -101,14 +123,7 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
             </div>
             <h2 className="uploadTitle">{statusMessage.title}</h2>
             <p className="uploadDescription">{statusMessage.description}</p>
-            {uploadStatus.status === "completed" && uploadStatus.completeTime && (
-              <p className="uploadTime">
-                完了時刻: {new Date(uploadStatus.completeTime).toLocaleString("ja-JP")}
-              </p>
-            )}
           </div>
-          <div className="divider"></div>
-          {contentState.mode === "player" && <Title />}
           {contentState.mode === "player" && <ClipsPanel />}
         </div>
       </div>
@@ -153,17 +168,6 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
             font-size: 16px;
             color: #6E7684;
             margin: 0 0 8px 0;
-          }
-          .uploadTime {
-            font-family: 'Satoshi-Medium', sans-serif;
-            font-size: 13px;
-            color: #9CA3AF;
-            margin: 8px 0 0 0;
-          }
-          .divider {
-            height: 1px;
-            background: #E5E7EB;
-            margin: 32px 0;
           }
           @media (max-width: 900px) {
             .simpleResultPanel {

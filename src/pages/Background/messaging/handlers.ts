@@ -52,10 +52,10 @@ import {
 } from "../recording/recordingHelpers";
 import { newChunk, clearAllRecordings } from "../recording/chunkHandler";
 import { setMicActiveTab } from "../tabManagement/tabHelpers";
-import { loginWithWebsite } from "../auth/loginWithWebsite";
 import { checkSupabaseAuth, openLoginPage } from '../auth/supabaseAuth';
 import type {
   SupabaseSessionSyncedMessage,
+  SupabaseSessionExpiredMessage,
   SupabaseAuthCheckMessage,
   SupabaseClearAuthMessage,
   SupabaseLoginRequestMessage,
@@ -283,77 +283,6 @@ export const setupHandlers = (): void => {
     )
   );
   registerMessage("add-alarm-listener", () => addAlarmListener());
-  registerMessage(
-    "check-auth-status",
-    async (message, sender, sendResponse) => {
-      if (!CLOUD_FEATURES_ENABLED) {
-        sendResponse({
-          authenticated: false,
-          message: "Cloud features disabled",
-        });
-        return true;
-      }
-      const result = await loginWithWebsite();
-      sendResponse(result);
-      return true;
-    }
-  );
-  registerMessage(
-    "create-video-project",
-    async (message, sender, sendResponse) => {
-      if (!CLOUD_FEATURES_ENABLED) {
-        sendResponse({ success: false, message: "Cloud features disabled" });
-        return true;
-      }
-      const { authenticated, subscribed, user } = await loginWithWebsite();
-
-      if (!authenticated) {
-        sendResponse({ success: false, message: "User not authenticated" });
-        return true;
-      }
-
-      if (!subscribed) {
-        sendResponse({ success: false, message: "Subscription inactive" });
-        return true;
-      }
-
-      try {
-        const msg = (message as unknown) as Record<string, unknown>;
-        const res = await fetch(`${API_BASE}/videos/create`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${await chrome.storage.local
-              .get("screenityToken")
-              .then((r) => r.screenityToken)}`,
-          },
-          body: JSON.stringify({
-            title: msg.title || "Untitled Recording",
-            data: msg.data || {},
-            instantMode: msg.instantMode || false,
-            recording: true,
-            isPublic: msg.instantMode ? true : false,
-          }),
-        });
-
-        const result = await res.json();
-
-        if (!res.ok || !result?.videoId) {
-          sendResponse({
-            success: false,
-            error: result?.error || "Server error",
-          });
-        } else {
-          sendResponse({ success: true, videoId: result.videoId });
-        }
-      } catch (err) {
-        console.error("❌ Failed to create video project:", (err as Error).message);
-        sendResponse({ success: false, error: (err as Error).message });
-      }
-
-      return true;
-    }
-  );
   registerMessage("handle-login", async () => {
     if (!CLOUD_FEATURES_ENABLED) {
       console.warn("Cloud features disabled, cannot handle login");
@@ -514,63 +443,6 @@ export const setupHandlers = (): void => {
   }
 
   registerMessage("get-monitor-for-window", getMonitorForWindow);
-
-  registerMessage("fetch-videos", async (message, sender, sendResponse) => {
-    if (!CLOUD_FEATURES_ENABLED) {
-      sendResponse({ success: false, message: "Cloud features disabled" });
-      return true;
-    }
-    const { authenticated, subscribed, user } = await loginWithWebsite();
-
-    if (!authenticated) {
-      sendResponse({ success: false, message: "User not authenticated" });
-      return true;
-    }
-
-    if (!subscribed) {
-      sendResponse({ success: false, message: "Subscription inactive" });
-      return true;
-    }
-
-    try {
-      const msg = (message as unknown) as Record<string, unknown>;
-      const page = msg.page || 0;
-      const pageSize = msg.pageSize || 12;
-      const sort = msg.sort || "newest";
-      const filter = msg.filter || "all";
-
-      const token = await chrome.storage.local
-        .get("screenityToken")
-        .then((r) => r.screenityToken);
-
-      const res = await fetch(
-        `${API_BASE}/videos?page=${page}&pageSize=${pageSize}&sort=${sort}&filter=${filter}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok || !result?.videos) {
-        sendResponse({
-          success: false,
-          error: result?.error || "Failed to fetch videos",
-        });
-      } else {
-        sendResponse({ success: true, videos: result.videos });
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch videos:", (err as Error).message);
-      sendResponse({ success: false, error: (err as Error).message });
-    }
-
-    return true;
-  });
   registerMessage("reopen-popup-multi", async (message) => {
     if (!CLOUD_FEATURES_ENABLED) {
       console.warn("Cloud features disabled");
@@ -590,56 +462,6 @@ export const setupHandlers = (): void => {
       console.warn("Failed to send popup reopen message:", err);
     }
   });
-  registerMessage(
-    "check-storage-quota",
-    async (message, sender, sendResponse) => {
-      if (!CLOUD_FEATURES_ENABLED) {
-        sendResponse({ success: false, error: "Cloud features disabled" });
-        return true;
-      }
-      const { authenticated, subscribed } = await loginWithWebsite();
-
-      if (!authenticated) {
-        sendResponse({ success: false, error: "Not authenticated" });
-        return true;
-      }
-
-      if (!subscribed) {
-        sendResponse({ success: false, error: "Subscription inactive" });
-        return true;
-      }
-
-      try {
-        const { screenityToken } = await chrome.storage.local.get(
-          "screenityToken"
-        );
-
-        const res = await fetch(`${API_BASE}/storage/quota`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${screenityToken as string}`,
-          },
-          credentials: "include",
-        });
-
-        const result = await res.json();
-
-        if (!res.ok) {
-          sendResponse({
-            success: false,
-            error: result?.error || "Fetch failed",
-          });
-        } else {
-          sendResponse({ success: true, ...result });
-        }
-      } catch (err) {
-        console.error("❌ Error checking storage quota:", err);
-        sendResponse({ success: false, error: (err as Error).message });
-      }
-
-      return true;
-    }
-  );
   registerMessage("time-warning", async (message) => {
     const tab = await getCurrentTab();
     if (tab?.id) {
@@ -876,41 +698,6 @@ export const setupHandlers = (): void => {
       active: true,
     });
   });
-  registerMessage("open-account-settings", async () => {
-    if (!CLOUD_FEATURES_ENABLED) {
-      console.warn("Cloud features disabled");
-      return;
-    }
-    const { authenticated } = await loginWithWebsite();
-    if (!authenticated) {
-      console.warn("User not authenticated, cannot open account settings");
-      return;
-    }
-
-    const url = `${process.env.SCREENITY_APP_BASE}/?settings=open`;
-    createTab(url, true, true);
-  });
-  registerMessage("open-support", async () => {
-    if (!CLOUD_FEATURES_ENABLED) {
-      console.warn("Cloud features disabled");
-      return;
-    }
-    const { authenticated, user } = await loginWithWebsite();
-    if (!authenticated || !user) {
-      console.warn("User not authenticated, cannot open support");
-      return;
-    }
-
-    const { name, email } = user;
-    const query = new URLSearchParams({
-      extension: "true",
-      name,
-      email,
-    });
-
-    const url = `https://tally.so/r/310MNg?${query.toString()}`;
-    createTab(url, true, true);
-  });
   registerMessage("check-banner-support", async (message, sender, sendResponse) => {
     const { bannerSupport } = await chrome.storage.local.get(["bannerSupport"]);
     sendResponse({ bannerSupport: Boolean(bannerSupport) });
@@ -922,11 +709,6 @@ export const setupHandlers = (): void => {
   });
   registerMessage("clear-recording-alarm", async () => {
     await chrome.alarms.clear("recording-alarm");
-  });
-  registerMessage("refresh-auth", async () => {
-    if (!CLOUD_FEATURES_ENABLED)
-      return { success: false, message: "Cloud features disabled" };
-    return await loginWithWebsite();
   });
 
   /**
@@ -1002,6 +784,42 @@ export const setupHandlers = (): void => {
     const { setAuthTokens } = await import('../../../utils/supabaseTokenStorage');
     const { accessToken, user, expiresAt } = message.payload;
     await setAuthTokens({ accessToken, user, expiresAt });
+    return { success: true };
+  });
+
+  /**
+   * Supabaseセッション期限切れ通知ハンドラー
+   * ログアウト時にSupabaseAuthSyncから呼ばれる
+   */
+  registerMessage('SUPABASE_SESSION_EXPIRED', async (message: SupabaseSessionExpiredMessage) => {
+    console.log('🔐 Background: Supabase session expired (logout detected)');
+
+    // 全タブに認証状態変更を通知
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'AUTH_STATE_CHANGED',
+        payload: { authenticated: false },
+      });
+      console.log('📢 Background: Notified Popup of logout');
+    } catch (err) {
+      // Popupが開いていない場合はエラーを無視
+      console.log('ℹ️ Background: Popup not open, notification skipped');
+    }
+
+    // 必要に応じて他のタブに通知
+    const tabs = await chrome.tabs.query({});
+    tabs.forEach((tab) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'AUTH_STATE_CHANGED',
+          payload: { authenticated: false },
+        }).catch(() => {
+          // タブがメッセージを受け取れない場合は無視
+        });
+      }
+    });
+
+    console.log('✅ Background: Logout notification completed');
     return { success: true };
   });
 };

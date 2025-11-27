@@ -6,7 +6,6 @@ import { onTabUpdatedListener } from "./onTabUpdatedListener";
 import { onWindowFocusChangedListener } from "./onWindowFocusChangedListener";
 import { onActionButtonClickedListener } from "./onActionButtonClickedListener";
 import { onStartupListener } from "./onStartupListener";
-import { onMessageExternalListener } from "./onMessageExternalListener";
 
 // Initialize all listeners
 export const initializeListeners = (): void => {
@@ -18,5 +17,4 @@ export const initializeListeners = (): void => {
   chrome.windows.onFocusChanged.addListener(onWindowFocusChangedListener);
   onActionButtonClickedListener();
   onStartupListener();
-  onMessageExternalListener();
 };

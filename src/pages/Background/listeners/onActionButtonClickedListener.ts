@@ -1,7 +1,6 @@
 import { sendMessageTab, getCurrentTab } from "../tabManagement";
 import { sendMessageRecord } from "../recording/sendMessageRecord";
 import { stopRecording } from "../recording/stopRecording";
-import { loginWithWebsite } from "../auth/loginWithWebsite";
 
 const CLOUD_FEATURES_ENABLED =
   process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
@@ -35,39 +34,11 @@ const openPlaygroundOrPopup = async (tab: chrome.tabs.Tab): Promise<void> => {
 
   if (tab.url && editorUrlPattern.test(tab.url)) {
     await chrome.storage.local.set({ editorTab: tab.id });
-
-    if (CLOUD_FEATURES_ENABLED) {
-      const result = await loginWithWebsite();
-
-      if (result?.authenticated) {
-        const match = tab.url.match(editorUrlPattern);
-        const projectIdFromUrl = match?.[2];
-
-        await chrome.storage.local.set({
-          projectId: projectIdFromUrl,
-          recordingToScene: true,
-          instantMode: false,
-        });
-
-        sendMessageTab(tab.id as number, {
-          type: "get-project-info",
-        }).catch((error) => {
-          console.log("Could not get project info:", error);
-        });
-      } else {
-        await chrome.storage.local.set({
-          projectId: null,
-          recordingToScene: false,
-          activeSceneId: null,
-        });
-      }
-    } else {
-      await chrome.storage.local.set({
-        projectId: null,
-        recordingToScene: false,
-        activeSceneId: null,
-      });
-    }
+    await chrome.storage.local.set({
+      projectId: null,
+      recordingToScene: false,
+      activeSceneId: null,
+    });
   } else {
     await chrome.storage.local.set({
       projectId: null,

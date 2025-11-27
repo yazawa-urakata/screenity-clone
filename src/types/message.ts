@@ -203,7 +203,8 @@ export type MessageType =
   | 'SUPABASE_AUTH_CHECK'
   | 'SUPABASE_CLEAR_AUTH'
   | 'SUPABASE_SET_AUTH'
-  | 'SUPABASE_LOGIN_REQUEST';
+  | 'SUPABASE_LOGIN_REQUEST'
+  | 'AUTH_STATE_CHANGED';
 
 // メッセージペイロードの基本インターフェース
 export interface BaseMessage {
@@ -596,6 +597,13 @@ export interface SupabaseSetAuthMessage extends BaseMessage {
 
 export interface SupabaseLoginRequestMessage extends BaseMessage {
   type: 'SUPABASE_LOGIN_REQUEST';
+}
+
+export interface AuthStateChangedMessage extends BaseMessage {
+  type: 'AUTH_STATE_CHANGED';
+  payload: {
+    authenticated: boolean;
+  };
 }
 
 // メッセージハンドラーの型
