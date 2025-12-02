@@ -1,18 +1,11 @@
 import React, { useEffect, useRef } from "react";
 
 // Import all the utils
-import base64ToBlob from "./utils/base64toBlob";
-import blobToArrayBuffer from "./utils/blobToArrayBuffer";
 import cropVideo from "./utils/cropVideo";
 import cutVideo from "./utils/cutVideo";
-import fetchFile from "./utils/fetchFile";
-import generateThumbstrips from "./utils/generateThumbstrips";
-import getAudio from "./utils/getAudio";
 import getFrame from "./utils/getFrame";
-import hasAudio from "./utils/hasAudio";
 import muteVideo from "./utils/muteVideo";
 import reencodeVideo from "./utils/reencodeVideo";
-import toGIF from "./utils/toGIF";
 
 const Sandbox = () => {
   const iframeRef = useRef(null);
@@ -42,24 +35,6 @@ const Sandbox = () => {
     if (message.type === "load-ffmpeg") {
       triggerLoad.current = true;
       loadFfmpeg();
-    } else if (message.type === "base64-to-blob") {
-      try {
-        const blob = await base64ToBlob(ffmpegInstance.current, message.base64);
-        const base64 = await toBase64(blob);
-        sendMessage({ type: "updated-blob", base64: base64 });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
-    } else if (message.type === "blob-to-array-buffer") {
-      try {
-        const arrayBuffer = await blobToArrayBuffer(
-          ffmpegInstance.current,
-          message.blob
-        );
-        sendMessage({ type: "updated-array-buffer", arrayBuffer: arrayBuffer });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
     } else if (message.type === "crop-video") {
       try {
         const blob = await cropVideo(ffmpegInstance.current, message.blob, {
@@ -94,33 +69,6 @@ const Sandbox = () => {
       } catch (error) {
         sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
       }
-    } else if (message.type === "fetch-file") {
-      try {
-        const blob = await fetchFile(message.url);
-        const base64 = await toBase64(blob);
-        sendMessage({ type: "updated-blob", base64: base64 });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
-    } else if (message.type === "generate-thumbstrips") {
-      try {
-        const blob = await generateThumbstrips(
-          ffmpegInstance.current,
-          message.blob
-        );
-        const base64 = await toBase64(blob);
-        sendMessage({ type: "updated-blob", base64: base64 });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
-    } else if (message.type === "get-audio") {
-      try {
-        const blob = await getAudio(ffmpegInstance.current, message.video);
-        const base64 = await toBase64(blob);
-        sendMessage({ type: "updated-blob", base64: base64 });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
     } else if (message.type === "get-frame") {
       try {
         const blob = await getFrame(
@@ -129,13 +77,6 @@ const Sandbox = () => {
           message.time
         );
         sendMessage({ type: "new-frame", frame: blob });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
-    } else if (message.type === "has-audio") {
-      try {
-        const audio = await hasAudio(ffmpegInstance.current, message.video);
-        sendMessage({ type: "updated-has-audio", hasAudio: audio });
       } catch (error) {
         sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
       }
@@ -166,14 +107,6 @@ const Sandbox = () => {
         );
         const base64 = await toBase64(blob);
         sendMessage({ type: "updated-blob", base64: base64 });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
-    } else if (message.type === "to-gif") {
-      try {
-        const blob = await toGIF(ffmpegInstance.current, message.blob);
-        const base64 = await toBase64(blob);
-        sendMessage({ type: "download-gif", base64: base64 });
       } catch (error) {
         sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
       }

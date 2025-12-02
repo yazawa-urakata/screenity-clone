@@ -6,19 +6,9 @@ const cloudFeaturesEnabled =
 
 export const onInstalledListener = (): void => {
   chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails) => {
-    const version = chrome.runtime.getManifest().version;
-    const locale = chrome.i18n.getMessage("@@ui_locale");
-
     if (details.reason === "install") {
       // Clear storage on fresh install
       chrome.storage.local.clear();
-
-      // Set uninstall URL based on locale
-      chrome.runtime.setUninstallURL(
-        locale.includes("en")
-          ? `https://tally.so/r/w8Zro5?version=${version}`
-          : `http://translate.google.com/translate?js=n&sl=auto&tl=${locale}&u=https://tally.so/r/w8Zro5?version=${version}`
-      );
 
       chrome.storage.local.set({
         firstTime: true,
@@ -49,12 +39,6 @@ export const onInstalledListener = (): void => {
           });
         }
       }
-
-      chrome.runtime.setUninstallURL(
-        locale.includes("en")
-          ? `https://tally.so/r/3Ex6kX?version=${version}`
-          : `http://translate.google.com/translate?js=n&sl=auto&tl=${locale}&u=https://tally.so/r/3Ex6kX?version=${version}`
-      );
     }
 
     // Disable backups for older Chrome versions

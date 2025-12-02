@@ -15,7 +15,7 @@ export const registerMessage = (
   handlers[type] = handler;
 };
 
-export const messageDispatcher = (
+const messageDispatcher = (
   message: BaseMessage,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void

@@ -62,7 +62,6 @@ export interface SandboxContentStateType {
   saveDrive: boolean;
   downloading: boolean;
   downloadingWEBM: boolean;
-  downloadingGIF: boolean;
   volume: number;
   cropPreset: string;
   replaceAudio: boolean;
@@ -104,7 +103,6 @@ export interface SandboxContentStateType {
   download?: () => Promise<void>;
   handleCrop?: (x: number, y: number, width: number, height: number) => Promise<boolean>;
   handleReencode?: () => Promise<boolean>;
-  downloadGIF?: () => Promise<void>;
   downloadWEBM?: () => Promise<void>;
   addAudio?: (videoBlob: Blob, audioBlob: Blob, volume: number) => Promise<void>;
   loadFFmpeg?: () => Promise<void>;
@@ -178,7 +176,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     saveDrive: false,
     downloading: false,
     downloadingWEBM: false,
-    downloadingGIF: false,
     volume: 1,
     cropPreset: "none",
     replaceAudio: false,
@@ -694,20 +691,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
         isFfmpegRunning: false,
         downloading: false,
       }));
-    } else if (event.data.type === "download-gif") {
-      const base64 = event.data.base64 as string;
-      const data = base64ToUint8Array(base64);
-      const blob = data instanceof Blob ? data : new Blob([data.buffer as ArrayBuffer], {
-        type: "image/gif",
-      });
-      const url = URL.createObjectURL(blob);
-      requestDownload(url, ".gif");
-      setContentState((prevContentState) => ({
-        ...prevContentState,
-        saved: true,
-        isFfmpegRunning: false,
-        downloadingGIF: false,
-      }));
     } else if (event.data.type === "new-frame") {
       const url = URL.createObjectURL(event.data.frame);
       setContentState((prevContentState) => ({
@@ -1062,24 +1045,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     }));
   };
 
-  const downloadGIF = async (): Promise<void> => {
-    if (contentState.isFfmpegRunning || contentState.downloading) {
-      return;
-    }
-    if (contentState.duration > 30) return;
-
-    setContentState((prevState) => ({
-      ...prevState,
-      downloadingGIF: true,
-      isFfmpegRunning: true,
-    }));
-
-    sendMessage({
-      type: "to-gif",
-      blob: contentState.blob,
-    });
-  };
-
   const loadFFmpeg = async (): Promise<void> => {
     sendMessage({ type: "load-ffmpeg" });
   };
@@ -1094,7 +1059,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
   contentState.handleCrop = handleCrop;
   contentState.handleReencode = handleReencode;
   contentState.getFrame = getImage;
-  contentState.downloadGIF = downloadGIF;
   contentState.downloadWEBM = downloadWEBM;
   contentState.addAudio = addAudio;
   contentState.loadFFmpeg = loadFFmpeg;
