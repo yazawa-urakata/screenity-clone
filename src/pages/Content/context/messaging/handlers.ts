@@ -109,14 +109,7 @@ export const setupHandlers = (): void => {
       showPopup: true,
     }));
 
-    if (contentStateRef.current.recordingType !== "camera") {
-      contentStateRef.current.startStreaming();
-    } else if (
-      contentStateRef.current.defaultVideoInput !== "none" &&
-      contentStateRef.current.cameraActive
-    ) {
-      contentStateRef.current.startStreaming();
-    }
+    contentStateRef.current.startStreaming();
   });
 
   registerMessage("commands", (message: BaseMessage) => {

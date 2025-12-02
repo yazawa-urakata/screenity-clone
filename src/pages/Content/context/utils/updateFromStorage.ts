@@ -8,16 +8,9 @@ export const updateFromStorage = (
   chrome.storage.local.get(
     [
       "audioInput",
-      "videoInput",
       "defaultAudioInput",
-      "defaultVideoInput",
-      "cameraDimensions",
-      "cameraFlipped",
-      "cameraActive",
       "micActive",
       "recording",
-      "backgroundEffect",
-      "backgroundEffectsActive",
       "toolbarPosition",
       "countdown",
       "recordingType",
@@ -73,47 +66,15 @@ export const updateFromStorage = (
           result.audioInput !== undefined && result.audioInput !== null
             ? (result.audioInput as any)
             : prevContentState.audioInput,
-        videoInput:
-          result.videoInput !== undefined && result.videoInput !== null
-            ? (result.videoInput as any)
-            : prevContentState.videoInput,
         defaultAudioInput:
           result.defaultAudioInput !== undefined &&
           result.defaultAudioInput !== null
             ? (result.defaultAudioInput as any)
             : prevContentState.defaultAudioInput,
-        defaultVideoInput:
-          result.defaultVideoInput !== undefined &&
-          result.defaultVideoInput !== null
-            ? (result.defaultVideoInput as any)
-            : prevContentState.defaultVideoInput,
-        cameraDimensions:
-          result.cameraDimensions !== undefined &&
-          result.cameraDimensions !== null
-            ? (result.cameraDimensions as any)
-            : prevContentState.cameraDimensions,
-        cameraFlipped:
-          result.cameraFlipped !== undefined && result.cameraFlipped !== null
-            ? (result.cameraFlipped as any)
-            : prevContentState.cameraFlipped,
-        cameraActive:
-          result.cameraActive !== undefined && result.cameraActive !== null
-            ? (result.cameraActive as any)
-            : prevContentState.cameraActive,
         micActive:
           result.micActive !== undefined && result.micActive !== null
             ? (result.micActive as any)
             : prevContentState.micActive,
-        backgroundEffect:
-          result.backgroundEffect !== undefined &&
-          result.backgroundEffect !== null
-            ? (result.backgroundEffect as any)
-            : prevContentState.backgroundEffect,
-        backgroundEffectsActive:
-          result.backgroundEffectsActive !== undefined &&
-          result.backgroundEffectsActive !== null
-            ? (result.backgroundEffectsActive as any)
-            : prevContentState.backgroundEffectsActive,
         toolbarPosition:
           result.toolbarPosition !== undefined &&
           result.toolbarPosition !== null
@@ -270,13 +231,6 @@ export const updateFromStorage = (
         chrome.storage.local.set({ systemAudio: true });
       }
 
-      if (
-        result.backgroundEffect === undefined ||
-        result.backgroundEffect === null
-      ) {
-        chrome.storage.local.set({ backgroundEffect: "blur" });
-      }
-
       if (result.backup === undefined || result.backup === null) {
         chrome.storage.local.set({ backup: false });
       }
@@ -287,10 +241,6 @@ export const updateFromStorage = (
 
       if (result.backupSetup === undefined || result.backupSetup === null) {
         chrome.storage.local.set({ backupSetup: false });
-      }
-
-      if (result.backgroundEffectsActive) {
-        chrome.runtime.sendMessage({ type: "backgroundEffectsActive" });
       }
 
       if (check) {

@@ -478,50 +478,12 @@ const RecorderOffscreen = () => {
     if (isNaN(fpsVal)) {
       fpsVal = 30;
     }
-    // Check user permissions for camera and microphone individually
-    const permissions = await navigator.permissions.query({
-      name: "camera",
-    });
+    // Check user permissions for microphone
     const permissions2 = await navigator.permissions.query({
       name: "microphone",
     });
 
     try {
-      let userConstraints = {
-        audio: {
-          deviceId: data.defaultAudioInput,
-        },
-        video: {
-          deviceId: data.defaultVideoInput,
-          width: {
-            ideal: width,
-          },
-          height: {
-            ideal: height,
-          },
-          frameRate: {
-            ideal: fpsVal,
-          },
-        },
-      };
-      if (permissions.state === "denied") {
-        userConstraints.video = false;
-      }
-      if (permissions2.state === "denied") {
-        userConstraints.audio = false;
-      }
-
-      let userStream;
-
-      // Camera access has been disabled
-      // if (
-      //   permissions.state != "denied" &&
-      //   permissions2.state != "denied" &&
-      //   data.recordingType === "camera"
-      // ) {
-      //   userStream = await navigator.mediaDevices.getUserMedia(userConstraints);
-      // }
-
       // Create an audio context, destination, and stream
       aCtx.current = new AudioContext();
       destination.current = aCtx.current.createMediaStreamDestination();
@@ -530,11 +492,7 @@ const RecorderOffscreen = () => {
       const micstream = await startAudioStream(data.defaultAudioInput);
 
       // Save the helper streams
-      if (data.recordingType === "camera") {
-        // Camera access has been disabled
-        helperVideoStream.current = null;
-      } else {
-        let stream;
+      let stream;
         if (isTab.current === true) {
           stream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -584,11 +542,11 @@ const RecorderOffscreen = () => {
             return;
           }
         }
-        helperVideoStream.current = stream;
+      helperVideoStream.current = stream;
 
-        const surface = stream.getVideoTracks()[0].getSettings().displaySurface;
-        chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
-      }
+      const surface = stream.getVideoTracks()[0].getSettings().displaySurface;
+      chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
+
       helperAudioStream.current = micstream;
 
       // Check if micstream has an audio track

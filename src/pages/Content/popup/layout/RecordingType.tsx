@@ -173,17 +173,6 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
                         true,
                         false
                       );
-                    } else {
-                      // Turn off background effects in chrome.storage
-                      chrome.storage.local.set({
-                        backgroundEffectsActive: false,
-                      });
-
-                      // Update in memory
-                      setContentState((prev: any) => ({
-                        ...prev,
-                        backgroundEffectsActive: false,
-                      }));
                     }
                   }}
                 />

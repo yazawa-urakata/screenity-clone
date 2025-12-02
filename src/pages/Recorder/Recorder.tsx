@@ -586,7 +586,6 @@ const Recorder: React.FC = () => {
     data: StreamingData,
     id: string | null,
     options: DesktopCaptureOptions | null,
-    permissions: PermissionStatus,
     permissions2: PermissionStatus
   ): Promise<void> {
     // Get quality value
@@ -602,47 +601,8 @@ const Recorder: React.FC = () => {
       fps = 30;
     }
 
-    // Check if the user selected a tab in desktopcapture
-    let userConstraints: MediaStreamConstraints = {
-      audio: {
-        deviceId: data.defaultAudioInput,
-      },
-      video: {
-        deviceId: data.defaultVideoInput,
-        width: {
-          ideal: width,
-        },
-        height: {
-          ideal: height,
-        },
-        frameRate: {
-          ideal: fps,
-        },
-      },
-    };
-    if (permissions.state === "denied") {
-      userConstraints.video = false;
-    }
-    if (permissions2.state === "denied") {
-      userConstraints.audio = false;
-    }
-
-    let userStream: MediaStream | undefined;
-    // Camera access has been disabled
-    // if (
-    //   permissions.state != "denied" &&
-    //   permissions2.state != "denied" &&
-    //   data.recordingType === "camera"
-    // ) {
-    //   userStream = await navigator.mediaDevices.getUserMedia(userConstraints);
-    // }
-
     // Save the helper streams
-    if (data.recordingType === "camera") {
-      // Camera access has been disabled
-      helperVideoStream.current = null;
-    } else {
-      const constraints = {
+    const constraints = {
         audio: {
           mandatory: {
             chromeMediaSource: isTab.current ? "tab" : "desktop",
@@ -707,9 +667,8 @@ const Recorder: React.FC = () => {
         devicePixelRatio: window.devicePixelRatio || 1,
       });
 
-      const surface = settings.displaySurface;
-      chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
-    }
+    const surface = settings.displaySurface;
+    chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
 
     // Create an audio context, destination, and stream
     aCtx.current = new AudioContext();
@@ -773,18 +732,13 @@ const Recorder: React.FC = () => {
   }
 
   async function startStreaming(data: StreamingData): Promise<void> {
-    // Check user permissions for camera and microphone individually
-    const permissions = await navigator.permissions.query({
-      name: "camera" as PermissionName,
-    });
+    // Check user permissions for microphone
     const permissions2 = await navigator.permissions.query({
       name: "microphone" as PermissionName,
     });
 
     try {
-      if (data.recordingType === "camera") {
-        startStream(data, null, null, permissions, permissions2);
-      } else if (!isTab.current) {
+      if (!isTab.current) {
         let captureTypes = ["screen", "window", "tab", "audio"] as chrome.desktopCapture.DesktopCaptureSourceType[];
         if (tabPreferred.current) {
           captureTypes = ["tab", "screen", "window", "audio"] as chrome.desktopCapture.DesktopCaptureSourceType[];
@@ -801,12 +755,12 @@ const Recorder: React.FC = () => {
               sendRecordingError("User cancelled the modal", true);
               return;
             } else {
-              startStream(data, streamId, options, permissions, permissions2);
+              startStream(data, streamId, options, permissions2);
             }
           }
         );
       } else {
-        startStream(data, tabID.current, null, permissions, permissions2);
+        startStream(data, tabID.current, null, permissions2);
       }
     } catch (err) {
       sendRecordingError(

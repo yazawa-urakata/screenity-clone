@@ -40,10 +40,6 @@ export function startClickTracking(
         "recordingType",
       ]);
 
-    if (recordingType === "camera") {
-      return;
-    }
-
     let clickX = e.clientX;
     let clickY = e.clientY;
 

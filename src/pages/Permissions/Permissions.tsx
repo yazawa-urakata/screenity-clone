@@ -11,16 +11,12 @@ interface PermissionsMessage {
   error?: string;
   audioinput?: DeviceInfo[];
   audiooutput?: DeviceInfo[];
-  videoinput?: DeviceInfo[];
-  cameraPermission?: boolean;
   microphonePermission?: boolean;
 }
 
 interface StorageData {
   audioinput: DeviceInfo[];
   audiooutput: DeviceInfo[];
-  videoinput: DeviceInfo[];
-  cameraPermission: boolean;
   microphonePermission: boolean;
 }
 
@@ -119,8 +115,6 @@ const Recorder: React.FC = () => {
         // Set available devices
         audioinput: audioinput,
         audiooutput: audiooutput,
-        videoinput: [],
-        cameraPermission: false,
         microphonePermission: micGranted,
       } as StorageData);
 
@@ -131,14 +125,10 @@ const Recorder: React.FC = () => {
           success: true,
           audioinput: audioinput,
           audiooutput: audiooutput,
-          videoinput: [],
-          cameraPermission: false,
           microphonePermission: micGranted,
         } as PermissionsMessage,
         "*"
       );
-
-      //sendResponse({ success: true, audioinput, audiooutput, videoinput });
 
       // End the stream
       stream.getTracks().forEach(function (track) {

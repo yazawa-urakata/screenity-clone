@@ -13,13 +13,8 @@ const WEB_APP_URL = getWebAppUrl();
 
 // Webアプリのドメインでのみ実行
 if (window.location.origin === WEB_APP_URL) {
-  console.log('🔐 Supabase Auth Sync: Initialized');
-  console.log('   Current URL:', window.location.href);
-  console.log('   Expected WEB_APP_URL:', WEB_APP_URL);
-
   /**
    * ログインページでの状態リセット
-   * Mem0パターンと同じロジック
    * 
    * Content Script から chrome.storage.session に直接アクセスできないため、
    * Background Script にメッセージを送信してクリアする

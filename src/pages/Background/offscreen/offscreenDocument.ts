@@ -6,7 +6,6 @@ export interface RecordingRequest {
   region?: boolean;
   customRegion?: boolean;
   offscreenRecording?: boolean;
-  camera?: boolean;
   [key: string]: unknown;
 }
 
@@ -14,18 +13,13 @@ const openRecorderTab = async (
   activeTab: chrome.tabs.Tab,
   backup: boolean,
   isRegion: boolean,
-  camera: boolean = false,
   request: RecordingRequest
 ): Promise<void> => {
   let switchTab = true;
 
   const recorderUrl = chrome.runtime.getURL("recorder.html");
 
-  if (!isRegion) {
-    if (camera) {
-      switchTab = false;
-    }
-  } else {
+  if (isRegion) {
     switchTab = activeTab.url?.includes(
       chrome.runtime.getURL("playground.html")
     ) ?? false;
@@ -60,8 +54,8 @@ const openRecorderTab = async (
             request: request,
             backup: backup,
             // Always set isTab and tabID for tab recording (no dialog)
-            isTab: !camera,
-            tabID: !camera ? activeTab.id : undefined,
+            isTab: true,
+            tabID: activeTab.id,
           });
         }
       });
@@ -107,12 +101,12 @@ export const offscreenDocument = async (request: RecordingRequest, tabId: number
         region: true,
       });
     } else {
-      await openRecorderTab(activeTab, backup as boolean, true, false, request);
+      await openRecorderTab(activeTab, backup as boolean, true, request);
     }
   } else {
-    if (!request.offscreenRecording || request.camera) {
+    if (!request.offscreenRecording) {
       // Skip offscreen recording if conditions aren't met
-      await openRecorderTab(activeTab, backup as boolean, false, request.camera ?? false, request);
+      await openRecorderTab(activeTab, backup as boolean, false, request);
       return;
     }
 
@@ -149,7 +143,7 @@ export const offscreenDocument = async (request: RecordingRequest, tabId: number
       });
     } catch (error) {
       console.error("Error creating offscreen document:", error);
-      await openRecorderTab(activeTab, backup as boolean, false, request.camera ?? false, request);
+      await openRecorderTab(activeTab, backup as boolean, false, request);
     }
   }
 };

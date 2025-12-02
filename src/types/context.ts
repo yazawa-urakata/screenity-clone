@@ -63,14 +63,6 @@ export interface ContentStateContextType {
   audioInput: MediaDeviceInfo[];
   setAudioInput?: (audioInput: MediaDeviceInfo[]) => void;
 
-  // カメラ設定
-  cameraActive: boolean;
-  setCameraActive?: (cameraActive: boolean) => void;
-  defaultVideoInput: string;
-  setDefaultVideoInput?: (defaultVideoInput: string) => void;
-  videoInput: MediaDeviceInfo[];
-  setVideoInput?: (videoInput: MediaDeviceInfo[]) => void;
-
   // 領域設定
   customRegion: boolean;
   setCustomRegion?: (customRegion: boolean) => void;
@@ -80,10 +72,6 @@ export interface ContentStateContextType {
   setRegionHeight?: (regionHeight: number) => void;
   fromRegion?: boolean;
   setFromRegion?: (fromRegion: boolean) => void;
-
-  // 背景エフェクト
-  backgroundEffect: string;
-  setBackgroundEffect?: (backgroundEffect: string) => void;
 
   // Toast機能
   openToast?: (title: string, action: () => void, durationMs?: number) => void;
@@ -100,25 +88,4 @@ export interface ContentStateContextType {
 
   // TODO: 他のステートを追加
   [key: string]: any;
-}
-
-// CameraContextの型定義
-export interface CameraContextType {
-  // カメラステート
-  stream: MediaStream | null;
-  setStream: (stream: MediaStream | null) => void;
-  isActive: boolean;
-  setIsActive: (isActive: boolean) => void;
-
-  // カメラ設定
-  deviceId: string;
-  setDeviceId: (deviceId: string) => void;
-  facingMode: 'user' | 'environment';
-  setFacingMode: (mode: 'user' | 'environment') => void;
-
-  // エフェクト
-  backgroundBlur: boolean;
-  setBackgroundBlur: (blur: boolean) => void;
-
-  // TODO: 他のカメラステートを追加
 }

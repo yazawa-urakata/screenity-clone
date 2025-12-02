@@ -56,11 +56,8 @@ export interface ContentStateType {
   recordingProjectTitle?: string;
   timeWarning: boolean;
   audioInput: MediaDeviceInfo[];
-  videoInput: MediaDeviceInfo[];
   setDevices: boolean;
   defaultAudioInput: string;
-  defaultVideoInput: string;
-  cameraActive: boolean;
   micActive: boolean;
   pushToTalk?: boolean;
   sortBy: string;
@@ -82,14 +79,6 @@ export interface ContentStateType {
     offsetY: number;
     fixed: boolean;
   };
-  cameraDimensions: {
-    size: number;
-    x: number;
-    y: number;
-  };
-  cameraFlipped: boolean;
-  backgroundEffect: string;
-  backgroundEffectsActive: boolean;
   countdown: boolean;
   showExtension: boolean;
   showPopup: boolean;
@@ -109,7 +98,6 @@ export interface ContentStateType {
   fromAlarm: boolean;
   pendingRecording: boolean;
   askForPermissions: boolean;
-  cameraPermission: boolean;
   microphonePermission: boolean;
   askMicrophone: boolean;
   recordingShortcut: string;
@@ -1046,7 +1034,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
             region: currentState.customRegion ? true : false,
             customRegion: currentState.customRegion,
             offscreenRecording: currentState.offscreenRecording,
-            camera: false,
           });
           setContentState((prevContentState) => ({
             ...prevContentState,
@@ -1083,7 +1070,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
         region: currentState.customRegion ? true : false,
         customRegion: currentState.customRegion,
         offscreenRecording: currentState.offscreenRecording,
-        camera: false,
       });
       setContentState((prevContentState) => ({
         ...prevContentState,
@@ -1139,8 +1125,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
   interface DevicePermissionsData {
     success: boolean;
     audioinput?: MediaDeviceInfo[];
-    videoinput?: MediaDeviceInfo[];
-    cameraPermission?: boolean;
     microphonePermission?: boolean;
   }
 
@@ -1151,63 +1135,31 @@ const ContentState: FC<ContentStateProps> = (props) => {
     if (data && data !== undefined && data.success) {
       // I need to convert to a regular array of objects
       const audioInput = data.audioinput || [];
-      const videoInput = data.videoinput || [];
-      const cameraPermission = data.cameraPermission || false;
       const microphonePermission = data.microphonePermission || false;
 
       setContentState((prevContentState) => ({
         ...prevContentState,
         audioInput: audioInput,
-        videoInput: videoInput,
-        cameraPermission: cameraPermission,
         microphonePermission: microphonePermission,
       }));
 
-      chrome.runtime.sendMessage({
-        type: "switch-camera",
-        id: currentState.defaultVideoInput,
-      });
-
       // Check if first time setting devices
-      if (!currentState.setDevices) {
-        // Set default devices
-        // Check if audio devices exist
-        if (audioInput.length > 0) {
-          setContentState((prevContentState) => ({
-            ...prevContentState,
-            defaultAudioInput: audioInput[0].deviceId,
-            micActive: true,
-          }));
-          chrome.storage.local.set({
-            defaultAudioInput: audioInput[0].deviceId,
-            micActive: true,
-          });
-        }
-        if (videoInput.length > 0) {
-          setContentState((prevContentState) => ({
-            ...prevContentState,
-            defaultVideoInput: videoInput[0].deviceId,
-            cameraActive: true,
-          }));
-          chrome.storage.local.set({
-            defaultVideoInput: videoInput[0].deviceId,
-            cameraActive: true,
-          });
-        }
-        if (audioInput.length > 0 || videoInput.length > 0) {
-          setContentState((prevContentState) => ({
-            ...prevContentState,
-            setDevices: true,
-          }));
-          chrome.storage.local.set({
-            setDevices: true,
-          });
-        }
+      if (!currentState.setDevices && audioInput.length > 0) {
+        setContentState((prevContentState) => ({
+          ...prevContentState,
+          defaultAudioInput: audioInput[0].deviceId,
+          micActive: true,
+          setDevices: true,
+        }));
+        chrome.storage.local.set({
+          defaultAudioInput: audioInput[0].deviceId,
+          micActive: true,
+          setDevices: true,
+        });
       }
     } else {
       setContentState((prevContentState) => ({
         ...prevContentState,
-        cameraPermission: false,
         microphonePermission: false,
       }));
       if (currentState.askForPermissions && currentState.openModal) {
@@ -1287,11 +1239,8 @@ const ContentState: FC<ContentStateProps> = (props) => {
     openToast: null,
     timeWarning: false,
     audioInput: [],
-    videoInput: [],
     setDevices: false,
     defaultAudioInput: "none",
-    defaultVideoInput: "none",
-    cameraActive: false,
     micActive: false,
     sortBy: "newest",
     paused: false,
@@ -1312,14 +1261,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
       offsetY: 0,
       fixed: true,
     },
-    cameraDimensions: {
-      size: 200,
-      x: 100,
-      y: 100,
-    },
-    cameraFlipped: false,
-    backgroundEffect: "blur",
-    backgroundEffectsActive: false,
     countdown: true,
     showExtension: false,
     showPopup: false,
@@ -1339,7 +1280,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     fromAlarm: false,
     pendingRecording: false,
     askForPermissions: true,
-    cameraPermission: true,
     microphonePermission: true,
     askMicrophone: true,
     recordingShortcut: "⌥⇧D",
@@ -1596,23 +1536,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
       }
     );
   }, [contentState.alarm, contentState.alarmTime]);
-
-  useEffect(() => {
-    if (contentState.backgroundEffectsActive) {
-      chrome.runtime.sendMessage({ type: "background-effects-active" });
-    } else {
-      chrome.runtime.sendMessage({ type: "background-effects-inactive" });
-    }
-  }, [contentState.backgroundEffectsActive]);
-
-  useEffect(() => {
-    if (contentState.backgroundEffectsActive) {
-      chrome.runtime.sendMessage({
-        type: "set-background-effect",
-        effect: contentState.backgroundEffect,
-      });
-    }
-  }, [contentState.backgroundEffect, contentState.backgroundEffectsActive]);
 
   // Programmatically add custom scrollbars
   useEffect(() => {

@@ -13,8 +13,6 @@ import * as Select from "@radix-ui/react-select";
 import {
   DropdownIcon,
   CheckWhiteIcon,
-  CameraOnIcon,
-  CameraOffIcon,
   MicOnIcon,
   MicOffIcon,
 } from "../../images/popup/images";
@@ -24,7 +22,7 @@ import { contentStateContext } from "../../context/ContentState";
 import { ContentStateContextType } from "../../../../types/context";
 
 interface DropdownProps {
-  type: "camera" | "mic";
+  type: "mic";
   shadowRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -37,51 +35,26 @@ const Dropdown: FC<DropdownProps> = (props) => {
   const [open, setOpen] = useState<boolean>(false);
 
   const updateItems = (): void => {
-    if (props.type === "camera") {
-      if (
-        contentState?.defaultVideoInput === "none" ||
-        !contentState?.cameraActive
-      ) {
-        setLabel(chrome.i18n.getMessage("noCameraDropdownLabel"));
-      } else {
-        // Check if defaultVideoInput is in camdevices, if not set to none
-        if (
-          contentState?.videoInput?.find(
-            (device) => device.deviceId === contentState?.defaultVideoInput
-          )
-        ) {
-          const device = contentState.videoInput.find(
-            (device) => device.deviceId === contentState.defaultVideoInput
-          );
-          if (device) {
-            setLabel(device.label);
-          }
-        } else {
-          setLabel(chrome.i18n.getMessage("noCameraDropdownLabel"));
-        }
-      }
+    if (
+      contentState?.defaultAudioInput === "none" ||
+      (!contentState?.micActive && !contentState?.pushToTalk)
+    ) {
+      setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
     } else {
+      // Check if defaultAudioInput is in micdevices, if not set to none
       if (
-        contentState?.defaultAudioInput === "none" ||
-        (!contentState?.micActive && !contentState?.pushToTalk)
+        contentState?.audioInput?.find(
+          (device) => device.deviceId === contentState?.defaultAudioInput
+        )
       ) {
-        setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
-      } else {
-        // Check if defaultAudioInput is in micdevices, if not set to none
-        if (
-          contentState?.audioInput?.find(
-            (device) => device.deviceId === contentState?.defaultAudioInput
-          )
-        ) {
-          const device = contentState.audioInput.find(
-            (device) => device.deviceId === contentState.defaultAudioInput
-          );
-          if (device) {
-            setLabel(device.label);
-          }
-        } else {
-          setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
+        const device = contentState.audioInput.find(
+          (device) => device.deviceId === contentState.defaultAudioInput
+        );
+        if (device) {
+          setLabel(device.label);
         }
+      } else {
+        setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
       }
     }
   };
@@ -90,10 +63,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
     updateItems();
   }, [
     contentState?.defaultAudioInput,
-    contentState?.defaultVideoInput,
     contentState?.audioInput,
-    contentState?.videoInput,
-    contentState?.cameraActive,
     contentState?.micActive,
   ]);
 
@@ -105,55 +75,29 @@ const Dropdown: FC<DropdownProps> = (props) => {
     e.preventDefault();
     e.stopPropagation();
     setOpen(false);
-    if (props.type === "camera") {
-      if (contentState?.cameraActive) {
-        setContentState((prevContentState) => ({
-          ...prevContentState,
-          cameraActive: false,
-        }));
-        chrome.storage.local.set({
-          cameraActive: false,
-        });
-        setLabel(chrome.i18n.getMessage("noCameraDropdownLabel"));
-      } else {
-        setContentState((prevContentState) => ({
-          ...prevContentState,
-          cameraActive: true,
-        }));
-        chrome.storage.local.set({
-          cameraActive: true,
-        });
-        const device = contentState?.videoInput?.find(
-          (device) => device.deviceId === contentState?.defaultVideoInput
-        );
-        if (device) {
-          setLabel(device.label);
-        }
-      }
+
+    if (contentState?.micActive) {
+      setContentState((prevContentState) => ({
+        ...prevContentState,
+        micActive: false,
+      }));
+      chrome.storage.local.set({
+        micActive: false,
+      });
+      setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
     } else {
-      if (contentState?.micActive) {
-        setContentState((prevContentState) => ({
-          ...prevContentState,
-          micActive: false,
-        }));
-        chrome.storage.local.set({
-          micActive: false,
-        });
-        setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
-      } else {
-        setContentState((prevContentState) => ({
-          ...prevContentState,
-          micActive: true,
-        }));
-        chrome.storage.local.set({
-          micActive: true,
-        });
-        const device = contentState?.audioInput?.find(
-          (device) => device.deviceId === contentState?.defaultAudioInput
-        );
-        if (device) {
-          setLabel(device.label);
-        }
+      setContentState((prevContentState) => ({
+        ...prevContentState,
+        micActive: true,
+      }));
+      chrome.storage.local.set({
+        micActive: true,
+      });
+      const device = contentState?.audioInput?.find(
+        (device) => device.deviceId === contentState?.defaultAudioInput
+      );
+      if (device) {
+        setLabel(device.label);
       }
     }
   };
@@ -168,75 +112,35 @@ const Dropdown: FC<DropdownProps> = (props) => {
         setOpen(open);
       }}
       value={
-        props.type === "camera" && contentState?.cameraActive
-          ? contentState?.defaultVideoInput
-          : props.type === "camera" && !contentState?.cameraActive
-          ? "none"
-          : props.type === "mic" &&
-            (contentState?.micActive || contentState?.pushToTalk)
+        (contentState?.micActive || contentState?.pushToTalk)
           ? contentState?.defaultAudioInput
-          : props.type === "mic" && !contentState?.micActive
-          ? "none"
           : "none"
       }
       onValueChange={(newValue: string) => {
-        if (props.type === "camera") {
-          if (newValue === "none") {
-            setContentState((prevContentState) => ({
-              ...prevContentState,
-              cameraActive: false,
-            }));
-            chrome.storage.local.set({
-              cameraActive: false,
-            });
-            setLabel(chrome.i18n.getMessage("noCameraDropdownLabel"));
-          } else {
-            setContentState((prevContentState) => ({
-              ...prevContentState,
-              defaultVideoInput: newValue,
-              cameraActive: true,
-            }));
-            chrome.storage.local.set({
-              defaultVideoInput: newValue,
-              cameraActive: true,
-            });
-            chrome.runtime.sendMessage({
-              type: "switch-camera",
-              id: newValue,
-            });
-            const device = contentState?.videoInput?.find(
-              (device) => device.deviceId === newValue
-            );
-            if (device) {
-              setLabel(device.label);
-            }
-          }
+        if (newValue === "none") {
+          setContentState((prevContentState) => ({
+            ...prevContentState,
+            micActive: false,
+          }));
+          chrome.storage.local.set({
+            micActive: false,
+          });
+          setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
         } else {
-          if (newValue === "none") {
-            setContentState((prevContentState) => ({
-              ...prevContentState,
-              micActive: false,
-            }));
-            chrome.storage.local.set({
-              micActive: false,
-            });
-            setLabel(chrome.i18n.getMessage("noMicrophoneDropdownLabel"));
-          } else {
-            setContentState((prevContentState) => ({
-              ...prevContentState,
-              defaultAudioInput: newValue,
-              micActive: true,
-            }));
-            chrome.storage.local.set({
-              defaultAudioInput: newValue,
-              micActive: true,
-            });
-            const device = contentState?.audioInput?.find(
-              (device) => device.deviceId === newValue
-            );
-            if (device) {
-              setLabel(device.label);
-            }
+          setContentState((prevContentState) => ({
+            ...prevContentState,
+            defaultAudioInput: newValue,
+            micActive: true,
+          }));
+          chrome.storage.local.set({
+            defaultAudioInput: newValue,
+            micActive: true,
+          });
+          const device = contentState?.audioInput?.find(
+            (device) => device.deviceId === newValue
+          );
+          if (device) {
+            setLabel(device.label);
           }
         }
       }}
@@ -282,28 +186,15 @@ const Dropdown: FC<DropdownProps> = (props) => {
               clickedIcon.current = false;
             }}
           >
-            {props.type === "camera" && (
-              <img
-                src={
-                  contentState?.defaultVideoInput === "none" ||
-                  !contentState?.cameraActive
-                    ? CameraOffIcon
-                    : CameraOnIcon
-                }
-                alt="camera"
-              />
-            )}
-            {props.type === "mic" && (
-              <img
-                src={
-                  contentState?.defaultAudioInput === "none" ||
-                  !contentState?.micActive
-                    ? MicOffIcon
-                    : MicOnIcon
-                }
-                alt="mic"
-              />
-            )}
+            <img
+              src={
+                contentState?.defaultAudioInput === "none" ||
+                !contentState?.micActive
+                  ? MicOffIcon
+                  : MicOnIcon
+              }
+              alt="mic"
+            />
           </div>
         </Select.Icon>
         <div className="SelectValue">
@@ -315,20 +206,12 @@ const Dropdown: FC<DropdownProps> = (props) => {
             {label}
           </Select.Value>
         </div>
-        {props.type === "camera" &&
-          (contentState?.defaultVideoInput === "none" ||
-            !contentState?.cameraActive) && (
-            <div className="SelectOff">
-              {chrome.i18n.getMessage("offLabel")}
-            </div>
-          )}
-        {props.type === "mic" &&
-          (contentState?.defaultAudioInput === "none" ||
-            (!contentState?.micActive && !contentState?.pushToTalk)) && (
-            <div className="SelectOff">
-              {chrome.i18n.getMessage("offLabel")}
-            </div>
-          )}
+        {(contentState?.defaultAudioInput === "none" ||
+          (!contentState?.micActive && !contentState?.pushToTalk)) && (
+          <div className="SelectOff">
+            {chrome.i18n.getMessage("offLabel")}
+          </div>
+        )}
         <Select.Icon className="SelectIconDrop">
           <img src={DropdownIcon} alt="dropdown" />
         </Select.Icon>
@@ -345,34 +228,19 @@ const Dropdown: FC<DropdownProps> = (props) => {
           <Select.Viewport className="SelectViewport">
             <Select.Group>
               <SelectItem value="none">
-                {props.type === "camera"
-                  ? chrome.i18n.getMessage("noCameraDropdownLabel")
-                  : chrome.i18n.getMessage("noMicrophoneDropdownLabel")}
+                {chrome.i18n.getMessage("noMicrophoneDropdownLabel")}
               </SelectItem>
             </Select.Group>
-            {props.type === "camera" &&
-              contentState?.videoInput &&
-              contentState.videoInput.length > 0 && (
-                <Select.Separator className="SelectSeparator" />
-              )}
-            {props.type === "mic" &&
-              contentState?.audioInput &&
+            {contentState?.audioInput &&
               contentState.audioInput.length > 0 && (
                 <Select.Separator className="SelectSeparator" />
               )}
             <Select.Group>
-              {props.type === "camera" &&
-                contentState?.videoInput?.map((device) => (
-                  <SelectItem value={device.deviceId} key={device.deviceId}>
-                    {device.label}
-                  </SelectItem>
-                ))}
-              {props.type === "mic" &&
-                contentState?.audioInput?.map((device) => (
-                  <SelectItem value={device.deviceId} key={device.deviceId}>
-                    {device.label}
-                  </SelectItem>
-                ))}
+              {contentState?.audioInput?.map((device) => (
+                <SelectItem value={device.deviceId} key={device.deviceId}>
+                  {device.label}
+                </SelectItem>
+              ))}
             </Select.Group>
           </Select.Viewport>
           <Select.ScrollDownButton className="SelectScrollButton"></Select.ScrollDownButton>

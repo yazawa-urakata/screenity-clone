@@ -30,21 +30,11 @@ export type MessageType =
   | 'get-streaming-data'
   | 'streaming-data'
   | 'screen-update'
-  // カメラ関連
-  | 'switch-camera'
-  | 'camera-only-update'
-  | 'camera-toggled-toolbar'
+  // PiP関連
   | 'toggle-pip'
   | 'pip-started'
   | 'pip-ended'
   | 'turn-off-pip'
-  // 背景エフェクト関連
-  | 'toggle-blur'
-  | 'set-background-effect'
-  | 'load-custom-effect'
-  | 'background-effects-active'
-  | 'background-effects-inactive'
-  | 'backgroundEffectsActive'
   // ファイル処理関連
   | 'write-file'
   | 'video-ready'
@@ -207,9 +197,7 @@ export interface StartRecordingMessage extends BaseMessage {
     audio?: boolean;
     video?: boolean;
     screen?: boolean;
-    camera?: boolean;
     microphoneId?: string;
-    cameraId?: string;
     tabId?: number;
     recordingType?: string;
   };
@@ -242,17 +230,6 @@ export interface GetStreamingDataMessage extends BaseMessage {
 export interface StreamingDataMessage extends BaseMessage {
   type: 'streaming-data';
   data?: string;
-}
-
-// カメラ関連メッセージ
-export interface SwitchCameraMessage extends BaseMessage {
-  type: 'switch-camera';
-  deviceId?: string;
-}
-
-export interface SetBackgroundEffectMessage extends BaseMessage {
-  type: 'set-background-effect';
-  effect?: string;
 }
 
 export interface PipMessage extends BaseMessage {

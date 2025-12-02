@@ -5,8 +5,6 @@ const URL =
 const DropdownIcon = `${URL}/dropdown.svg`;
 const MicOnIcon = `${URL}/mic-on.svg`;
 const MicOffIcon = `${URL}/mic-off.svg`;
-const CameraOnIcon = `${URL}/camera-on.svg`;
-const CameraOffIcon = `${URL}/camera-off.svg`;
 const CheckWhiteIcon = `${URL}/check-white.svg`;
 const MicOffBlue = `${URL}/mic-off-blue.svg`;
 const DropdownGroup = `${URL}/dropdown-group.svg`;
@@ -16,8 +14,6 @@ export {
   DropdownIcon,
   MicOnIcon,
   MicOffIcon,
-  CameraOnIcon,
-  CameraOffIcon,
   CheckWhiteIcon,
   MicOffBlue,
   DropdownGroup,
