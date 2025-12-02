@@ -2,7 +2,7 @@ import { removeTab } from "../tabManagement";
 import { sendChunks } from "./sendChunks";
 
 export const forceProcessing = async () => {
-  const editorURL = "editor.html";
+  const editorURL = "editorfallback.html";
 
   const { sandboxTab } = await chrome.storage.local.get(["sandboxTab"]);
 

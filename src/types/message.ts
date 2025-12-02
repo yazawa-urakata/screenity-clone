@@ -143,8 +143,6 @@ export type MessageType =
   | 'update-project-ready'
   | 'clear-project-recording'
   // エディター関連
-  | 'prepare-open-editor'
-  | 'prepare-editor-existing'
   | 'editor-ready'
   | 'preparing-recording'
   // マルチ録画関連
@@ -363,12 +361,6 @@ export interface FetchVideosMessage extends BaseMessage {
 
 export interface GetProjectInfoMessage extends BaseMessage {
   type: 'get-project-info' | 'GET_PROJECT_INFO';
-  projectId?: string;
-}
-
-// エディター関連メッセージ
-export interface PrepareOpenEditorMessage extends BaseMessage {
-  type: 'prepare-open-editor' | 'prepare-editor-existing';
   projectId?: string;
 }
 

@@ -8,7 +8,7 @@ if (existingRoot) {
   document.body.removeChild(existingRoot);
 }
 
-const root = document.createElement("div");
+const root: HTMLDivElement = document.createElement("div");
 root.id = "screenity-ui";
 document.body.appendChild(root);
 

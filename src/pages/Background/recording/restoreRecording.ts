@@ -16,15 +16,7 @@ export const checkRestore = async (sendResponse) => {
 };
 
 export const restoreRecording = async () => {
-  let editorUrl = "editorfallback.html";
-
-  // Check if Chrome version is 109 or below
-  if (navigator.userAgent.includes("Chrome/")) {
-    const version = parseInt(navigator.userAgent.match(/Chrome\/([0-9]+)/)[1]);
-    if (version > 109) {
-      editorUrl = "editor.html";
-    }
-  }
+  const editorUrl = "editorfallback.html";
 
   // Retrieve stored chunks
   const chunks = [];

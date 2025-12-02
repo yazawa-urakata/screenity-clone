@@ -16,7 +16,7 @@ require("dotenv").config(); // Fallback to .env if variables not found in .env.l
 // Entry points for the different pages
 const entryPoints = {
   background: path.join(__dirname, "src", "pages", "Background", "index.ts"),
-  contentScript: path.join(__dirname, "src", "pages", "Content", "index.jsx"),
+  contentScript: path.join(__dirname, "src", "pages", "Content", "index.tsx"),
   recorder: path.join(__dirname, "src", "pages", "Recorder", "index.tsx"),
   recorderoffscreen: path.join(
     __dirname,
@@ -29,7 +29,6 @@ const entryPoints = {
   permissions: path.join(__dirname, "src", "pages", "Permissions", "index.tsx"),
   setup: path.join(__dirname, "src", "pages", "Setup", "index.tsx"),
   playground: path.join(__dirname, "src", "pages", "Playground", "index.tsx"),
-  editor: path.join(__dirname, "src", "pages", "Editor", "index.tsx"),
   region: path.join(__dirname, "src", "pages", "Region", "index.tsx"),
   editorfallback: path.join(
     __dirname,

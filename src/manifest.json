@@ -43,11 +43,9 @@
       "resources": [
         "content.styles.css",
         "blank.mp4",
-        "editor.html",
         "assets/*",
         "setup.html",
         "worker.js",
-        "vendor/*",
         "recorder.html",
         "recorderoffscreen.html",
         "sandbox.html",
@@ -80,9 +78,7 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; media-src 'self' data: blob: *; img-src 'self' https: data: blob:"
   },
   "sandbox": {
-    "pages": [
-      "editor.html"
-    ]
+    "pages": []
   },
   "commands": {
     "start-recording": {

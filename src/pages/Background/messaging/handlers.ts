@@ -478,36 +478,6 @@ export const setupHandlers = (): void => {
       }).catch((e) => console.warn("Failed to send time-stopped to tab:", e));
     }
   });
-  registerMessage("prepare-open-editor", async (message) => {
-    if (!CLOUD_FEATURES_ENABLED) {
-      console.warn("Cloud features disabled");
-      return;
-    }
-    const msg = (message as unknown) as Record<string, unknown>;
-    const createdTab = await createTab(msg.url as string, true, true);
-    chrome.storage.local.set({ editorTab: createdTab?.id || null });
-  });
-  registerMessage("prepare-editor-existing", async (message) => {
-    if (!CLOUD_FEATURES_ENABLED) {
-      console.warn("Cloud features disabled");
-      return;
-    }
-    const msg = (message as unknown) as Record<string, unknown>;
-    let messageTab: number | null = null;
-
-    if (msg.multiMode) {
-      messageTab = (await getCurrentTab())?.id || null;
-    } else {
-      const { editorTab } = await chrome.storage.local.get(["editorTab"]);
-      messageTab = editorTab as number;
-      focusTab(editorTab as number);
-    }
-
-    sendMessageTab(messageTab as number, {
-      type: "update-project-loading",
-      multiMode: msg.multiMode,
-    });
-  });
   registerMessage("preparing-recording", async () => {
     const tab = await getCurrentTab();
     if (tab?.id) {
