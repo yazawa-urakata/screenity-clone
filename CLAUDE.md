@@ -86,7 +86,7 @@ src/
 Content Script の React Context で 180+ の状態プロパティを管理：
 
 - 録画状態（paused, recording, timer）
-- デバイス選択（camera, microphone）
+- デバイス選択（microphone, audio input）
 - UI 状態（popup position, toolbar visibility）
 - クリップ録画（clipRecording, clipSelectionActive, clipStartTime, clipEndTime）
 
@@ -228,7 +228,7 @@ await chrome.offscreen.createDocument({
 
 ## ビルド結果
 
-- **ビルドサイズ**: 5.6MB
+- **ビルドサイズ**: 5.5MB
 - **アセット数**: 136 ファイル
 
 ## 参考リソース
