@@ -43,6 +43,9 @@ export function useInstantUpload(config?: Partial<InstantUploadConfig>) {
 
         const apiBaseUrl = getWebAppUrl();
 
+        // recordingIdをvideoIdから生成（タイムスタンプベース）
+        const recordingId = `${Date.now()}`;
+
         const response = await fetch(`${apiBaseUrl}/api/s3/multipart/initiate`, {
           method: "POST",
           headers: {
@@ -50,9 +53,9 @@ export function useInstantUpload(config?: Partial<InstantUploadConfig>) {
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            fileName: `recording-${Date.now()}.webm`,
+            fileName: "video.webm",
             fileType: "video/webm",
-            uploadPath: "recordings",
+            uploadPath: `recordings/${recordingId}`,
           }),
         });
 
@@ -97,15 +100,16 @@ export function useInstantUpload(config?: Partial<InstantUploadConfig>) {
     [mergedConfig]
   );
 
-  const finalizeUpload = useCallback(async (): Promise<void> => {
+  const finalizeUpload = useCallback(async (): Promise<{ key: string; location: string } | void> => {
     if (!uploaderRef.current) return;
 
     setState("finalizing");
 
     try {
-      await uploaderRef.current.finalize();
+      const result = await uploaderRef.current.finalize();
       setState("completed");
       uploaderRef.current = null;
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       setState("error");

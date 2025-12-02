@@ -5,6 +5,9 @@ import { createMediaRecorder } from "./mediaRecorderUtils";
 import { sendRecordingError, sendStopRecording } from "./messaging";
 import { getBitrates, getResolutionForQuality } from "./recorderConfig";
 import { useInstantUpload } from "./useInstantUpload";
+import { uploadSingleFile } from "./uploadUtils";
+import { getSupabaseAuthState, getWebAppUrl } from "../../utils/supabaseClient";
+import type { ClipList } from "../../types/clip";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -308,8 +311,52 @@ const Recorder: React.FC = () => {
       if (uploaderRef.current && isFinishing.current) {
         try {
           console.log("[Recorder] onstop: Starting finalize upload...");
-          await finalizeUpload();
-          console.log("✅ Real-time upload finalized from onstop");
+          const result = await finalizeUpload();
+          console.log("✅ Real-time upload finalized from onstop", result);
+
+          // clips.json のアップロード処理
+          if (result && result.key) {
+            try {
+              // クリップリストを取得
+              const storageResult = await chrome.storage.local.get(["clips"]);
+              const clips = (storageResult.clips as ClipList) || [];
+
+              if (clips.length > 0) {
+                console.log("[Recorder] Found clips to upload:", clips.length);
+                const { isAuthenticated, accessToken } = await getSupabaseAuthState();
+
+                if (isAuthenticated && accessToken) {
+                  const uploadedS3Key = result.key;
+                  const lastSlashIndex = uploadedS3Key.lastIndexOf("/");
+                  const recordingDir = lastSlashIndex > 0 ? uploadedS3Key.slice(0, lastSlashIndex) : "recordings";
+                  const recordingId = recordingDir.split("/").pop() || "unknown";
+
+                  const clipsData = {
+                    recordingId,
+                    sourceVideoKey: uploadedS3Key,
+                    clips,
+                  };
+
+                  const clipsBlob = new Blob([JSON.stringify(clipsData)], { type: "application/json" });
+                  const apiBaseUrl = getWebAppUrl();
+
+                  await uploadSingleFile(
+                    clipsBlob,
+                    "clips.json",
+                    "application/json",
+                    recordingDir,
+                    apiBaseUrl,
+                    accessToken
+                  );
+                  console.log("✅ clips.json uploaded successfully");
+                } else {
+                  console.warn("⚠️ Cannot upload clips.json: Not authenticated");
+                }
+              }
+            } catch (clipError) {
+              console.error("❌ Failed to upload clips.json:", clipError);
+            }
+          }
 
           // アップロード完了状態を Chrome Storage に保存
           await chrome.storage.local.set({
@@ -432,7 +479,7 @@ const Recorder: React.FC = () => {
     if (recorder.current) {
       try {
         recorder.current.requestData();
-      } catch {}
+      } catch { }
       recorder.current.stop();
       console.log("[Recorder] Recording stopped, waiting for onstop event...");
 
@@ -637,7 +684,30 @@ const Recorder: React.FC = () => {
 
       helperVideoStream.current = stream;
 
-      const surface = stream.getVideoTracks()[0].getSettings().displaySurface;
+      // Get actual recording resolution from video track settings
+      const videoTrack = stream.getVideoTracks()[0];
+      const settings = videoTrack.getSettings();
+      const actualWidth = settings.width || width;
+      const actualHeight = settings.height || height;
+
+      // Save recording metadata to Chrome Storage for clip coordinate scaling
+      chrome.storage.local.set({
+        recordingVideoWidth: actualWidth,
+        recordingVideoHeight: actualHeight,
+        recordingTabWidth: window.innerWidth,
+        recordingTabHeight: window.innerHeight,
+        recordingDevicePixelRatio: window.devicePixelRatio || 1,
+      });
+
+      console.log('[Recording] Video settings saved:', {
+        actualWidth,
+        actualHeight,
+        tabWidth: window.innerWidth,
+        tabHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio || 1,
+      });
+
+      const surface = settings.displaySurface;
       chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
     }
 

@@ -633,8 +633,16 @@ const ContentState: FC<ContentStateProps> = (props) => {
       return;
     }
 
-    // 録画開始時刻を取得して、そこからの経過時間を計算
-    chrome.storage.local.get(['recordingStartTime', 'projectId'], (result) => {
+    // 録画開始時刻と録画メタデータを取得
+    chrome.storage.local.get([
+      'recordingStartTime',
+      'projectId',
+      'recordingVideoWidth',
+      'recordingVideoHeight',
+      'recordingTabWidth',
+      'recordingTabHeight',
+      'recordingDevicePixelRatio',
+    ], (result) => {
       try {
         const recordingStartTime = result.recordingStartTime as number;
         const projectId = result.projectId as string;
@@ -646,6 +654,62 @@ const ContentState: FC<ContentStateProps> = (props) => {
           clipEndTime,
           duration: clipEndTime - clipStartTime,
         });
+
+        // 録画映像の実解像度を取得
+        const recordingVideoWidth = result.recordingVideoWidth as number;
+        const recordingVideoHeight = result.recordingVideoHeight as number;
+
+        // CSS ピクセル → 録画ピクセル への座標変換
+        let scaledCrop: { x: number; y: number; width: number; height: number } | undefined;
+
+        if (currentState.clipCrop && recordingVideoWidth && recordingVideoHeight) {
+          // タブの実レンダリング解像度（物理ピクセル）
+          // 録画開始時ではなく、現在のウィンドウサイズとDPRを使用する（リサイズ対応）
+          const currentDevicePixelRatio = window.devicePixelRatio || 1;
+          const tabActualWidth = window.innerWidth * currentDevicePixelRatio;
+          const tabActualHeight = window.innerHeight * currentDevicePixelRatio;
+          // アスペクト比の計算
+          const videoAspectRatio = recordingVideoWidth / recordingVideoHeight;
+          const tabAspectRatio = tabActualWidth / tabActualHeight;
+
+          let scaleX = recordingVideoWidth / tabActualWidth;
+          let scaleY = recordingVideoHeight / tabActualHeight;
+          let xOffset = 0;
+          let yOffset = 0;
+
+          // ピラーボックス（左右に黒帯）の判定
+          // タブの方が細長い場合、動画の左右に黒帯が入る
+          if (tabAspectRatio < videoAspectRatio) {
+            // 高さを基準にスケーリングを合わせる（アスペクト比維持のためXもYと同じ倍率にする）
+            scaleX = scaleY;
+
+            // 有効なコンテンツ幅（動画内でのWebページの幅）
+            const videoContentWidth = tabActualWidth * scaleX;
+
+            // 左右の黒帯の幅をオフセットとして加算
+            xOffset = (recordingVideoWidth - videoContentWidth) / 2;
+          }
+          // レターボックス（上下に黒帯）の判定
+          // タブの方が横長（縦短）の場合、動画の上下に黒帯が入る
+          else if (tabAspectRatio > videoAspectRatio) {
+            // 幅を基準にスケーリングを合わせる
+            scaleY = scaleX;
+
+            // 有効なコンテンツ高さ
+            const videoContentHeight = tabActualHeight * scaleY;
+
+            // 上下の黒帯の高さをオフセットとして加算
+            yOffset = (recordingVideoHeight - videoContentHeight) / 2;
+          }
+
+          // CSS ピクセル → 物理ピクセル → 録画ピクセル
+          scaledCrop = {
+            x: Math.round((currentState.clipCrop.x * currentDevicePixelRatio * scaleX) + xOffset),
+            y: Math.round((currentState.clipCrop.y * currentDevicePixelRatio * scaleY) + yOffset + 3), // +3px for possible scrollbar
+            width: Math.round(currentState.clipCrop.width * currentDevicePixelRatio * scaleX),
+            height: Math.round(currentState.clipCrop.height * currentDevicePixelRatio * scaleY - 8), // -8px for possible scrollbar
+          };
+        }
 
         // バリデーション
         validateClip(
@@ -659,7 +723,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           recordingStartTime,
           clipStartTime,
           clipEndTime,
-          currentState.clipCrop || undefined,
+          scaledCrop,  // 変換後の座標を使用
           projectId
         );
 

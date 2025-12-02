@@ -223,7 +223,7 @@ export class InstantUploader {
     });
   }
 
-  public async finalize(): Promise<void> {
+  public async finalize(): Promise<{ key: string; location: string } | void> {
     if (this.finished) return;
 
     // Flush any remaining buffered data as the final part
@@ -294,6 +294,11 @@ export class InstantUploader {
       totalParts: this.parts.length,
       isComplete: true,
     });
+
+    return {
+      key: result.key,
+      location: result.location,
+    };
   }
 
   public async cancel(): Promise<void> {
