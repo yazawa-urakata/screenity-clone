@@ -44,9 +44,6 @@ const Setup: React.FC = () => {
     <div className="setupBackground">
       {!setupComplete && (
         <div className="setupContainer">
-          <div className="setupImage">
-            <img src={chrome.runtime.getURL("assets/helper/pin.gif")} />
-          </div>
           <div className="setupText">
             <div className="setupEmoji">👋</div>
             <div className="setupTitle">
@@ -55,29 +52,17 @@ const Setup: React.FC = () => {
             <div className="setupDescription">
               <div className="setupStep">
                 {chrome.i18n.getMessage("setupStep1Before")}
-                <span>
-                  <img
-                    src={chrome.runtime.getURL("assets/helper/puzzle.svg")}
-                  />
-                </span>
+                <span className="setupIcon">🧩</span>
                 {chrome.i18n.getMessage("setupStep1After")}
               </div>
               <div className="setupStep">
                 {chrome.i18n.getMessage("setupStep2Before")}
-                <span>
-                  <img src={chrome.runtime.getURL("assets/helper/pin.svg")} />
-                </span>{" "}
+                <span className="setupIcon">📌</span>{" "}
                 {chrome.i18n.getMessage("setupStep2After")}
               </div>
               <div className="setupStep">
                 {chrome.i18n.getMessage("setupStep3Before")}
-                <span>
-                  <img
-                    src={chrome.runtime.getURL(
-                      "assets/helper/mini-screenity.png"
-                    )}
-                  />
-                </span>
+                <span className="setupIcon">🎬</span>
                 {chrome.i18n.getMessage("setupStep3After")}
               </div>
             </div>
@@ -97,10 +82,6 @@ const Setup: React.FC = () => {
           </div>
         </div>
       )}
-      <img
-        className="setupLogo"
-        src={chrome.runtime.getURL("assets/logo-text.svg")}
-      />
       <style>
         {`
 				body {
@@ -110,12 +91,6 @@ const Setup: React.FC = () => {
 	padding: 0;
 	min-height: 100%;
 		background-color: #F6F7FB!important;
-		background: url('` +
-          chrome.runtime.getURL("assets/helper/pattern-svg.svg") +
-          `') repeat;
-		background-size: 62px 23.5px;
-		animation: moveBackground 138s linear infinite;
-		transform: rotate(0deg);
 				}
 
 				.setupInfo {
@@ -125,26 +100,6 @@ const Setup: React.FC = () => {
 					text-decoration: none!important;
 					color: #4C7DE2;
 				}
-
-				@keyframes moveBackground {
-					0% {
-						background-position: 0 0;
-					}
-					100% {
-						background-position: 100% 0;
-					}
-				}
-
-
-				.setupLogo {
-					position: absolute;
-					bottom: 30px;
-					left: 0px;
-					right: 0px;
-					margin: auto;
-					width: 120px;
-				}
-
 
 				.setupBackground {
 					height: 100vh;
@@ -165,29 +120,16 @@ const Setup: React.FC = () => {
 					display: flex;
 					justify-content: center;
 					align-items: center;
-					width: 60%;
+					width: 40%;
 					height: fit-content;
 					background-color: #fff;
 					border-radius: 30px;
 					padding: 50px 50px;
-					gap: 80px;
 					font-family: 'Satoshi-Medium', sans-serif;
 				}
 
-				.setupImage {
-					width: 70%;
-					display: flex;
-					justify-content: center;
-					align-items: center;
-				}
-
-				.setupImage img {
-					width: 100%;
-					border-radius: 30px;
-				}
-
 				.setupText {
-					width: 50%;
+					width: 100%;
 					display: flex;
 					flex-direction: column;
 					justify-content: left;
@@ -224,26 +166,20 @@ const Setup: React.FC = () => {
 					vertical-align: middle;
 				}
 
-				.setupStep span {
-
+				.setupIcon {
 					align-items: center;
 					justify-content: center;
 					text-align: center;
-					width: 20px;
-					height: 20px;
-					padding: 2px;
+					width: 24px;
+					height: 24px;
+					padding: 4px;
 					border-radius: 30px;
 					display: inline-flex;
 					vertical-align: middle;
 					margin-left: 3px;
 					margin-right: 3px;
 					background-color: #F4F2F2;
-				}
-
-				.setupStep img {
-					width: 100%;
-					text-align: center;
-					display: block;
+					font-size: 14px;
 				}
 
 				.center {
@@ -258,13 +194,7 @@ const Setup: React.FC = () => {
 
 				@media only screen and (max-width: 800px) {
 					.setupContainer {
-						flex-direction: column;
-						gap: 40px;
-
-					}
-
-					.setupText, .setupImage {
-						width: 100%!important;
+						width: 60%!important;
 					}
 				}
 

@@ -400,40 +400,10 @@ const TrashIcon: FC<SVGIconProps> = (props) => {
   );
 };
 
-const VideoOffIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "camera-icons/video-off.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
-
 const CameraCloseIcon: FC<SVGIconProps> = (props) => {
   return (
     <ReactSVG
       src={URL + "camera-icons/close.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
-
-const CameraMoreIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "camera-icons/more.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
-
-const CameraResizeIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "camera-icons/camera-resize.svg"}
       width={props.width}
       height={props.height}
     />
@@ -483,16 +453,6 @@ const SpotlightCursorIcon: FC<SVGIconProps> = (props) => {
   return (
     <ReactSVG
       src={URL + "tool-icons/spotlight-cursor-icon.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
-
-const Pip: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "camera-icons/pip.svg"}
       width={props.width}
       height={props.height}
     />
@@ -678,16 +638,12 @@ export {
   CircleFilledIcon,
   TriangleFilledIcon,
   TrashIcon,
-  VideoOffIcon,
   CameraCloseIcon,
-  CameraMoreIcon,
-  CameraResizeIcon,
   CameraIcon,
   BlurIcon,
   AlertIcon,
   TimeIcon,
   SpotlightCursorIcon,
-  Pip,
   CloseIconPopup,
   GrabIconPopup,
   OnboardingArrow,
