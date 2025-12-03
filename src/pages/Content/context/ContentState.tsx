@@ -5,11 +5,12 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 
 import { updateFromStorage } from "./utils/updateFromStorage";
 import type { ClipMetadata, ClipList } from "../../../types/clip";
-import { createClipMetadata, validateClip, MAX_CLIPS } from "../../../utils/clipUtils";
+import { createClipMetadata, validateClip, MAX_CLIPS, MAX_CLIP_DURATION_MS } from "../../../utils/clipUtils";
 import { ClipValidationError } from "../../../types/clip";
 
 import { setupHandlers } from "./messaging/handlers";
@@ -231,6 +232,10 @@ interface RestoreResponse {
 
 const ContentState: FC<ContentStateProps> = (props) => {
   const [timer, setTimerInternal] = useState<number>(0);
+
+  // ★追加★ クリップ録画60秒自動終了用タイマー
+  const clipAutoStopTimerRef = useRef<number | null>(null);
+
   const CLOUD_FEATURES_ENABLED =
     process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
   setTimer = setTimerInternal;
@@ -629,26 +634,52 @@ const ContentState: FC<ContentStateProps> = (props) => {
       'recordingTabWidth',
       'recordingTabHeight',
       'recordingDevicePixelRatio',
+      'clipStartTime',  // 追加: Chrome Storageから取得★
+      'clipCrop',       // 追加: Chrome Storageから取得★
     ], (result) => {
       try {
         const recordingStartTime = result.recordingStartTime as number;
-        const clipStartTime = currentState.clipStartTime!;
-        const clipEndTime = Date.now() - recordingStartTime;
+
+        // 修正: Chrome Storageから取得（より確実）、取得できない場合はメモリ上の状態を使用★
+        const clipStartTime = (result.clipStartTime as number) || currentState.clipStartTime;
+        let clipEndTime = Date.now() - recordingStartTime;
+
+        // ★重要★ 60秒自動終了の場合、タイマーの遅延で60秒を超える可能性があるため、
+        // clipEndTime を最大60秒に制限する
+        if (clipEndTime - clipStartTime > MAX_CLIP_DURATION_MS) {
+          console.warn('[ClipRecording] ⚠️ クリップ長が60秒を超えています。60秒に制限します。', {
+            originalDuration: clipEndTime - clipStartTime,
+            clipStartTime,
+            originalClipEndTime: clipEndTime,
+          });
+          clipEndTime = clipStartTime + MAX_CLIP_DURATION_MS;
+        }
 
         console.log('[ClipRecording] クリップ録画を終了', {
           clipStartTime,
+          clipStartTimeFromStorage: result.clipStartTime,
+          clipStartTimeFromMemory: currentState.clipStartTime,
           clipEndTime,
           duration: clipEndTime - clipStartTime,
         });
+
+        // 追加: clipStartTime のバリデーション★
+        if (!clipStartTime || clipStartTime < 0) {
+          console.error('[ClipRecording] clipStartTime が無効です:', clipStartTime);
+          throw new Error('クリップの開始時刻が取得できませんでした');
+        }
 
         // 録画映像の実解像度を取得
         const recordingVideoWidth = result.recordingVideoWidth as number;
         const recordingVideoHeight = result.recordingVideoHeight as number;
 
+        // 修正: Chrome Storageから取得したclipCropを優先使用★
+        const clipCropData = (result.clipCrop as { x: number; y: number; width: number; height: number } | undefined) || currentState.clipCrop;
+
         // CSS ピクセル → 録画ピクセル への座標変換
         let scaledCrop: { x: number; y: number; width: number; height: number } | undefined;
 
-        if (currentState.clipCrop && recordingVideoWidth && recordingVideoHeight) {
+        if (clipCropData && recordingVideoWidth && recordingVideoHeight) {
           // タブの実レンダリング解像度（物理ピクセル）
           // 録画開始時ではなく、現在のウィンドウサイズとDPRを使用する（リサイズ対応）
           const currentDevicePixelRatio = window.devicePixelRatio || 1;
@@ -690,10 +721,10 @@ const ContentState: FC<ContentStateProps> = (props) => {
 
           // CSS ピクセル → 物理ピクセル → 録画ピクセル
           scaledCrop = {
-            x: Math.round((currentState.clipCrop.x * currentDevicePixelRatio * scaleX) + xOffset),
-            y: Math.round((currentState.clipCrop.y * currentDevicePixelRatio * scaleY) + yOffset + 3), // +3px for possible scrollbar
-            width: Math.round(currentState.clipCrop.width * currentDevicePixelRatio * scaleX),
-            height: Math.round(currentState.clipCrop.height * currentDevicePixelRatio * scaleY - 8), // -8px for possible scrollbar
+            x: Math.round((clipCropData.x * currentDevicePixelRatio * scaleX) + xOffset),
+            y: Math.round((clipCropData.y * currentDevicePixelRatio * scaleY) + yOffset + 3), // +3px for possible scrollbar
+            width: Math.round(clipCropData.width * currentDevicePixelRatio * scaleX),
+            height: Math.round((clipCropData.height * currentDevicePixelRatio * scaleY) - 8), // -8px for possible scrollbar
           };
         }
 
@@ -720,10 +751,23 @@ const ContentState: FC<ContentStateProps> = (props) => {
               clipData,
             },
           },
-          () => {
+          (response) => {
             // 応答を受け取るためのコールバック（エラー抑制）
             if (chrome.runtime.lastError) {
-              console.warn('[ClipRecording] メッセージ送信エラー:', chrome.runtime.lastError.message);
+              console.error('[ClipRecording] ❌ メッセージ送信エラー:', chrome.runtime.lastError.message);
+              console.error('[ClipRecording] クリップメタデータの保存に失敗しました。Background Scriptが応答していない可能性があります。');
+              return;
+            }
+
+            // 応答の内容を確認
+            if (response && response.success) {
+              console.log('[ClipRecording] ✅ クリップメタデータが正常にChrome Storageに保存されました', {
+                clipId: clipData.id,
+                response,
+              });
+              console.log('[ClipRecording] 📝 重要: clips.jsonのS3アップロードは画面録画全体を停止したときに実行されます');
+            } else {
+              console.error('[ClipRecording] ❌ クリップメタデータの保存に失敗しました:', response);
             }
           }
         );
@@ -1639,6 +1683,70 @@ const ContentState: FC<ContentStateProps> = (props) => {
   useEffect(() => {
     updateFromStorage();
   }, []);
+
+  // クリップ録画60秒自動終了機能
+  useEffect(() => {
+    // クリップ録画中かつ開始時刻が記録されている場合のみ動作
+    if (contentState.clipRecording && contentState.clipStartTime !== null) {
+      console.log('[ClipAutoStop] クリップ録画60秒自動終了タイマーを開始', {
+        clipStartTime: contentState.clipStartTime,
+        targetEndTime: contentState.clipStartTime + 60000,
+      });
+
+      // 既存のタイマーをクリア（念のため）
+      if (clipAutoStopTimerRef.current !== null) {
+        console.warn('[ClipAutoStop] 既存タイマーを検出 - クリアして再セット');
+        clearTimeout(clipAutoStopTimerRef.current);
+        clipAutoStopTimerRef.current = null;
+      }
+
+      // 60秒後に自動終了
+      const AUTO_STOP_DURATION_MS = 60 * 1000; // 60秒 = 60,000ミリ秒
+
+      clipAutoStopTimerRef.current = window.setTimeout(() => {
+        console.log('[ClipAutoStop] ⏰ 60秒経過 - クリップ録画を自動終了します', {
+          clipRecording: contentStateRef.current?.clipRecording,
+          clipStartTime: contentStateRef.current?.clipStartTime,
+          clipCrop: contentStateRef.current?.clipCrop,
+        });
+
+        // contentStateRef.current で最新の状態を取得
+        if (contentStateRef.current?.clipRecording) {
+          // 既存の endClipRecording() をそのまま呼び出す
+          console.log('[ClipAutoStop] 📤 endClipRecording() を呼び出します');
+          try {
+            contentStateRef.current.endClipRecording();
+            console.log('[ClipAutoStop] ✅ endClipRecording() の呼び出しが完了しました');
+            console.log('[ClipAutoStop] 📝 重要: clips.jsonのS3アップロードは画面録画全体を停止したときに実行されます');
+          } catch (error) {
+            console.error('[ClipAutoStop] ❌ endClipRecording()でエラーが発生しました:', error);
+          }
+        } else {
+          console.warn('[ClipAutoStop] ⚠️ クリップ録画は既に終了しています - メタデータを保存できません');
+        }
+
+        clipAutoStopTimerRef.current = null;
+      }, AUTO_STOP_DURATION_MS);
+
+    } else {
+      // クリップ録画が終了した場合、タイマーをクリア
+      if (clipAutoStopTimerRef.current !== null) {
+        console.log('[ClipAutoStop] クリップ録画終了 - タイマーをクリア');
+        clearTimeout(clipAutoStopTimerRef.current);
+        clipAutoStopTimerRef.current = null;
+      }
+    }
+
+    // クリーンアップ関数: コンポーネントアンマウント時やdeps変更時
+    return () => {
+      if (clipAutoStopTimerRef.current !== null) {
+        console.log('[ClipAutoStop] useEffect クリーンアップ - タイマーをクリア');
+        clearTimeout(clipAutoStopTimerRef.current);
+        clipAutoStopTimerRef.current = null;
+      }
+    };
+  }, [contentState.clipRecording, contentState.clipStartTime]);
+  // deps: clipRecording または clipStartTime が変化したら再実行
 
   return (
     // this is the provider providing state

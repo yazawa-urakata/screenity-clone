@@ -315,15 +315,27 @@ const Recorder: React.FC = () => {
           console.log("✅ Real-time upload finalized from onstop", result);
 
           // clips.json のアップロード処理
+          console.log("[Recorder] 📦 録画停止 - clips.jsonアップロード処理を開始", {
+            result,
+            hasKey: result && result.key,
+          });
+
           if (result && result.key) {
             try {
               // クリップリストを取得
+              console.log("[Recorder] 🔍 Chrome Storageからclipsを取得中...");
               const storageResult = await chrome.storage.local.get(["clips"]);
               const clips = (storageResult.clips as ClipList) || [];
 
+              console.log("[Recorder] 📋 Chrome Storageから取得したclips:", {
+                clipsLength: clips.length,
+                clips: clips.map(c => ({ id: c.id, startTime: c.startTime, endTime: c.endTime, duration: c.duration })),
+              });
+
               if (clips.length > 0) {
-                console.log("[Recorder] Found clips to upload:", clips.length);
+                console.log("[Recorder] ✅ Found clips to upload:", clips.length);
                 const { isAuthenticated, accessToken } = await getSupabaseAuthState();
+                console.log("[Recorder] 🔐 認証状態:", { isAuthenticated, hasToken: !!accessToken });
 
                 if (isAuthenticated && accessToken) {
                   const uploadedS3Key = result.key;
@@ -351,11 +363,18 @@ const Recorder: React.FC = () => {
                   console.log("✅ clips.json uploaded successfully");
                 } else {
                   console.warn("⚠️ Cannot upload clips.json: Not authenticated");
+                  console.warn("⚠️ Supabase認証が失敗しました。Web Applicationにログインしてください。");
                 }
+              } else {
+                console.warn("[Recorder] ⚠️ Chrome Storageにclipsが保存されていません");
+                console.warn("[Recorder] クリップ録画を終了していない可能性があります");
               }
             } catch (clipError) {
               console.error("❌ Failed to upload clips.json:", clipError);
             }
+          } else {
+            console.warn("[Recorder] ⚠️ 録画ファイルのS3キーが取得できませんでした");
+            console.warn("[Recorder] InstantUpload（リアルタイムアップロード）が失敗している可能性があります");
           }
 
           // アップロード完了状態を Chrome Storage に保存
@@ -603,69 +622,69 @@ const Recorder: React.FC = () => {
 
     // Save the helper streams
     const constraints = {
-        audio: {
-          mandatory: {
-            chromeMediaSource: isTab.current ? "tab" : "desktop",
-            chromeMediaSourceId: id,
-          },
+      audio: {
+        mandatory: {
+          chromeMediaSource: isTab.current ? "tab" : "desktop",
+          chromeMediaSourceId: id,
         },
-        video: {
-          mandatory: {
-            chromeMediaSource: isTab.current ? "tab" : "desktop",
-            chromeMediaSourceId: id,
-            maxWidth: width,
-            maxHeight: height,
-            maxFrameRate: fps,
-          },
+      },
+      video: {
+        mandatory: {
+          chromeMediaSource: isTab.current ? "tab" : "desktop",
+          chromeMediaSourceId: id,
+          maxWidth: width,
+          maxHeight: height,
+          maxFrameRate: fps,
         },
-      };
+      },
+    };
 
-      let stream: MediaStream;
+    let stream: MediaStream;
 
-      try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints as MediaStreamConstraints);
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints as MediaStreamConstraints);
 
-        // Check if the stream actually has data in it
-        if (stream.getVideoTracks().length === 0) {
-          sendRecordingError("No video tracks available");
-          return;
-        }
-      } catch (err) {
-        sendRecordingError("Failed to get user media: " + JSON.stringify(err));
+      // Check if the stream actually has data in it
+      if (stream.getVideoTracks().length === 0) {
+        sendRecordingError("No video tracks available");
         return;
       }
+    } catch (err) {
+      sendRecordingError("Failed to get user media: " + JSON.stringify(err));
+      return;
+    }
 
-      if (isTab.current) {
-        // Continue to play the captured audio to the user.
-        const output = new AudioContext();
-        const source = output.createMediaStreamSource(stream);
-        source.connect(output.destination);
-      }
+    if (isTab.current) {
+      // Continue to play the captured audio to the user.
+      const output = new AudioContext();
+      const source = output.createMediaStreamSource(stream);
+      source.connect(output.destination);
+    }
 
-      helperVideoStream.current = stream;
+    helperVideoStream.current = stream;
 
-      // Get actual recording resolution from video track settings
-      const videoTrack = stream.getVideoTracks()[0];
-      const settings = videoTrack.getSettings();
-      const actualWidth = settings.width || width;
-      const actualHeight = settings.height || height;
+    // Get actual recording resolution from video track settings
+    const videoTrack = stream.getVideoTracks()[0];
+    const settings = videoTrack.getSettings();
+    const actualWidth = settings.width || width;
+    const actualHeight = settings.height || height;
 
-      // Save recording metadata to Chrome Storage for clip coordinate scaling
-      chrome.storage.local.set({
-        recordingVideoWidth: actualWidth,
-        recordingVideoHeight: actualHeight,
-        recordingTabWidth: window.innerWidth,
-        recordingTabHeight: window.innerHeight,
-        recordingDevicePixelRatio: window.devicePixelRatio || 1,
-      });
+    // Save recording metadata to Chrome Storage for clip coordinate scaling
+    chrome.storage.local.set({
+      recordingVideoWidth: actualWidth,
+      recordingVideoHeight: actualHeight,
+      recordingTabWidth: window.innerWidth,
+      recordingTabHeight: window.innerHeight,
+      recordingDevicePixelRatio: window.devicePixelRatio || 1,
+    });
 
-      console.log('[Recording] Video settings saved:', {
-        actualWidth,
-        actualHeight,
-        tabWidth: window.innerWidth,
-        tabHeight: window.innerHeight,
-        devicePixelRatio: window.devicePixelRatio || 1,
-      });
+    console.log('[Recording] Video settings saved:', {
+      actualWidth,
+      actualHeight,
+      tabWidth: window.innerWidth,
+      tabHeight: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio || 1,
+    });
 
     const surface = settings.displaySurface;
     chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
