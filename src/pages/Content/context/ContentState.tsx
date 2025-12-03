@@ -624,7 +624,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     // 録画開始時刻と録画メタデータを取得
     chrome.storage.local.get([
       'recordingStartTime',
-      'projectId',
       'recordingVideoWidth',
       'recordingVideoHeight',
       'recordingTabWidth',
@@ -633,7 +632,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     ], (result) => {
       try {
         const recordingStartTime = result.recordingStartTime as number;
-        const projectId = result.projectId as string;
         const clipStartTime = currentState.clipStartTime!;
         const clipEndTime = Date.now() - recordingStartTime;
 
@@ -711,8 +709,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           recordingStartTime,
           clipStartTime,
           clipEndTime,
-          scaledCrop,  // 変換後の座標を使用
-          projectId
+          scaledCrop  // 変換後の座標を使用
         );
 
         // Background に保存リクエストを送信

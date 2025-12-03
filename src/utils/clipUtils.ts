@@ -22,15 +22,13 @@ export const MAX_CLIP_DURATION_MS = 60 * 1000;
  * @param clipStartTime クリップ開始時刻（ミリ秒）
  * @param clipEndTime クリップ終了時刻（ミリ秒）
  * @param crop クロップ領域（オプション）
- * @param recordingId 録画セッションID（オプション）
  * @returns クリップメタデータ
  */
 export function createClipMetadata(
   recordingStartTime: number,
   clipStartTime: number,
   clipEndTime: number,
-  crop?: ClipCropRegion,
-  recordingId?: string
+  crop?: ClipCropRegion
 ): ClipMetadata {
   const duration = clipEndTime - clipStartTime;
   const id = crypto.randomUUID();
@@ -42,7 +40,6 @@ export function createClipMetadata(
     duration,
     crop,
     createdAt: Date.now(),
-    recordingId,
   };
 }
 

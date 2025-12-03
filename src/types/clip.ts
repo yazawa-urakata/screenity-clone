@@ -28,8 +28,6 @@ export interface ClipMetadata {
   crop?: ClipCropRegion;
   /** クリップ作成日時（ミリ秒） */
   createdAt: number;
-  /** 録画セッションID（オプション） */
-  recordingId?: string;
 }
 
 /**
