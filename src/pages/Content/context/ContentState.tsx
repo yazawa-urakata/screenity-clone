@@ -392,6 +392,13 @@ const ContentState: FC<ContentStateProps> = (props) => {
   }, []);
 
   const stopRecording = useCallback((): void => {
+    // クリップ録画中のガード - クリップ録画中は全体の録画を停止できない
+    const currentState = contentStateRef.current;
+    if (currentState?.clipRecording) {
+      console.warn('[Recording] ⚠️ クリップ録画中は全体の録画を停止できません。先にクリップ録画を終了してください。');
+      return;
+    }
+
     chrome.runtime.sendMessage({ type: "clear-recording-alarm" });
     chrome.storage.local.set({
       recording: false,

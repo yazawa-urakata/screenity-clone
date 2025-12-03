@@ -273,7 +273,7 @@ const ToolbarWrap: React.FC = () => {
             <ToolTrigger
               type="button"
               content={chrome.i18n.getMessage("finishRecordingTooltip")}
-              disabled={!contentState.recording}
+              disabled={!contentState.recording || contentState.clipRecording}
               onClick={() => {
                 contentState.stopRecording();
               }}
