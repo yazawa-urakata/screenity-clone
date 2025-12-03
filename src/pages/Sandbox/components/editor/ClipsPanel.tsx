@@ -3,13 +3,6 @@ import { formatClipTime } from "../../../../utils/clipUtils";
 import styles from "../../styles/edit/_ClipsPanel.module.scss";
 import { ContentStateContext } from "../../context/ContentState";
 
-// Icons
-import { ReactSVG } from "react-svg";
-
-const URL = "/assets/";
-
-const ClipIcon = URL + "tool-icons/clip-icon.svg";
-
 const ClipsPanel: React.FC = () => {
   const contextValue = useContext(ContentStateContext);
   console.log("contextValue", contextValue);
@@ -30,7 +23,6 @@ const ClipsPanel: React.FC = () => {
   return (
     <div className={styles.clipsPanel}>
       <div className={styles.clipsPanelHeader}>
-        <ReactSVG src={ClipIcon} className={styles.clipIcon} />
         <h3 className={styles.clipsPanelTitle}>
           録画クリップ ({clips.length})
         </h3>
