@@ -1,5 +1,6 @@
 import { registerMessage } from "../../../messaging/messageRouter";
 import type {
+  RecordingErrorMessage,
   SaveClipMessage,
   SupabaseAuthCheckMessage,
   SupabaseLoginRequestMessage,
@@ -132,7 +133,7 @@ export const setupHandlers = (): void => {
     setMicActiveTab(message as unknown as Record<string, unknown>),
   );
   registerMessage("recording-error", (message) =>
-    handleRecordingError(message as unknown as Record<string, unknown>),
+    handleRecordingError(message as unknown as RecordingErrorMessage),
   );
   registerMessage("on-get-permissions", (message) =>
     handleOnGetPermissions(message as unknown as Record<string, unknown>),

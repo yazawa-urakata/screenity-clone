@@ -207,6 +207,7 @@ export interface VideoReadyMessage extends BaseMessage {
 export interface RecordingErrorMessage extends BaseMessage {
   type: "recording-error";
   error?: string;
+  why?: string;
 }
 
 // ストリーミング関連メッセージ

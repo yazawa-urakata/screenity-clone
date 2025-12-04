@@ -1,3 +1,4 @@
+import type { RecordingErrorMessage } from "../../../types/message";
 import { addAlarmListener } from "../alarms/addAlarmListener";
 import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocuments";
 import {
@@ -64,7 +65,9 @@ export const handlePip = async (started = false): Promise<void> => {
   }
 };
 
-export const handleOnGetPermissions = async (request) => {
+export const handleOnGetPermissions = async (
+  request: Record<string, unknown>,
+) => {
   // Send a message to (actual) active tab
   const activeTab = await getCurrentTab();
   if (activeTab) {
@@ -94,7 +97,9 @@ export const handleRecordingComplete = async () => {
   }
 };
 
-export const handleRecordingError = async (request: any) => {
+export const handleRecordingError = async (
+  request: RecordingErrorMessage,
+) => {
   const { activeTab } = await chrome.storage.local.get(["activeTab"]);
 
   sendMessageRecord({ type: "recording-error" }).then(() => {
@@ -121,6 +126,7 @@ export const handleGetStreamingData = async () => {
 };
 
 export const videoReady = async () => {
-  // stopRecording() は handleStopRecordingTab() で既に呼ばれているため、
-  // ここでは何もしない（重複したタブ作成を防ぐ）
+  // すべてのアップロード処理（マルチパート + clips.json）が完了した時点で
+  // video-ready メッセージが送信されるため、ここで recorder.html タブを閉じる
+  await handleRecordingComplete();
 };
