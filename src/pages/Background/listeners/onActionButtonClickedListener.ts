@@ -1,9 +1,6 @@
-import { sendMessageTab, getCurrentTab } from "../tabManagement";
 import { sendMessageRecord } from "../recording/sendMessageRecord";
 import { stopRecording } from "../recording/stopRecording";
-
-const CLOUD_FEATURES_ENABLED =
-  process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
+import { getCurrentTab, sendMessageTab } from "../tabManagement";
 
 // Utility to handle tab messaging logic
 const handleTabMessaging = async (tab: chrome.tabs.Tab): Promise<void> => {
@@ -13,13 +10,20 @@ const handleTabMessaging = async (tab: chrome.tabs.Tab): Promise<void> => {
     const targetTab = await chrome.tabs.get(activeTab as number);
 
     if (targetTab) {
-      sendMessageTab(activeTab as number, { type: "stop-recording-tab" }).catch((error) => {
-        console.log("Could not send stop-recording message to active tab:", error);
-      });
+      sendMessageTab(activeTab as number, { type: "stop-recording-tab" }).catch(
+        (error) => {
+          console.log(
+            "Could not send stop-recording message to active tab:",
+            error,
+          );
+        },
+      );
     } else {
-      sendMessageTab(tab.id as number, { type: "stop-recording-tab" }).catch((error) => {
-        console.log("Could not send stop-recording message to tab:", error);
-      });
+      sendMessageTab(tab.id as number, { type: "stop-recording-tab" }).catch(
+        (error) => {
+          console.log("Could not send stop-recording message to tab:", error);
+        },
+      );
       chrome.storage.local.set({ activeTab: tab.id });
     }
   } catch (error) {
@@ -30,7 +34,7 @@ const handleTabMessaging = async (tab: chrome.tabs.Tab): Promise<void> => {
 // Utility to open Playground or inject popup
 const openPlaygroundOrPopup = async (tab: chrome.tabs.Tab): Promise<void> => {
   const editorUrlPattern =
-    /https?:\/\/(app\.screenity\.io|localhost:3000)\/editor\/([^\/]+)(\/edit)?\/?/;
+    /https?:\/\/(app\.screenity\.io|localhost:3000)\/editor\/([^/]+)(\/edit)?\/?/;
 
   if (tab.url && editorUrlPattern.test(tab.url)) {
     await chrome.storage.local.set({ editorTab: tab.id });
@@ -60,9 +64,11 @@ const openPlaygroundOrPopup = async (tab: chrome.tabs.Tab): Promise<void> => {
     tab.url?.includes("/playground.html") || tab.url?.includes("/setup.html");
 
   if ((!isForbidden || isPlaygroundOrSetup) && navigator.onLine) {
-    sendMessageTab(tab.id as number, { type: "toggle-popup" }).catch((error) => {
-      console.log("Could not send message to tab:", error);
-    });
+    sendMessageTab(tab.id as number, { type: "toggle-popup" }).catch(
+      (error) => {
+        console.log("Could not send message to tab:", error);
+      },
+    );
     chrome.storage.local.set({ activeTab: tab.id });
   } else {
     const newTab = await chrome.tabs.create({
@@ -74,14 +80,16 @@ const openPlaygroundOrPopup = async (tab: chrome.tabs.Tab): Promise<void> => {
     const onUpdated = (
       tabId: number,
       changeInfo,
-      updatedTab: chrome.tabs.Tab
+      updatedTab: chrome.tabs.Tab,
     ): void => {
       if (updatedTab.id === newTab.id && changeInfo.status === "complete") {
         chrome.tabs.onUpdated.removeListener(onUpdated);
         setTimeout(() => {
-          sendMessageTab(newTab.id as number, { type: "toggle-popup" }).catch((error) => {
-            console.log("Could not send message to new tab:", error);
-          });
+          sendMessageTab(newTab.id as number, { type: "toggle-popup" }).catch(
+            (error) => {
+              console.log("Could not send message to new tab:", error);
+            },
+          );
         }, 500);
       }
     };
@@ -113,7 +121,9 @@ export const onActionButtonClickedListener = (): void => {
       if (firstTime && tab.url?.includes(chrome.runtime.getURL("setup.html"))) {
         chrome.storage.local.set({ firstTime: false });
         const activeTab = await getCurrentTab();
-        sendMessageTab(activeTab.id as number, { type: "setup-complete" }).catch((error) => {
+        sendMessageTab(activeTab.id as number, {
+          type: "setup-complete",
+        }).catch((error) => {
           console.log("Could not send setup-complete message:", error);
         });
       }

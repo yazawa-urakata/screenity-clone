@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState, useRef, useMemo } from "react";
 import Plyr from "plyr-react";
+import type React from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import "../../styles/plyr.css";
 import { ContentStateContext } from "../../context/ContentState";
-
+import ClipsPanel from "../editor/ClipsPanel";
 // Components
 import Title from "./Title";
-import ClipsPanel from "../editor/ClipsPanel";
 
 interface PlyrSource {
   type: string;
@@ -31,7 +31,7 @@ interface PlyrInstance {
   };
 }
 
-interface VideoPlayerProps {}
+type VideoPlayerProps = {};
 
 const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
   const contextValue = useContext(ContentStateContext);
@@ -87,7 +87,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
         global: true,
       },
     }),
-    []
+    [],
   );
 
   /*
@@ -142,20 +142,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
         URL.revokeObjectURL(objectURL);
       };
     }
-  }, [
-    contentState.webm,
-    contentState.blob,
-    contentState.hasBeenEdited,
-  ]);
+  }, [contentState.webm, contentState.blob, contentState.hasBeenEdited]);
 
   // Use a mutation observer to check if .plyr--video is added to the DOM
   useEffect(() => {
     if (contentStateRef.current.mp4ready || contentStateRef.current.blob)
       return;
-    const config: MutationObserverInit = { attributes: true, childList: true, subtree: true };
+    const config: MutationObserverInit = {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    };
 
-    const callback = function (mutationsList: MutationRecord[], observer: MutationObserver): void {
-      for (let mutation of mutationsList) {
+    const callback = (
+      mutationsList: MutationRecord[],
+      observer: MutationObserver,
+    ): void => {
+      for (const mutation of mutationsList) {
         if (
           document.querySelector(".plyr--video") &&
           !contentStateRef.current.mp4ready &&

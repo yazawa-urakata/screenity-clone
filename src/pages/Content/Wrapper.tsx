@@ -1,26 +1,26 @@
-import React, { useContext, useRef, useEffect, CSSProperties } from "react";
-
-import PopupContainer from "./popup/PopupContainer";
-import Toolbar from "./toolbar/Toolbar";
-import Countdown from "./countdown/Countdown";
-import Modal from "./modal/Modal";
-import Warning from "./warning/Warning";
-
-import Region from "./region/Region";
-
-// Using ShadowDOM
-import root from "react-shadow";
-
 // Import styles raw to add into the ShadowDOM
 import styles from "!raw-loader!./styles/app.css";
-
-import ZoomContainer from "./utils/ZoomContainer";
+import React, {
+  type CSSProperties,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
+// Using ShadowDOM
+import root from "react-shadow";
+import {
+  type ContentStateType,
+  contentStateContext,
+} from "./context/ContentState";
+import Countdown from "./countdown/Countdown";
+import { startClickTracking } from "./cursor/trackClicks";
+import Modal from "./modal/Modal";
+import PopupContainer from "./popup/PopupContainer";
+import Region from "./region/Region";
+import Toolbar from "./toolbar/Toolbar";
 import BlurTool from "./utils/BlurTool";
 import CursorModes from "./utils/CursorModes";
-
-import { contentStateContext, ContentStateType } from "./context/ContentState";
-
-import { startClickTracking } from "./cursor/trackClicks";
+import Warning from "./warning/Warning";
 
 /*
  * RecordingLoader コンポーネントを削除
@@ -80,7 +80,7 @@ const Wrapper: React.FC = () => {
       {
         type: "screenity-get-permissions",
       },
-      "*"
+      "*",
     );
 
     setContentState((prevContentState) => ({
@@ -104,7 +104,7 @@ const Wrapper: React.FC = () => {
         contentState.regionHeight,
         contentState.regionX,
         contentState.regionY,
-        contentStateRef
+        contentStateRef,
       );
     }
 
@@ -127,13 +127,11 @@ const Wrapper: React.FC = () => {
     pointerEvents: "all",
     position: "fixed",
     background:
-      window.location.href.indexOf(
-        chrome.runtime.getURL("setup.html")
-      ) === -1 &&
-        window.location.href.indexOf(
-          chrome.runtime.getURL("playground.html")
-        ) === -1 &&
-        !contentState.pendingRecording
+      window.location.href.indexOf(chrome.runtime.getURL("setup.html")) ===
+        -1 &&
+      window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
+        -1 &&
+      !contentState.pendingRecording
         ? "rgba(0,0,0,0.15)"
         : "rgba(0,0,0,0)",
     top: 0,
@@ -142,12 +140,10 @@ const Wrapper: React.FC = () => {
 
   const handleOverlayClick = (): void => {
     if (
-      window.location.href.indexOf(
-        chrome.runtime.getURL("setup.html")
-      ) === -1 &&
-      window.location.href.indexOf(
-        chrome.runtime.getURL("playground.html")
-      ) === -1 &&
+      window.location.href.indexOf(chrome.runtime.getURL("setup.html")) ===
+        -1 &&
+      window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
+        -1 &&
       !contentState.pendingRecording &&
       !contentState.customRegion
     ) {
@@ -195,17 +191,13 @@ const Wrapper: React.FC = () => {
         ></iframe>
       )}
 
-      {contentState.zoomEnabled && <ZoomContainer />}
       <BlurTool />
       {contentState.showExtension || contentState.recording ? (
         <div>
           {!contentState.recording &&
             !contentState.drawingMode &&
             !contentState.blurMode && (
-              <div
-                style={overlayStyle}
-                onClick={handleOverlayClick}
-              ></div>
+              <div style={overlayStyle} onClick={handleOverlayClick}></div>
             )}
           <CursorModes />
           <root.div
@@ -217,7 +209,7 @@ const Wrapper: React.FC = () => {
             <div
               className="container"
               style={{
-                pointerEvents: "auto" // UI要素を常に操作可能にする（個々の要素で細かく制御）
+                pointerEvents: "auto", // UI要素を常に操作可能にする（個々の要素で細かく制御）
               }}
             >
               <Warning />

@@ -1,14 +1,18 @@
-import { MessageType, MessageHandler, BaseMessage } from '../types/message';
+import type {
+  BaseMessage,
+  MessageHandler,
+  MessageType,
+} from "../types/message";
 
 const handlers: Record<string, MessageHandler> = {};
 
 export const registerMessage = (
   type: MessageType,
-  handler: MessageHandler
+  handler: MessageHandler,
 ): void => {
   if (handlers[type]) {
     console.warn(
-      `⚠️ Handler for ${type} already exists in this context. Skipping.`
+      `⚠️ Handler for ${type} already exists in this context. Skipping.`,
     );
     return;
   }
@@ -18,7 +22,7 @@ export const registerMessage = (
 const messageDispatcher = (
   message: BaseMessage,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: any) => void
+  sendResponse: (response?: any) => void,
 ): boolean | void => {
   const handler = handlers[message.type];
 
@@ -50,13 +54,16 @@ export const messageRouter = (): void => {
     (
       message: BaseMessage,
       sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: any) => void
+      sendResponse: (response?: any) => void,
     ) => {
       const result = messageDispatcher(message, sender, sendResponse);
 
-      if (result === true || (result && typeof result === 'object' && 'then' in result)) {
+      if (
+        result === true ||
+        (result && typeof result === "object" && "then" in result)
+      ) {
         return true;
       }
-    }
+    },
   );
 };

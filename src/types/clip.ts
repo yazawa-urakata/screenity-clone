@@ -40,15 +40,15 @@ export type ClipList = ClipMetadata[];
  */
 export enum ClipErrorCode {
   /** 最大クリップ数に達した */
-  MAX_CLIPS_REACHED = 'MAX_CLIPS_REACHED',
+  MAX_CLIPS_REACHED = "MAX_CLIPS_REACHED",
   /** クリップの長さが最大値を超えた */
-  DURATION_TOO_LONG = 'DURATION_TOO_LONG',
+  DURATION_TOO_LONG = "DURATION_TOO_LONG",
   /** 無効なクロップ領域 */
-  INVALID_CROP = 'INVALID_CROP',
+  INVALID_CROP = "INVALID_CROP",
   /** 録画中ではない */
-  NOT_RECORDING = 'NOT_RECORDING',
+  NOT_RECORDING = "NOT_RECORDING",
   /** 無効な時刻範囲 */
-  INVALID_TIME_RANGE = 'INVALID_TIME_RANGE',
+  INVALID_TIME_RANGE = "INVALID_TIME_RANGE",
 }
 
 /**
@@ -60,7 +60,7 @@ export class ClipValidationError extends Error {
 
   constructor(code: ClipErrorCode, message: string) {
     super(message);
-    this.name = 'ClipValidationError';
+    this.name = "ClipValidationError";
     this.code = code;
 
     // プロトタイプチェーンを正しく設定（TypeScript の制約）

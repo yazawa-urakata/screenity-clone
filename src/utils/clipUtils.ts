@@ -2,8 +2,8 @@
  * クリップ録画機能のユーティリティ関数
  */
 
-import type { ClipMetadata, ClipList, ClipCropRegion } from '../types/clip';
-import { ClipErrorCode, ClipValidationError } from '../types/clip';
+import type { ClipCropRegion, ClipList, ClipMetadata } from "../types/clip";
+import { ClipErrorCode, ClipValidationError } from "../types/clip";
 
 /**
  * 最大クリップ数
@@ -25,10 +25,9 @@ export const MAX_CLIP_DURATION_MS = 60 * 1000;
  * @returns クリップメタデータ
  */
 export function createClipMetadata(
-  recordingStartTime: number,
   clipStartTime: number,
   clipEndTime: number,
-  crop?: ClipCropRegion
+  crop?: ClipCropRegion,
 ): ClipMetadata {
   const duration = clipEndTime - clipStartTime;
   const id = crypto.randomUUID();
@@ -56,13 +55,13 @@ export function validateClip(
   clips: ClipList,
   clipStartTime: number,
   clipEndTime: number,
-  isRecording: boolean
+  isRecording: boolean,
 ): void {
   // 録画中チェック
   if (!isRecording) {
     throw new ClipValidationError(
       ClipErrorCode.NOT_RECORDING,
-      '録画を開始してください'
+      "録画を開始してください",
     );
   }
 
@@ -70,7 +69,7 @@ export function validateClip(
   if (clips.length >= MAX_CLIPS) {
     throw new ClipValidationError(
       ClipErrorCode.MAX_CLIPS_REACHED,
-      `クリップは最大${MAX_CLIPS}つまでです`
+      `クリップは最大${MAX_CLIPS}つまでです`,
     );
   }
 
@@ -78,7 +77,7 @@ export function validateClip(
   if (clipStartTime >= clipEndTime) {
     throw new ClipValidationError(
       ClipErrorCode.INVALID_TIME_RANGE,
-      '無効な時刻範囲です'
+      "無効な時刻範囲です",
     );
   }
 
@@ -87,7 +86,7 @@ export function validateClip(
   if (duration > MAX_CLIP_DURATION_MS) {
     throw new ClipValidationError(
       ClipErrorCode.DURATION_TOO_LONG,
-      `クリップは最大${MAX_CLIP_DURATION_MS / 1000}秒までです`
+      `クリップは最大${MAX_CLIP_DURATION_MS / 1000}秒までです`,
     );
   }
 }
@@ -113,8 +112,8 @@ export function formatClipTime(milliseconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
-  const paddedMinutes = String(minutes).padStart(2, '0');
-  const paddedSeconds = String(seconds).padStart(2, '0');
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  const paddedSeconds = String(seconds).padStart(2, "0");
 
   return `${paddedMinutes}:${paddedSeconds}`;
 }

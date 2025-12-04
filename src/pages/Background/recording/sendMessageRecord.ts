@@ -1,6 +1,9 @@
 import { sendMessageTab } from "../tabManagement";
 
-export const sendMessageRecord = (message: any, responseCallback: ((response: any) => void) | null = null) => {
+export const sendMessageRecord = (
+  message: any,
+  responseCallback: ((response: any) => void) | null = null,
+) => {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(["recordingTab", "offscreen"], (result) => {
       if (chrome.runtime.lastError) {

@@ -1,188 +1,180 @@
 // メッセージング関連の型定義
 
-import type { SupabaseUser } from './supabase';
+import type { SupabaseUser } from "./supabase";
 
 // メッセージタイプの定義
 export type MessageType =
   // 録画制御関連
-  | 'start-recording'
-  | 'stop-recording-tab'
-  | 'stop-recording-tab-backup'
-  | 'pause-recording-tab'
-  | 'resume-recording-tab'
-  | 'start-recording-tab'
-  | 'cancel-recording'
-  | 'restart-recording-tab'
-  | 'dismiss-recording-tab'
-  | 'dismiss-recording'
-  | 'recording-error'
-  | 'recording-complete'
-  | 'recording-ended'
-  | 'recording-check'
-  | 'check-recording'
-  | 'pause-recording'
-  | 'restart-recording'
+  | "start-recording"
+  | "stop-recording-tab"
+  | "pause-recording-tab"
+  | "resume-recording-tab"
+  | "start-recording-tab"
+  | "cancel-recording"
+  | "restart-recording-tab"
+  | "dismiss-recording-tab"
+  | "dismiss-recording"
+  | "recording-error"
+  | "recording-complete"
+  | "recording-ended"
+  | "recording-check"
+  | "check-recording"
+  | "pause-recording"
+  | "restart-recording"
   // ストリーム/録画タイプ関連
-  | 'start-stream'
-  | 'ready-to-record'
-  | 'stop-pending'
-  | 'desktop-capture'
-  | 'get-streaming-data'
-  | 'streaming-data'
-  | 'screen-update'
+  | "start-stream"
+  | "ready-to-record"
+  | "stop-pending"
+  | "desktop-capture"
+  | "get-streaming-data"
+  | "streaming-data"
+  | "screen-update"
   // PiP関連
-  | 'toggle-pip'
-  | 'pip-started'
-  | 'pip-ended'
-  | 'turn-off-pip'
+  | "toggle-pip"
+  | "pip-started"
+  | "pip-ended"
+  | "turn-off-pip"
   // ファイル処理関連
-  | 'write-file'
-  | 'video-ready'
-  | 'new-chunk'
-  | 'close-writable'
+  | "video-ready"
+  | "new-chunk"
   // バックアップ関連
-  | 'backup-created'
-  | 'backup-error'
-  | 'discard-backup'
-  | 'discard-backup-restart'
-  | 'init-backup'
-  | 'restore-recording'
-  | 'check-restore'
+  | "restore-recording"
+  | "check-restore"
   // タブ/ウィンドウ管理関連
-  | 'reset-active-tab'
-  | 'reset-active-tab-restart'
-  | 'focus-this-tab'
-  | 'set-surface'
-  | 'set-mic-active-tab'
+  | "reset-active-tab"
+  | "reset-active-tab-restart"
+  | "focus-this-tab"
+  | "set-surface"
+  | "set-mic-active-tab"
   // 再起動関連
-  | 'handle-restart'
-  | 'handle-dismiss'
-  | 'restarted'
+  | "handle-restart"
+  | "handle-dismiss"
+  | "restarted"
   // UI/ポップアップ関連
-  | 'toggle-popup'
-  | 'toggle-extension'
-  | 'hide-popup-recording'
-  | 'setup-complete'
-  | 'show-toast'
+  | "toggle-popup"
+  | "toggle-extension"
+  | "hide-popup-recording"
+  | "setup-complete"
+  | "show-toast"
   // タイマー/時間関連
-  | 'time'
-  | 'time-warning'
-  | 'time-stopped'
-  | 'get-video-time'
-  | 'add-alarm-listener'
-  | 'clear-recording-alarm'
+  | "time"
+  | "time-warning"
+  | "time-stopped"
+  | "get-video-time"
+  | "add-alarm-listener"
+  | "clear-recording-alarm"
   // 権限関連
-  | 'on-get-permissions'
-  | 'check-capture-permissions'
-  | 'extension-media-permissions'
-  | 'screenity-get-permissions'
-  | 'screenity-permissions'
-  | 'screenity-permissions-loaded'
+  | "on-get-permissions"
+  | "check-capture-permissions"
+  | "extension-media-permissions"
+  | "screenity-get-permissions"
+  | "screenity-permissions"
+  | "screenity-permissions-loaded"
   // エディター/編集関連
-  | 'load-ffmpeg'
-  | 'add-audio-to-video'
-  | 'crop-video'
-  | 'cut-video'
-  | 'mute-video'
-  | 'reencode-video'
-  | 'get-frame'
-  | 'crop-update'
-  | 'ffmpeg-loaded'
-  | 'ffmpeg-load-error'
-  | 'ffmpeg-error'
-  | 'updated-blob'
-  | 'new-frame'
+  | "load-ffmpeg"
+  | "add-audio-to-video"
+  | "crop-video"
+  | "cut-video"
+  | "mute-video"
+  | "reencode-video"
+  | "get-frame"
+  | "crop-update"
+  | "ffmpeg-loaded"
+  | "ffmpeg-load-error"
+  | "ffmpeg-error"
+  | "updated-blob"
+  | "new-frame"
   // ダウンロード関連
-  | 'request-download'
-  | 'indexed-db-download'
-  | 'download-video'
-  | 'download-indexed-db'
+  | "request-download"
+  | "indexed-db-download"
+  | "download-video"
+  | "download-indexed-db"
   // Google Drive関連
-  | 'save-to-drive'
-  | 'save-to-drive-fallback'
-  | 'saved-to-drive'
-  | 'sign-out-drive'
+  | "save-to-drive"
+  | "save-to-drive-fallback"
+  | "saved-to-drive"
+  | "sign-out-drive"
   // 認証/アカウント関連
-  | 'check-auth-status'
-  | 'check-auth'
-  | 'refresh-auth'
-  | 'handle-login'
-  | 'handle-logout'
-  | 'auth-expired'
-  | 'AUTH_SUCCESS'
-  | 'LOGIN_SUCCESS'
-  | 'SIGN_OUT'
+  | "check-auth-status"
+  | "check-auth"
+  | "refresh-auth"
+  | "handle-login"
+  | "handle-logout"
+  | "auth-expired"
+  | "AUTH_SUCCESS"
+  | "LOGIN_SUCCESS"
+  | "SIGN_OUT"
   // プロジェクト/ビデオ管理関連
-  | 'create-video-project'
-  | 'fetch-videos'
-  | 'get-project-info'
-  | 'open-popup-project'
-  | 'OPEN_POPUP_PROJECT'
-  | 'GET_PROJECT_INFO'
-  | 'update-project-loading'
-  | 'update-project-ready'
-  | 'clear-project-recording'
+  | "create-video-project"
+  | "fetch-videos"
+  | "get-project-info"
+  | "open-popup-project"
+  | "OPEN_POPUP_PROJECT"
+  | "GET_PROJECT_INFO"
+  | "update-project-loading"
+  | "update-project-ready"
+  | "clear-project-recording"
   // エディター関連
-  | 'editor-ready'
-  | 'preparing-recording'
+  | "editor-ready"
+  | "preparing-recording"
   // マルチ録画関連
-  | 'reopen-popup-multi'
-  | 'finish-multi-recording'
+  | "reopen-popup-multi"
+  | "finish-multi-recording"
   // システム/ブラウザ関連
-  | 'get-platform-info'
-  | 'is-pinned'
-  | 'resize-window'
-  | 'available-memory'
-  | 'ping'
-  | 'PING_FROM_WEBAPP'
+  | "get-platform-info"
+  | "is-pinned"
+  | "resize-window"
+  | "available-memory"
+  | "ping"
+  | "PING_FROM_WEBAPP"
   // ストレージ/クォータ関連
-  | 'check-storage-quota'
-  | 'clear-recordings'
-  | 'force-processing'
+  | "check-storage-quota"
+  | "clear-recordings"
+  | "force-processing"
   // ナビゲーション/外部リンク関連
-  | 'review-screenity'
-  | 'follow-twitter'
-  | 'pricing'
-  | 'open-processing-info'
-  | 'upgrade-info'
-  | 'trim-info'
-  | 'join-waitlist'
-  | 'chrome-update-info'
-  | 'open-help'
-  | 'memory-limit-help'
-  | 'open-home'
-  | 'report-bug'
-  | 'handle-reactivate'
-  | 'handle-upgrade'
-  | 'open-account-settings'
-  | 'open-support'
+  | "review-screenity"
+  | "follow-twitter"
+  | "pricing"
+  | "open-processing-info"
+  | "upgrade-info"
+  | "trim-info"
+  | "join-waitlist"
+  | "chrome-update-info"
+  | "open-help"
+  | "memory-limit-help"
+  | "open-home"
+  | "report-bug"
+  | "handle-reactivate"
+  | "handle-upgrade"
+  | "open-account-settings"
+  | "open-support"
   // その他のUI関連
-  | 'commands'
-  | 'stream-error'
-  | 'check-banner-support'
-  | 'hide-banner'
+  | "commands"
+  | "stream-error"
+  | "check-banner-support"
+  | "hide-banner"
   // モニター/ディスプレイ関連
-  | 'get-monitor-for-window'
+  | "get-monitor-for-window"
   // イベント関連
-  | 'click-event'
-  | 'crop-target'
+  | "click-event"
+  | "crop-target"
   // Region Capture関連
-  | 'screenity-region-capture-loaded'
+  | "screenity-region-capture-loaded"
   // クリップ録画関連
-  | 'start-clip-recording'
-  | 'end-clip-recording'
-  | 'save-clip'
-  | 'clip-saved'
-  | 'clip-error'
-  | 'set-clip-crop'
+  | "start-clip-recording"
+  | "end-clip-recording"
+  | "save-clip"
+  | "clip-saved"
+  | "clip-error"
+  | "set-clip-crop"
   // Supabase認証関連
-  | 'SUPABASE_SESSION_SYNCED'
-  | 'SUPABASE_SESSION_EXPIRED'
-  | 'SUPABASE_AUTH_CHECK'
-  | 'SUPABASE_CLEAR_AUTH'
-  | 'SUPABASE_SET_AUTH'
-  | 'SUPABASE_LOGIN_REQUEST'
-  | 'AUTH_STATE_CHANGED';
+  | "SUPABASE_SESSION_SYNCED"
+  | "SUPABASE_SESSION_EXPIRED"
+  | "SUPABASE_AUTH_CHECK"
+  | "SUPABASE_CLEAR_AUTH"
+  | "SUPABASE_SET_AUTH"
+  | "SUPABASE_LOGIN_REQUEST"
+  | "AUTH_STATE_CHANGED";
 
 // メッセージペイロードの基本インターフェース
 export interface BaseMessage {
@@ -192,7 +184,7 @@ export interface BaseMessage {
 
 // 録画関連メッセージ
 export interface StartRecordingMessage extends BaseMessage {
-  type: 'start-recording';
+  type: "start-recording";
   payload?: {
     audio?: boolean;
     video?: boolean;
@@ -204,144 +196,131 @@ export interface StartRecordingMessage extends BaseMessage {
 }
 
 export interface StopRecordingTabMessage extends BaseMessage {
-  type: 'stop-recording-tab';
+  type: "stop-recording-tab";
   save?: boolean;
 }
 
-export interface WriteFileMessage extends BaseMessage {
-  type: 'write-file';
-  index?: number;
-}
-
 export interface VideoReadyMessage extends BaseMessage {
-  type: 'video-ready';
+  type: "video-ready";
 }
 
 export interface RecordingErrorMessage extends BaseMessage {
-  type: 'recording-error';
+  type: "recording-error";
   error?: string;
 }
 
 // ストリーミング関連メッセージ
 export interface GetStreamingDataMessage extends BaseMessage {
-  type: 'get-streaming-data';
+  type: "get-streaming-data";
 }
 
 export interface StreamingDataMessage extends BaseMessage {
-  type: 'streaming-data';
+  type: "streaming-data";
   data?: string;
 }
 
 export interface PipMessage extends BaseMessage {
-  type: 'pip-started' | 'pip-ended' | 'toggle-pip';
+  type: "pip-started" | "pip-ended" | "toggle-pip";
 }
 
 // ダウンロード関連メッセージ
 export interface RequestDownloadMessage extends BaseMessage {
-  type: 'request-download';
+  type: "request-download";
   base64: string;
   title: string;
 }
 
 export interface DownloadVideoMessage extends BaseMessage {
-  type: 'download-video';
+  type: "download-video";
   base64: string;
   title: string;
 }
 
 // バックアップ関連メッセージ
-export interface BackupCreatedMessage extends BaseMessage {
-  type: 'backup-created';
-}
-
-export interface DiscardBackupMessage extends BaseMessage {
-  type: 'discard-backup' | 'discard-backup-restart';
-}
-
 export interface RestoreRecordingMessage extends BaseMessage {
-  type: 'restore-recording';
+  type: "restore-recording";
 }
 
 // タブ/ウィンドウ管理メッセージ
 export interface ResetActiveTabMessage extends BaseMessage {
-  type: 'reset-active-tab' | 'reset-active-tab-restart';
+  type: "reset-active-tab" | "reset-active-tab-restart";
 }
 
 export interface SetSurfaceMessage extends BaseMessage {
-  type: 'set-surface';
+  type: "set-surface";
   surface?: string;
 }
 
 export interface FocusTabMessage extends BaseMessage {
-  type: 'focus-this-tab';
+  type: "focus-this-tab";
   tabId?: number;
 }
 
 // 権限関連メッセージ
 export interface CheckCapturePermissionsMessage extends BaseMessage {
-  type: 'check-capture-permissions';
+  type: "check-capture-permissions";
 }
 
 export interface OnGetPermissionsMessage extends BaseMessage {
-  type: 'on-get-permissions';
+  type: "on-get-permissions";
   data?: any;
 }
 
 // Google Drive関連メッセージ
 export interface SaveToDriveMessage extends BaseMessage {
-  type: 'save-to-drive' | 'save-to-drive-fallback';
+  type: "save-to-drive" | "save-to-drive-fallback";
   fileName?: string;
   mimeType?: string;
 }
 
 export interface SavedToDriveMessage extends BaseMessage {
-  type: 'saved-to-drive';
+  type: "saved-to-drive";
   success: boolean;
   url?: string;
 }
 
 // 認証関連メッセージ
 export interface CheckAuthStatusMessage extends BaseMessage {
-  type: 'check-auth-status' | 'check-auth';
+  type: "check-auth-status" | "check-auth";
 }
 
 export interface HandleLoginMessage extends BaseMessage {
-  type: 'handle-login';
+  type: "handle-login";
   token?: string;
   user?: any;
 }
 
 export interface HandleLogoutMessage extends BaseMessage {
-  type: 'handle-logout';
+  type: "handle-logout";
 }
 
 // プロジェクト関連メッセージ
 export interface CreateVideoProjectMessage extends BaseMessage {
-  type: 'create-video-project';
+  type: "create-video-project";
   title?: string;
   projectId?: string;
 }
 
 export interface FetchVideosMessage extends BaseMessage {
-  type: 'fetch-videos';
+  type: "fetch-videos";
 }
 
 export interface GetProjectInfoMessage extends BaseMessage {
-  type: 'get-project-info' | 'GET_PROJECT_INFO';
+  type: "get-project-info" | "GET_PROJECT_INFO";
   projectId?: string;
 }
 
 export interface EditorReadyMessage extends BaseMessage {
-  type: 'editor-ready';
+  type: "editor-ready";
 }
 
 // FFmpeg関連メッセージ
 export interface LoadFfmpegMessage extends BaseMessage {
-  type: 'load-ffmpeg';
+  type: "load-ffmpeg";
 }
 
 export interface CropVideoMessage extends BaseMessage {
-  type: 'crop-video';
+  type: "crop-video";
   x?: number;
   y?: number;
   width?: number;
@@ -349,63 +328,63 @@ export interface CropVideoMessage extends BaseMessage {
 }
 
 export interface CutVideoMessage extends BaseMessage {
-  type: 'cut-video';
+  type: "cut-video";
   start?: number;
   end?: number;
 }
 
 // システム関連メッセージ
 export interface GetPlatformInfoMessage extends BaseMessage {
-  type: 'get-platform-info';
+  type: "get-platform-info";
 }
 
 export interface IsPinnedMessage extends BaseMessage {
-  type: 'is-pinned';
+  type: "is-pinned";
 }
 
 export interface ResizeWindowMessage extends BaseMessage {
-  type: 'resize-window';
+  type: "resize-window";
   width: number;
   height: number;
 }
 
 export interface AvailableMemoryMessage extends BaseMessage {
-  type: 'available-memory';
+  type: "available-memory";
 }
 
 export interface PingMessage extends BaseMessage {
-  type: 'ping';
+  type: "ping";
 }
 
 // タイマー関連メッセージ
 export interface TimeMessage extends BaseMessage {
-  type: 'time';
+  type: "time";
   duration?: number;
 }
 
 export interface TimeWarningMessage extends BaseMessage {
-  type: 'time-warning';
+  type: "time-warning";
 }
 
 export interface AddAlarmListenerMessage extends BaseMessage {
-  type: 'add-alarm-listener';
+  type: "add-alarm-listener";
   time?: number;
 }
 
 // UI関連メッセージ
 export interface ShowToastMessage extends BaseMessage {
-  type: 'show-toast';
+  type: "show-toast";
   message?: string;
   duration?: number;
 }
 
 export interface TogglePopupMessage extends BaseMessage {
-  type: 'toggle-popup';
+  type: "toggle-popup";
 }
 
 // イベント関連メッセージ
 export interface ClickEventMessage extends BaseMessage {
-  type: 'click-event';
+  type: "click-event";
   x?: number;
   y?: number;
   timestamp?: number;
@@ -413,15 +392,15 @@ export interface ClickEventMessage extends BaseMessage {
 
 // クリップ録画関連メッセージ
 export interface StartClipRecordingMessage extends BaseMessage {
-  type: 'start-clip-recording';
+  type: "start-clip-recording";
 }
 
 export interface EndClipRecordingMessage extends BaseMessage {
-  type: 'end-clip-recording';
+  type: "end-clip-recording";
 }
 
 export interface SaveClipMessage extends BaseMessage {
-  type: 'save-clip';
+  type: "save-clip";
   payload: {
     clipData: {
       id: string;
@@ -441,7 +420,7 @@ export interface SaveClipMessage extends BaseMessage {
 }
 
 export interface ClipSavedMessage extends BaseMessage {
-  type: 'clip-saved';
+  type: "clip-saved";
   payload: {
     clipId: string;
     clipNumber: number;
@@ -450,7 +429,7 @@ export interface ClipSavedMessage extends BaseMessage {
 }
 
 export interface ClipErrorMessage extends BaseMessage {
-  type: 'clip-error';
+  type: "clip-error";
   payload: {
     code: string;
     message: string;
@@ -458,7 +437,7 @@ export interface ClipErrorMessage extends BaseMessage {
 }
 
 export interface SetClipCropMessage extends BaseMessage {
-  type: 'set-clip-crop';
+  type: "set-clip-crop";
   payload: {
     crop: {
       x: number;
@@ -471,62 +450,60 @@ export interface SetClipCropMessage extends BaseMessage {
 
 // メッセージの型ガード（よく使用されるもののみ）
 export function isStartRecordingMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is StartRecordingMessage {
-  return message.type === 'start-recording';
+  return message.type === "start-recording";
 }
 
 export function isStopRecordingTabMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is StopRecordingTabMessage {
-  return message.type === 'stop-recording-tab';
+  return message.type === "stop-recording-tab";
 }
 
 export function isVideoReadyMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is VideoReadyMessage {
-  return message.type === 'video-ready';
+  return message.type === "video-ready";
 }
 
 export function isRecordingErrorMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is RecordingErrorMessage {
-  return message.type === 'recording-error';
+  return message.type === "recording-error";
 }
 
-export function isPingMessage(
-  message: BaseMessage
-): message is PingMessage {
-  return message.type === 'ping';
+export function isPingMessage(message: BaseMessage): message is PingMessage {
+  return message.type === "ping";
 }
 
 export function isStartClipRecordingMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is StartClipRecordingMessage {
-  return message.type === 'start-clip-recording';
+  return message.type === "start-clip-recording";
 }
 
 export function isSaveClipMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is SaveClipMessage {
-  return message.type === 'save-clip';
+  return message.type === "save-clip";
 }
 
 export function isClipSavedMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is ClipSavedMessage {
-  return message.type === 'clip-saved';
+  return message.type === "clip-saved";
 }
 
 export function isClipErrorMessage(
-  message: BaseMessage
+  message: BaseMessage,
 ): message is ClipErrorMessage {
-  return message.type === 'clip-error';
+  return message.type === "clip-error";
 }
 
 // Supabase認証関連メッセージ
 export interface SupabaseSessionSyncedMessage extends BaseMessage {
-  type: 'SUPABASE_SESSION_SYNCED';
+  type: "SUPABASE_SESSION_SYNCED";
   payload: {
     user: SupabaseUser;
     expiresAt: number;
@@ -534,19 +511,19 @@ export interface SupabaseSessionSyncedMessage extends BaseMessage {
 }
 
 export interface SupabaseSessionExpiredMessage extends BaseMessage {
-  type: 'SUPABASE_SESSION_EXPIRED';
+  type: "SUPABASE_SESSION_EXPIRED";
 }
 
 export interface SupabaseAuthCheckMessage extends BaseMessage {
-  type: 'SUPABASE_AUTH_CHECK';
+  type: "SUPABASE_AUTH_CHECK";
 }
 
 export interface SupabaseClearAuthMessage extends BaseMessage {
-  type: 'SUPABASE_CLEAR_AUTH';
+  type: "SUPABASE_CLEAR_AUTH";
 }
 
 export interface SupabaseSetAuthMessage extends BaseMessage {
-  type: 'SUPABASE_SET_AUTH';
+  type: "SUPABASE_SET_AUTH";
   payload: {
     accessToken: string;
     user: any;
@@ -555,11 +532,11 @@ export interface SupabaseSetAuthMessage extends BaseMessage {
 }
 
 export interface SupabaseLoginRequestMessage extends BaseMessage {
-  type: 'SUPABASE_LOGIN_REQUEST';
+  type: "SUPABASE_LOGIN_REQUEST";
 }
 
 export interface AuthStateChangedMessage extends BaseMessage {
-  type: 'AUTH_STATE_CHANGED';
+  type: "AUTH_STATE_CHANGED";
   payload: {
     authenticated: boolean;
   };
@@ -569,7 +546,7 @@ export interface AuthStateChangedMessage extends BaseMessage {
 export type MessageHandler<T extends BaseMessage = BaseMessage> = (
   message: T,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: any) => void
+  sendResponse: (response?: any) => void,
 ) => void | boolean | unknown | Promise<any>;
 
 // メッセージレスポンスの型

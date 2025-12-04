@@ -1,5 +1,5 @@
-import { discardRecording } from "./discardRecording";
 import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocuments";
+import { discardRecording } from "./discardRecording";
 
 export const checkRecording = async (): Promise<void> => {
   const { recordingTab, offscreen } = await chrome.storage.local.get([
@@ -21,7 +21,7 @@ export const checkRecording = async (): Promise<void> => {
     try {
       const existingContexts = await chrome.runtime.getContexts({});
       const offDocument = existingContexts.find(
-        (c) => c.contextType === "OFFSCREEN_DOCUMENT"
+        (c) => c.contextType === "OFFSCREEN_DOCUMENT",
       );
 
       if (!offDocument) {

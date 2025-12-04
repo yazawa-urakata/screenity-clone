@@ -5,17 +5,17 @@
  * 統合したフックです。
  */
 
-import { useState, useCallback } from "react";
-import { useSupabaseAuth } from "./useSupabaseAuth";
-import { useMultipartUpload } from "./useMultipartUpload";
-import { saveS3Key, generateFileName } from "../utils/s3Upload";
+import { useCallback, useState } from "react";
 import { getWebAppUrl } from "../../../utils/supabaseClient";
 import type {
-  UploadStatus,
-  UploadProgress,
-  UploadError,
   MultipartUploadConfig,
+  UploadError,
+  UploadProgress,
+  UploadStatus,
 } from "../types/s3Upload";
+import { generateFileName, saveS3Key } from "../utils/s3Upload";
+import { useMultipartUpload } from "./useMultipartUpload";
+import { useSupabaseAuth } from "./useSupabaseAuth";
 
 interface UploadParams {
   /** アップロードするBlob */
@@ -64,7 +64,10 @@ function classifyError(errorMessage: string): UploadError["code"] {
   if (lowerMessage.includes("authenticated") || lowerMessage.includes("auth")) {
     return "AUTH_ERROR";
   }
-  if (lowerMessage.includes("presigned url") || lowerMessage.includes("presigned")) {
+  if (
+    lowerMessage.includes("presigned url") ||
+    lowerMessage.includes("presigned")
+  ) {
     return "PRESIGNED_URL_ERROR";
   }
   if (lowerMessage.includes("network") || lowerMessage.includes("fetch")) {
@@ -83,7 +86,12 @@ function classifyError(errorMessage: string): UploadError["code"] {
  * @returns アップロード関数と状態
  */
 export function useS3Upload(): UseS3UploadReturn {
-  const { authState, loading: authLoading, openLoginPage, refreshAuth } = useSupabaseAuth();
+  const {
+    authState,
+    loading: authLoading,
+    openLoginPage,
+    refreshAuth,
+  } = useSupabaseAuth();
   const {
     upload: multipartUpload,
     cancel: cancelMultipart,
@@ -105,7 +113,13 @@ export function useS3Upload(): UseS3UploadReturn {
    * Step 3: S3キー保存
    */
   const uploadToS3 = useCallback(
-    async ({ blob, fileName, fileType, uploadPath = "uploads", config }: UploadParams): Promise<void> => {
+    async ({
+      blob,
+      fileName,
+      fileType,
+      uploadPath = "uploads",
+      config,
+    }: UploadParams): Promise<void> => {
       try {
         // エラーをクリア
         setError(null);
@@ -158,7 +172,7 @@ export function useS3Upload(): UseS3UploadReturn {
         throw err;
       }
     },
-    [authState, multipartUpload]
+    [authState, multipartUpload],
   );
 
   /**

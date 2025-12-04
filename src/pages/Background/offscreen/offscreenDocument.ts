@@ -1,5 +1,5 @@
-import { getCurrentTab } from "../tabManagement";
 import { sendMessageRecord } from "../recording/sendMessageRecord";
+import { getCurrentTab } from "../tabManagement";
 import { closeOffscreenDocument } from "./closeOffscreenDocument";
 
 export interface RecordingRequest {
@@ -11,18 +11,17 @@ export interface RecordingRequest {
 
 const openRecorderTab = async (
   activeTab: chrome.tabs.Tab,
-  backup: boolean,
   isRegion: boolean,
-  request: RecordingRequest
+  request: RecordingRequest,
 ): Promise<void> => {
   let switchTab = true;
 
   const recorderUrl = chrome.runtime.getURL("recorder.html");
 
   if (isRegion) {
-    switchTab = activeTab.url?.includes(
-      chrome.runtime.getURL("playground.html")
-    ) ?? false;
+    switchTab =
+      activeTab.url?.includes(chrome.runtime.getURL("playground.html")) ??
+      false;
   }
 
   chrome.tabs
@@ -45,14 +44,13 @@ const openRecorderTab = async (
 
       chrome.tabs.onUpdated.addListener(function listener(
         tabId: number,
-        changeInfo
+        changeInfo,
       ) {
         if (tabId === tab.id && changeInfo.status === "complete") {
           chrome.tabs.onUpdated.removeListener(listener);
           sendMessageRecord({
             type: "loaded",
             request: request,
-            backup: backup,
             // Always set isTab and tabID for tab recording (no dialog)
             isTab: true,
             tabID: activeTab.id,
@@ -62,8 +60,10 @@ const openRecorderTab = async (
     });
 };
 
-export const offscreenDocument = async (request: RecordingRequest, tabId: number | null = null): Promise<void> => {
-  const { backup } = await chrome.storage.local.get(["backup"]);
+export const offscreenDocument = async (
+  request: RecordingRequest,
+  tabId: number | null = null,
+): Promise<void> => {
   let activeTab = await getCurrentTab();
 
   if (tabId !== null) {
@@ -97,16 +97,15 @@ export const offscreenDocument = async (request: RecordingRequest, tabId: number
       sendMessageRecord({
         type: "loaded",
         request: request,
-        backup: backup as boolean,
         region: true,
       });
     } else {
-      await openRecorderTab(activeTab, backup as boolean, true, request);
+      await openRecorderTab(activeTab, true, request);
     }
   } else {
     if (!request.offscreenRecording) {
       // Skip offscreen recording if conditions aren't met
-      await openRecorderTab(activeTab, backup as boolean, false, request);
+      await openRecorderTab(activeTab, false, request);
       return;
     }
 
@@ -122,7 +121,11 @@ export const offscreenDocument = async (request: RecordingRequest, tabId: number
 
       await chrome.offscreen.createDocument({
         url: "recorderoffscreen.html",
-        reasons: ["USER_MEDIA" as chrome.offscreen.Reason, "AUDIO_PLAYBACK" as chrome.offscreen.Reason, "DISPLAY_MEDIA" as chrome.offscreen.Reason],
+        reasons: [
+          "USER_MEDIA" as chrome.offscreen.Reason,
+          "AUDIO_PLAYBACK" as chrome.offscreen.Reason,
+          "DISPLAY_MEDIA" as chrome.offscreen.Reason,
+        ],
         justification: "Recording from getDisplayMedia API",
       });
 
@@ -139,11 +142,10 @@ export const offscreenDocument = async (request: RecordingRequest, tabId: number
         isTab: false,
         quality: qualityValue,
         fps: fpsValue,
-        backup: backup as boolean,
       });
     } catch (error) {
       console.error("Error creating offscreen document:", error);
-      await openRecorderTab(activeTab, backup as boolean, false, request);
+      await openRecorderTab(activeTab, false, request);
     }
   }
 };

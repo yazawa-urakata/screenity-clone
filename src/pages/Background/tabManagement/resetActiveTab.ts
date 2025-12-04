@@ -1,15 +1,15 @@
-import { focusTab } from "./focusTab";
-import { sendMessageTab } from "./sendMessageTab";
 import {
   startAfterCountdown,
   startRecording,
 } from "../recording/startRecording";
+import { focusTab } from "./focusTab";
 import { getCurrentTab } from "./getCurrentTab";
+import { sendMessageTab } from "./sendMessageTab";
 
 export const restartActiveTab = async () => {
   try {
     const activeTab = await getCurrentTab();
-    if (activeTab && activeTab.id) {
+    if (activeTab?.id) {
       sendMessageTab(activeTab.id, { type: "ready-to-record" });
 
       const { countdown } = await chrome.storage.local.get(["countdown"]);
@@ -67,7 +67,9 @@ export const resetActiveTab = async (forceRestart = false) => {
       }
 
       // Decide which tab to send message to
-      const targetTabId = shouldFocusTab ? (activeTab as number) : currentTab?.id;
+      const targetTabId = shouldFocusTab
+        ? (activeTab as number)
+        : currentTab?.id;
 
       if (targetTabId) {
         sendMessageTab(targetTabId, { type: "ready-to-record" });

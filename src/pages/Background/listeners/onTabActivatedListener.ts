@@ -5,14 +5,13 @@ interface TabActiveInfo {
   windowId: number;
 }
 
-export const handleTabActivation = async (activeInfo: TabActiveInfo): Promise<void> => {
+export const handleTabActivation = async (
+  activeInfo: TabActiveInfo,
+): Promise<void> => {
   try {
     const { recordingStartTime } = await chrome.storage.local.get([
       "recordingStartTime",
     ]);
-
-    // Get the activated tab
-    const tab = await chrome.tabs.get(activeInfo.tabId);
 
     // Check if currently recording or restarting
     const { recording } = await chrome.storage.local.get(["recording"]);
@@ -28,12 +27,7 @@ export const handleTabActivation = async (activeInfo: TabActiveInfo): Promise<vo
       ]);
       if (tabRecordedID && (tabRecordedID as number) !== activeInfo.tabId) {
         sendMessageTab(activeInfo.tabId, { type: "hide-popup-recording" });
-      } else if (
-        !(
-          tab.url?.includes("backup.html") &&
-          tab.url?.includes("chrome-extension://")
-        )
-      ) {
+      } else {
         // Update the active tab reference
         chrome.storage.local.set({ activeTab: activeInfo.tabId });
       }
@@ -60,14 +54,18 @@ export const handleTabActivation = async (activeInfo: TabActiveInfo): Promise<vo
       if (alarm) {
         const { alarmTime } = await chrome.storage.local.get(["alarmTime"]);
         const seconds = parseFloat(alarmTime as string);
-        const time = Math.floor((Date.now() - (recordingStartTime as number)) / 1000);
+        const time = Math.floor(
+          (Date.now() - (recordingStartTime as number)) / 1000,
+        );
         const remaining = seconds - time;
         sendMessageTab(activeInfo.tabId, {
           type: "time",
           time: remaining,
         });
       } else {
-        const time = Math.floor((Date.now() - (recordingStartTime as number)) / 1000);
+        const time = Math.floor(
+          (Date.now() - (recordingStartTime as number)) / 1000,
+        );
         sendMessageTab(activeInfo.tabId, { type: "time", time: time });
       }
     }

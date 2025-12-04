@@ -5,7 +5,7 @@ async function cutVideo(
   end: number,
   cut: boolean,
   duration: number,
-  encode: boolean
+  encode: boolean,
 ): Promise<Blob> {
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
 
@@ -45,7 +45,7 @@ async function cutVideo(
         "-to",
         start.toString(),
         ...encodeOptions,
-        "part1.mp4"
+        "part1.mp4",
       );
 
       // Then, cut the video from the end time to the end
@@ -57,13 +57,13 @@ async function cutVideo(
         "-to",
         duration.toString(),
         ...encodeOptions,
-        "part2.mp4"
+        "part2.mp4",
       );
 
       // Create a text file with the list of input videos
       const inputListContent = "file 'part1.mp4'\nfile 'part2.mp4'";
       const inputListData = new Uint8Array(
-        new TextEncoder().encode(inputListContent)
+        new TextEncoder().encode(inputListContent),
       );
       ffmpeg.FS("writeFile", "input.txt", inputListData);
 
@@ -77,7 +77,7 @@ async function cutVideo(
         "input.txt",
         "-c",
         "copy",
-        outputFileName
+        outputFileName,
       );
 
       // Get the edited video data
@@ -97,7 +97,7 @@ async function cutVideo(
         "-to",
         duration.toString(),
         ...encodeOptions,
-        outputFileName
+        outputFileName,
       );
 
       // Get the edited video data
@@ -117,7 +117,7 @@ async function cutVideo(
         "-to",
         start.toString(),
         ...encodeOptions,
-        outputFileName
+        outputFileName,
       );
 
       // Get the edited video data
@@ -138,7 +138,7 @@ async function cutVideo(
       "-t",
       (end - start).toString(),
       ...encodeOptions,
-      outputFileName
+      outputFileName,
     );
 
     // Get the edited video data

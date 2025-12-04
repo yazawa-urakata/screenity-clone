@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
 import localforage from "localforage";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -44,7 +44,6 @@ const RecorderOffscreen = () => {
   const tabID = useRef(null);
   const quality = useRef("1080p");
   const fps = useRef(30);
-  const backupRef = useRef(false);
 
   // FLAG: New stuff
   const pending = useRef([]);
@@ -119,9 +118,6 @@ const RecorderOffscreen = () => {
     lastSize.current = e.data.size;
     savedCount.current += 1;
 
-    if (backupRef.current) {
-      chrome.runtime.sendMessage({ type: "write-file", index: i });
-    }
     return true;
   }
 
@@ -233,8 +229,8 @@ const RecorderOffscreen = () => {
       ];
 
       // Check if the browser supports any of the mimeTypes, make sure to select the first one that is supported from the list
-      let mimeType = mimeTypes.find((mimeType) =>
-        MediaRecorder.isTypeSupported(mimeType)
+      const mimeType = mimeTypes.find((mimeType) =>
+        MediaRecorder.isTypeSupported(mimeType),
       );
 
       // If no mimeType is supported, throw an error
@@ -493,55 +489,55 @@ const RecorderOffscreen = () => {
 
       // Save the helper streams
       let stream;
-        if (isTab.current === true) {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              mandatory: {
-                chromeMediaSource: "tab",
-                chromeMediaSourceId: tabID.current,
-              },
+      if (isTab.current === true) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            mandatory: {
+              chromeMediaSource: "tab",
+              chromeMediaSourceId: tabID.current,
             },
-            video: {
-              mandatory: {
-                chromeMediaSource: "tab",
-                chromeMediaSourceId: tabID.current,
-                maxWidth: width,
-                maxHeight: height,
-                maxFrameRate: fpsVal,
-              },
+          },
+          video: {
+            mandatory: {
+              chromeMediaSource: "tab",
+              chromeMediaSourceId: tabID.current,
+              maxWidth: width,
+              maxHeight: height,
+              maxFrameRate: fpsVal,
             },
-          });
+          },
+        });
 
-          // Check if the stream actually has data in it
-          if (stream.getVideoTracks().length === 0) {
-            chrome.runtime.sendMessage({
-              type: "recording-error",
-              error: "stream-error",
-              why: "No video tracks available",
-            });
-            return;
-          }
-        } else {
-          stream = await navigator.mediaDevices.getDisplayMedia({
-            audio: data.systemAudio,
-            video: {
-              frameRate: 30,
-              displaySurface: "monitor",
-            },
-            selfBrowserSurface: "exclude",
-            systemAudio: "include",
+        // Check if the stream actually has data in it
+        if (stream.getVideoTracks().length === 0) {
+          chrome.runtime.sendMessage({
+            type: "recording-error",
+            error: "stream-error",
+            why: "No video tracks available",
           });
-
-          // Check if the stream actually has data in it
-          if (stream.getVideoTracks().length === 0) {
-            chrome.runtime.sendMessage({
-              type: "recording-error",
-              error: "stream-error",
-              why: "No video tracks available",
-            });
-            return;
-          }
+          return;
         }
+      } else {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          audio: data.systemAudio,
+          video: {
+            frameRate: 30,
+            displaySurface: "monitor",
+          },
+          selfBrowserSurface: "exclude",
+          systemAudio: "include",
+        });
+
+        // Check if the stream actually has data in it
+        if (stream.getVideoTracks().length === 0) {
+          chrome.runtime.sendMessage({
+            type: "recording-error",
+            error: "stream-error",
+            why: "No video tracks available",
+          });
+          return;
+        }
+      }
       helperVideoStream.current = stream;
 
       const surface = stream.getVideoTracks()[0].getSettings().displaySurface;
@@ -556,7 +552,7 @@ const RecorderOffscreen = () => {
       ) {
         audioInputGain.current = aCtx.current.createGain();
         audioInputSource.current = aCtx.current.createMediaStreamSource(
-          helperAudioStream.current
+          helperAudioStream.current,
         );
         audioInputSource.current
           .connect(audioInputGain.current)
@@ -573,7 +569,7 @@ const RecorderOffscreen = () => {
       if (helperVideoStream.current.getAudioTracks().length > 0) {
         audioOutputGain.current = aCtx.current.createGain();
         audioOutputSource.current = aCtx.current.createMediaStreamSource(
-          helperVideoStream.current
+          helperVideoStream.current,
         );
         audioOutputSource.current
           .connect(audioOutputGain.current)
@@ -584,7 +580,7 @@ const RecorderOffscreen = () => {
 
       // Add the tracks to the stream
       liveStream.current.addTrack(
-        helperVideoStream.current.getVideoTracks()[0]
+        helperVideoStream.current.getVideoTracks()[0],
       );
       if (
         (helperAudioStream.current != null &&
@@ -592,7 +588,7 @@ const RecorderOffscreen = () => {
         helperVideoStream.current.getAudioTracks().length > 0
       ) {
         liveStream.current.addTrack(
-          destination.current.stream.getAudioTracks()[0]
+          destination.current.stream.getAudioTracks()[0],
         );
       }
 
@@ -623,7 +619,6 @@ const RecorderOffscreen = () => {
   const onMessage = useCallback(
     (request, sender, sendResponse) => {
       if (request.type === "loaded") {
-        backupRef.current = request.backup;
         isTab.current = request.isTab;
         quality.current = request.quality;
         fps.current = request.fps;
@@ -654,7 +649,7 @@ const RecorderOffscreen = () => {
         dismissRecording();
       }
     },
-    [recorder.current]
+    [recorder.current],
   );
 
   useEffect(() => {

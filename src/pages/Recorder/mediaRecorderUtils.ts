@@ -7,10 +7,10 @@ interface MediaRecorderOptions {
 
 export function createMediaRecorder(
   stream: MediaStream,
-  { audioBitsPerSecond, videoBitsPerSecond }: MediaRecorderOptions
+  { audioBitsPerSecond, videoBitsPerSecond }: MediaRecorderOptions,
 ): MediaRecorder {
   const mimeType = MIME_TYPES.find((type) =>
-    MediaRecorder.isTypeSupported(type)
+    MediaRecorder.isTypeSupported(type),
   );
 
   if (!mimeType) {

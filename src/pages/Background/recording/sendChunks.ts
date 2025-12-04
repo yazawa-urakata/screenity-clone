@@ -1,5 +1,4 @@
-import { chunksStore } from "./chunkHandler";
-import { handleChunks } from "./chunkHandler";
+import { chunksStore, handleChunks } from "./chunkHandler";
 
 export const sendChunks = async (override = false) => {
   try {

@@ -1,5 +1,5 @@
-import { sendMessageRecord } from "./sendMessageRecord";
 import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocuments";
+import { sendMessageRecord } from "./sendMessageRecord";
 
 export const discardRecording = async () => {
   sendMessageRecord({ type: "dismiss-recording" });
@@ -14,11 +14,9 @@ export const discardRecording = async () => {
     recording: false,
   });
 
-  chrome.runtime.sendMessage({ type: "discard-backup" });
   chrome.runtime.sendMessage({ type: "turn-off-pip" });
 };
 
 export const handleDismissRecordingTab = async () => {
-  chrome.runtime.sendMessage({ type: "discard-backup" });
   discardRecording();
 };

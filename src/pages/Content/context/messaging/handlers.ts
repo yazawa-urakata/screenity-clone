@@ -1,17 +1,13 @@
 // src/content/handlers/recordingHandlers.ts
 import {
-  registerMessage,
   messageRouter,
+  registerMessage,
 } from "../../../../messaging/messageRouter";
-import { setContentState, contentStateRef } from "../ContentState";
-import { updateFromStorage } from "../utils/updateFromStorage";
-import { setTimer } from "../ContentState";
+import type { BaseMessage } from "../../../../types/message";
+import { contentStateRef, setContentState, setTimer } from "../ContentState";
 
 import { checkAuthStatus } from "../utils/checkAuthStatus";
-import { BaseMessage } from "../../../../types/message";
-
-const CLOUD_FEATURES_ENABLED =
-  process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
+import { updateFromStorage } from "../utils/updateFromStorage";
 
 export const setupHandlers = (): void => {
   // Initialize message router
@@ -115,12 +111,16 @@ export const setupHandlers = (): void => {
   registerMessage("commands", (message: BaseMessage) => {
     if (!message) return;
 
-    const commands = (message as unknown as { commands: Array<{ name: string; shortcut?: string }> }).commands;
+    const commands = (
+      message as unknown as {
+        commands: Array<{ name: string; shortcut?: string }>;
+      }
+    ).commands;
     const startRecordingCommand = commands.find(
-      (command) => command.name === "start-recording"
+      (command) => command.name === "start-recording",
     );
     const cancelRecordingCommand = commands.find(
-      (command) => command.name === "cancel-recording"
+      (command) => command.name === "cancel-recording",
     );
 
     setContentState((prev) => ({
@@ -199,29 +199,17 @@ export const setupHandlers = (): void => {
       },
       () => {
         contentStateRef.current.dismissRecording();
-      }
-    );
-  });
-
-  registerMessage("backup-error", () => {
-    contentStateRef.current.openModal(
-      chrome.i18n.getMessage("backupPermissionFailTitle"),
-      chrome.i18n.getMessage("backupPermissionFailDescription"),
-      chrome.i18n.getMessage("permissionsModalDismiss"),
-      null,
-      () => {
-        contentStateRef.current.dismissRecording();
       },
-      () => {
-        contentStateRef.current.dismissRecording();
-      }
     );
   });
 
   registerMessage(
     "recording-check",
     (message: BaseMessage, sender: chrome.runtime.MessageSender) => {
-      const msg = message as unknown as { recordingStartTime?: number; force?: boolean };
+      const msg = message as unknown as {
+        recordingStartTime?: number;
+        force?: boolean;
+      };
       const { recordingStartTime } = msg;
 
       if (recordingStartTime) {
@@ -244,7 +232,7 @@ export const setupHandlers = (): void => {
         }));
         updateFromStorage(false, sender.id ? parseInt(sender.id) : null);
       }
-    }
+    },
   );
 
   registerMessage("stop-pending", () => {
@@ -268,7 +256,7 @@ export const setupHandlers = (): void => {
       if (contentStateRef.current.openToast) {
         contentStateRef.current.openToast(
           chrome.i18n.getMessage("addedToMultiToast"),
-          () => {}
+          () => {},
         );
       }
     }, 1000);
@@ -297,7 +285,7 @@ export const setupHandlers = (): void => {
     setTimeout(() => {
       contentStateRef.current.openToast(
         chrome.i18n.getMessage("readyRecordSceneToast"),
-        () => {}
+        () => {},
       );
     }, 1000);
   });
@@ -313,7 +301,7 @@ export const setupHandlers = (): void => {
       contentStateRef.current.openToast(
         chrome.i18n.getMessage("reachingRecordingLimitToast"),
         () => {},
-        5000
+        5000,
       );
     }
   });
@@ -328,7 +316,7 @@ export const setupHandlers = (): void => {
       contentStateRef.current.openToast(
         chrome.i18n.getMessage("recordingLimitReachedToast"),
         () => {},
-        5000
+        5000,
       );
     }
   });
@@ -353,26 +341,24 @@ export const setupHandlers = (): void => {
       }));
 
       if (result.authenticated) {
-        console.log('✅ User authenticated:', result.user);
+        console.log("✅ User authenticated:", result.user);
 
-        // Offscreen recording and client-side zoom are not available for authenticated users
+        // Offscreen recording is not available for authenticated users
         setContentState((prev) => ({
           ...prev,
           offscreenRecording: false,
           onboarding: false,
           showProSplash: false,
-          zoomEnabled: false,
         }));
 
         chrome.storage.local.set({
           offscreenRecording: false,
-          zoomEnabled: false,
         });
       } else {
-        console.log('ℹ️ User not authenticated');
+        console.log("ℹ️ User not authenticated");
       }
     } catch (error) {
-      console.error('❌ Failed to check auth:', error);
+      console.error("❌ Failed to check auth:", error);
 
       // エラー時はログアウト状態として扱う
       const { recording } = await chrome.storage.local.get("recording");
@@ -391,7 +377,7 @@ export const setupHandlers = (): void => {
   // 認証状態変更通知ハンドラー
   // Background ScriptからSUPABASE_SESSION_SYNCED後に送信される
   registerMessage("AUTH_STATE_CHANGED", async () => {
-    console.log('📢 Content Script: Received AUTH_STATE_CHANGED');
+    console.log("📢 Content Script: Received AUTH_STATE_CHANGED");
 
     try {
       // 最新の認証状態を取得
@@ -406,26 +392,27 @@ export const setupHandlers = (): void => {
       }));
 
       if (result.authenticated) {
-        console.log('✅ Content Script: Auth state updated - User logged in:', (result.user as any)?.email);
+        console.log(
+          "✅ Content Script: Auth state updated - User logged in:",
+          (result.user as any)?.email,
+        );
 
-        // Offscreen recording and client-side zoom are not available for authenticated users
+        // Offscreen recording is not available for authenticated users
         setContentState((prev) => ({
           ...prev,
           offscreenRecording: false,
           onboarding: false,
           showProSplash: false,
-          zoomEnabled: false,
         }));
 
         chrome.storage.local.set({
           offscreenRecording: false,
-          zoomEnabled: false,
         });
       } else {
-        console.log('ℹ️ Content Script: Auth state updated - User logged out');
+        console.log("ℹ️ Content Script: Auth state updated - User logged out");
       }
     } catch (error) {
-      console.error('❌ Content Script: Failed to update auth state:', error);
+      console.error("❌ Content Script: Failed to update auth state:", error);
     }
   });
   registerMessage(
@@ -434,7 +421,7 @@ export const setupHandlers = (): void => {
       const msg = message as unknown as { multiMode: boolean };
       window.postMessage(
         { source: "update-project-loading", multiMode: msg.multiMode },
-        "*"
+        "*",
       );
 
       if (!msg.multiMode) {
@@ -446,34 +433,28 @@ export const setupHandlers = (): void => {
       }
 
       updateFromStorage(true, sender.id ? parseInt(sender.id) : null);
-    }
+    },
   );
-  registerMessage(
-    "update-project-ready",
-    (message: BaseMessage) => {
-      const msg = message as unknown as {
-        share: boolean;
-        newProject: boolean;
-        sceneId: string;
-      };
-      window.postMessage(
-        {
-          source: "update-project-ready",
-          share: msg.share,
-          newProject: msg.newProject,
-          sceneId: msg.sceneId,
-        },
-        "*"
-      );
-    }
-  );
-  registerMessage(
-    "clear-project-recording",
-    (message: BaseMessage) => {
-      const msg = message as unknown as { senderId: string };
-      updateFromStorage(false, parseInt(msg.senderId));
-    }
-  );
+  registerMessage("update-project-ready", (message: BaseMessage) => {
+    const msg = message as unknown as {
+      share: boolean;
+      newProject: boolean;
+      sceneId: string;
+    };
+    window.postMessage(
+      {
+        source: "update-project-ready",
+        share: msg.share,
+        newProject: msg.newProject,
+        sceneId: msg.sceneId,
+      },
+      "*",
+    );
+  });
+  registerMessage("clear-project-recording", (message: BaseMessage) => {
+    const msg = message as unknown as { senderId: string };
+    updateFromStorage(false, parseInt(msg.senderId));
+  });
   registerMessage("preparing-recording", () => {
     setContentState((prev) => ({
       ...prev,
@@ -494,8 +475,9 @@ export const setupHandlers = (): void => {
     };
 
     // Chrome Storage から最新の clips を取得して ContentState に反映
-    chrome.storage.local.get(['clips'], (result) => {
-      const clips = (result.clips || []) as import('../../../../types/clip').ClipList;
+    chrome.storage.local.get(["clips"], (result) => {
+      const clips = (result.clips ||
+        []) as import("../../../../types/clip").ClipList;
 
       setContentState((prev) => ({
         ...prev,
@@ -506,13 +488,18 @@ export const setupHandlers = (): void => {
         customRegion: false,
       }));
 
-      console.log('[ClipRecording] クリップが保存されました:', msg.payload, 'Total clips:', clips.length);
+      console.log(
+        "[ClipRecording] クリップが保存されました:",
+        msg.payload,
+        "Total clips:",
+        clips.length,
+      );
     });
 
     // Toast 通知
     if (contentStateRef.current?.openToast) {
       contentStateRef.current.openToast(
-        `クリップ ${msg.payload.clipNumber} を保存しました (${msg.payload.duration}秒)`
+        `クリップ ${msg.payload.clipNumber} を保存しました (${msg.payload.duration}秒)`,
       );
     }
 
@@ -537,10 +524,12 @@ export const setupHandlers = (): void => {
 
     // Toast 通知
     if (contentStateRef.current?.openToast) {
-      contentStateRef.current.openToast(`クリップエラー: ${msg.payload.message}`);
+      contentStateRef.current.openToast(
+        `クリップエラー: ${msg.payload.message}`,
+      );
     }
 
-    console.error('[ClipRecording] クリップエラー:', msg.payload);
+    console.error("[ClipRecording] クリップエラー:", msg.payload);
     return { success: true };
   });
 };

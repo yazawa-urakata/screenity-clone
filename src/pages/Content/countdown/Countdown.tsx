@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import type React from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 // Context
 import { contentStateContext } from "../context/ContentState";
@@ -90,22 +91,25 @@ const Countdown: React.FC = () => {
         }
       }, 10);
 
-      const transformId = setTimeout(() => {
-        if (!contentState.countdownCancelled) {
-          setIsTransforming(false);
-        }
-      }, (COUNTDOWN_TIME * 1000) / 2);
+      const transformId = setTimeout(
+        () => {
+          if (!contentState.countdownCancelled) {
+            setIsTransforming(false);
+          }
+        },
+        (COUNTDOWN_TIME * 1000) / 2,
+      );
 
       timers.current.push(
         { id: rotateId, type: "timeout" },
-        { id: transformId, type: "timeout" }
+        { id: transformId, type: "timeout" },
       );
 
       return () => {
         clearTimeout(rotateId);
         clearTimeout(transformId);
         timers.current = timers.current.filter(
-          (t) => t.id !== rotateId && t.id !== transformId
+          (t) => t.id !== rotateId && t.id !== transformId,
         );
       };
     }
@@ -118,8 +122,9 @@ const Countdown: React.FC = () => {
 
   return (
     <div
-      className={`countdown ${contentState.countdownActive ? "recording-countdown" : ""
-        }`}
+      className={`countdown ${
+        contentState.countdownActive ? "recording-countdown" : ""
+      }`}
       onClick={handleCancel}
     >
       {contentState.isCountdownVisible && (

@@ -10,7 +10,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const ASSET_PATH = process.env.ASSET_PATH || "/";
 
 // Load .env.local first (higher priority), then .env as fallback
-require("dotenv").config({ path: '.env.local' });
+require("dotenv").config({ path: ".env.local" });
 require("dotenv").config(); // Fallback to .env if variables not found in .env.local
 
 // Entry points for the different pages
@@ -23,7 +23,7 @@ const entryPoints = {
     "src",
     "pages",
     "RecorderOffscreen",
-    "index.jsx"
+    "index.jsx",
   ),
   sandbox: path.join(__dirname, "src", "pages", "Sandbox", "index.jsx"),
   permissions: path.join(__dirname, "src", "pages", "Permissions", "index.tsx"),
@@ -35,22 +35,25 @@ const entryPoints = {
     "src",
     "pages",
     "EditorFallback",
-    "index.jsx"
+    "index.jsx",
   ),
-  backup: path.join(__dirname, "src", "pages", "Backup", "index.jsx"),
   supabaseAuthSync: path.join(
     __dirname,
     "src",
     "pages",
     "SupabaseAuthSync",
-    "index.ts"
+    "index.ts",
   ),
 };
 
 const htmlPlugins = Object.keys(entryPoints)
   .map((entryName) => {
     // Skip background script and content scripts as they don't need an HTML file
-    if (entryName === "background" || entryName === "contentScript" || entryName === "supabaseAuthSync") {
+    if (
+      entryName === "background" ||
+      entryName === "contentScript" ||
+      entryName === "supabaseAuthSync"
+    ) {
       return null;
     }
 
@@ -59,7 +62,7 @@ const htmlPlugins = Object.keys(entryPoints)
       "src",
       "pages",
       entryName.charAt(0).toUpperCase() + entryName.slice(1),
-      "index.html"
+      "index.html",
     );
 
     const options = {
@@ -67,19 +70,8 @@ const htmlPlugins = Object.keys(entryPoints)
       filename: `${entryName}.html`,
       chunks: [entryName],
       cache: false,
+      favicon: path.join(__dirname, "src", "assets", "favicon.png"),
     };
-
-    // Add favicon only for backup page
-    if (entryName === "backup") {
-      options.favicon = path.join(
-        __dirname,
-        "src",
-        "assets",
-        "backup-favicon.ico"
-      );
-    } else {
-      options.favicon = path.join(__dirname, "src", "assets", "favicon.png");
-    }
 
     return new HtmlWebpackPlugin(options);
   })
@@ -166,35 +158,33 @@ const config = {
     new webpack.ProgressPlugin(),
     new webpack.DefinePlugin({
       "process.env.SCREENITY_APP_BASE": JSON.stringify(
-        process.env.SCREENITY_APP_BASE
+        process.env.SCREENITY_APP_BASE,
       ),
       "process.env.SCREENITY_WEBSITE_BASE": JSON.stringify(
-        process.env.SCREENITY_WEBSITE_BASE
+        process.env.SCREENITY_WEBSITE_BASE,
       ),
       "process.env.SCREENITY_API_BASE_URL": JSON.stringify(
-        process.env.SCREENITY_API_BASE_URL
+        process.env.SCREENITY_API_BASE_URL,
       ),
       "process.env.SCREENITY_ENABLE_CLOUD_FEATURES": JSON.stringify(
-        process.env.SCREENITY_ENABLE_CLOUD_FEATURES
+        process.env.SCREENITY_ENABLE_CLOUD_FEATURES,
       ),
       "process.env.MAX_RECORDING_DURATION": JSON.stringify(
-        process.env.MAX_RECORDING_DURATION || 3600 // Default to 1 hour
+        process.env.MAX_RECORDING_DURATION || 3600, // Default to 1 hour
       ),
       "process.env.RECORDING_WARNING_THRESHOLD": JSON.stringify(
-        process.env.RECORDING_WARNING_THRESHOLD || 60 // Default to 1 minute
+        process.env.RECORDING_WARNING_THRESHOLD || 60, // Default to 1 minute
       ),
       // Supabase環境変数
       "process.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(
-        process.env.NEXT_PUBLIC_SUPABASE_URL
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
       ),
       "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": JSON.stringify(
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       ),
-      "process.env.WEBAPP_URL_DEV": JSON.stringify(
-        process.env.WEBAPP_URL_DEV
-      ),
+      "process.env.WEBAPP_URL_DEV": JSON.stringify(process.env.WEBAPP_URL_DEV),
       "process.env.WEBAPP_URL_PROD": JSON.stringify(
-        process.env.WEBAPP_URL_PROD
+        process.env.WEBAPP_URL_PROD,
       ),
     }),
 
@@ -211,7 +201,7 @@ const config = {
                 description: process.env.npm_package_description,
                 version: process.env.npm_package_version,
                 ...JSON.parse(content.toString()),
-              })
+              }),
             );
           },
         },

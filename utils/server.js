@@ -29,7 +29,7 @@ if (
   config.entry["background"] = [
     path.resolve(
       __dirname,
-      `autoReloadClients/backgroundClient.js?port=${env.PORT}`
+      `autoReloadClients/backgroundClient.js?port=${env.PORT}`,
     ),
   ].concat(config.entry["background"]);
 }
@@ -41,7 +41,7 @@ if (customOptions.enableContentScriptsAutoReload) {
 }
 
 config.plugins = [new webpack.HotModuleReplacementPlugin()].concat(
-  config.plugins || []
+  config.plugins || [],
 );
 
 delete config.custom;
@@ -99,20 +99,20 @@ const server = new WebpackDevServer(
             const updatedJsModules = modules.filter(
               (module) =>
                 module.type === "module" &&
-                module.moduleType === "javascript/auto"
+                module.moduleType === "javascript/auto",
             );
 
             // Check which parts of the extension have been updated
             const isBackgroundUpdated = updatedJsModules.some((module) =>
               module.nameForCondition.startsWith(
-                path.resolve(__dirname, "../src/pages/Background")
-              )
+                path.resolve(__dirname, "../src/pages/Background"),
+              ),
             );
 
             const isContentScriptsUpdated = updatedJsModules.some((module) =>
               module.nameForCondition.startsWith(
-                path.resolve(__dirname, "../src/pages/Content")
-              )
+                path.resolve(__dirname, "../src/pages/Content"),
+              ),
             );
 
             // Determine what needs to be reloaded based on changes and config
@@ -130,7 +130,7 @@ const server = new WebpackDevServer(
                   event: "background-updated",
                   data: {},
                 },
-                "utf-8"
+                "utf-8",
               );
             }
 
@@ -140,7 +140,7 @@ const server = new WebpackDevServer(
                   event: "content-scripts-updated",
                   data: {},
                 },
-                "utf-8"
+                "utf-8",
               );
             }
           }, 1000);
@@ -163,7 +163,7 @@ const server = new WebpackDevServer(
       return middlewares;
     },
   },
-  compiler
+  compiler,
 );
 
 const startServer = async () => {

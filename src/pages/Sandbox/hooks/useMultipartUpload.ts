@@ -5,9 +5,13 @@
  * プログレス管理、エラーハンドリング、キャンセル機能を提供します。
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
+import type {
+  MultipartUploadConfig,
+  UploadError,
+  UploadProgress,
+} from "../types/s3Upload";
 import { MultipartUploader } from "../utils/multipartUploader";
-import type { MultipartUploadConfig, UploadProgress, UploadError } from "../types/s3Upload";
 
 /**
  * ファイルサイズに基づいて最適なpartSizeを計算
@@ -114,7 +118,14 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
    * @returns アップロードされたS3キー
    */
   const upload = useCallback(
-    async ({ blob, apiBaseUrl, authToken, fileName, uploadPath, config }: UploadParams): Promise<string> => {
+    async ({
+      blob,
+      apiBaseUrl,
+      authToken,
+      fileName,
+      uploadPath,
+      config,
+    }: UploadParams): Promise<string> => {
       // 既にアップロード中の場合はエラー
       if (isUploading) {
         throw new Error("Upload already in progress");
@@ -139,7 +150,7 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
       if (process.env.NODE_ENV === "development") {
         console.log(
           `[S3 Upload] File size: ${(blob.size / 1024 / 1024).toFixed(2)}MB, ` +
-            `Part size: ${(optimalPartSize / 1024 / 1024).toFixed(2)}MB`
+            `Part size: ${(optimalPartSize / 1024 / 1024).toFixed(2)}MB`,
         );
       }
 
@@ -155,7 +166,7 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
           (progressData) => {
             // プログレスコールバック
             setProgress(progressData);
-          }
+          },
         );
 
         // useRefに保存（キャンセル用）
@@ -169,8 +180,14 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
           uploadedBytes: blob.size,
           totalBytes: blob.size,
           percentage: 100,
-          currentPart: mergedConfig.partSize > 0 ? Math.ceil(blob.size / mergedConfig.partSize) : 1,
-          totalParts: mergedConfig.partSize > 0 ? Math.ceil(blob.size / mergedConfig.partSize) : 1,
+          currentPart:
+            mergedConfig.partSize > 0
+              ? Math.ceil(blob.size / mergedConfig.partSize)
+              : 1,
+          totalParts:
+            mergedConfig.partSize > 0
+              ? Math.ceil(blob.size / mergedConfig.partSize)
+              : 1,
           bytesPerSecond: 0,
           estimatedTimeRemaining: 0,
         });
@@ -184,7 +201,10 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
         const errorMessage = err instanceof Error ? err.message : String(err);
 
         // エラー分類
-        if (errorMessage.includes("UPLOAD_CANCELLED") || errorMessage.includes("CANCELLED")) {
+        if (
+          errorMessage.includes("UPLOAD_CANCELLED") ||
+          errorMessage.includes("CANCELLED")
+        ) {
           setError({
             code: "CANCELLED",
             message: "Upload was cancelled",
@@ -205,7 +225,7 @@ export function useMultipartUpload(): UseMultipartUploadReturn {
         throw err;
       }
     },
-    [isUploading]
+    [isUploading],
   );
 
   /**

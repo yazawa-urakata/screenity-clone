@@ -1,11 +1,11 @@
-import React, { useContext, useState, useEffect } from "react";
+import type React from "react";
+import { useContext, useEffect, useState } from "react";
 import { ContentStateContext } from "../../context/ContentState";
-
+import ClipsPanel from "../editor/ClipsPanel";
 // Components
 import Title from "./Title";
-import ClipsPanel from "../editor/ClipsPanel";
 
-interface SimpleResultPanelProps { }
+type SimpleResultPanelProps = {};
 
 interface UploadStatus {
   status: "completed" | "error" | "uploading" | "unknown";
@@ -34,7 +34,9 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
   });
 
   if (!contextValue) {
-    throw new Error("SimpleResultPanel must be used within ContentStateContext");
+    throw new Error(
+      "SimpleResultPanel must be used within ContentStateContext",
+    );
   }
 
   const [contentState] = contextValue;
@@ -43,7 +45,11 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
     // Chrome Storage からアップロード状態を読み取り
     const loadUploadStatus = () => {
       chrome.storage.local.get(
-        ["instantUploadStatus", "instantUploadCompleteTime", "instantUploadError"],
+        [
+          "instantUploadStatus",
+          "instantUploadCompleteTime",
+          "instantUploadError",
+        ],
         (result) => {
           if (result.instantUploadStatus === "completed") {
             setUploadStatus({
@@ -60,7 +66,7 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
               status: "unknown",
             });
           }
-        }
+        },
       );
     };
 
@@ -70,10 +76,13 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
     // Chrome Storage の変更を監視
     const listener = (
       changes: { [key: string]: chrome.storage.StorageChange },
-      areaName: string
+      areaName: string,
     ) => {
       if (areaName === "local" && changes.instantUploadStatus) {
-        console.log("[SimpleResultPanel] instantUploadStatus changed:", changes.instantUploadStatus.newValue);
+        console.log(
+          "[SimpleResultPanel] instantUploadStatus changed:",
+          changes.instantUploadStatus.newValue,
+        );
         loadUploadStatus();
       }
     };
@@ -98,7 +107,8 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
         return {
           icon: "❌",
           title: "アップロード失敗",
-          description: uploadStatus.error || "アップロード中にエラーが発生しました",
+          description:
+            uploadStatus.error || "アップロード中にエラーが発生しました",
           color: "#ef4444",
         };
       default:

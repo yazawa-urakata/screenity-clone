@@ -1,6 +1,6 @@
 export function sendRecordingError(
   why: string | Error | unknown,
-  cancel: boolean = false
+  cancel: boolean = false,
 ): void {
   chrome.runtime.sendMessage({
     type: "recording-error",

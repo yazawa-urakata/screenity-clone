@@ -16,7 +16,7 @@ export interface SupabaseSession {
   refresh_token: string;
   expires_in: number;
   expires_at: number;
-  token_type: 'Bearer';
+  token_type: "Bearer";
   user: SupabaseUser;
 }
 

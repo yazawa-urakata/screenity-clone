@@ -1,16 +1,18 @@
+import * as ToastEl from "@radix-ui/react-toast";
 import React, {
-  FC,
-  useState,
-  useEffect,
-  useContext,
+  type FC,
   useCallback,
+  useContext,
+  useEffect,
   useRef,
+  useState,
 } from "react";
 
-import * as ToastEl from "@radix-ui/react-toast";
-
 // Context
-import { contentStateContext, ContentStateType } from "../../context/ContentState";
+import {
+  type ContentStateType,
+  contentStateContext,
+} from "../../context/ContentState";
 
 const Toast: FC = () => {
   const contextValue = useContext(contentStateContext);
@@ -29,13 +31,16 @@ const Toast: FC = () => {
     contentStateRef.current = contentState;
   }, [contentState]);
 
-  const openToast = useCallback((title: string, action: () => void, durationMs: number = 2000): void => {
-    if (contentStateRef.current.hideUI) return;
-    setTitle(title);
-    setOpen(true);
-    setTrigger(() => action);
-    setToastDuration(durationMs);
-  }, []);
+  const openToast = useCallback(
+    (title: string, action: () => void, durationMs: number = 2000): void => {
+      if (contentStateRef.current.hideUI) return;
+      setTitle(title);
+      setOpen(true);
+      setTrigger(() => action);
+      setToastDuration(durationMs);
+    },
+    [],
+  );
 
   useEffect(() => {
     setContentState((prevContentState) => ({

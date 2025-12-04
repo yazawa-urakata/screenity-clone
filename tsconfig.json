@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -20,11 +16,8 @@
     "resolveJsonModule": true,
     "noEmit": false,
     "checkJs": false,
-    "types": [
-      "node",
-      "chrome"
-    ],
-    "jsx": "react",
+    "types": ["node", "chrome"],
+    "jsx": "react-jsx",
     "incremental": true,
     "isolatedModules": true,
     "baseUrl": ".",
@@ -32,11 +25,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "build",
-    "node_modules"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["build", "node_modules"]
 }

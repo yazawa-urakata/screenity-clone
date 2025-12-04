@@ -1,21 +1,23 @@
 import React, {
-  FC,
-  ReactNode,
   createContext,
-  useState,
-  useEffect,
+  type FC,
+  type ReactNode,
   useCallback,
+  useEffect,
   useRef,
+  useState,
 } from "react";
-
-import { updateFromStorage } from "./utils/updateFromStorage";
-import type { ClipMetadata, ClipList } from "../../../types/clip";
-import { createClipMetadata, validateClip, MAX_CLIPS, MAX_CLIP_DURATION_MS } from "../../../utils/clipUtils";
+import type { ClipList } from "../../../types/clip";
 import { ClipValidationError } from "../../../types/clip";
-
+import {
+  createClipMetadata,
+  MAX_CLIP_DURATION_MS,
+  MAX_CLIPS,
+  validateClip,
+} from "../../../utils/clipUtils";
 import { setupHandlers } from "./messaging/handlers";
-
 import { checkAuthStatus } from "./utils/checkAuthStatus";
+import { updateFromStorage } from "./utils/updateFromStorage";
 
 // Context type definition
 export interface ContentStateType {
@@ -37,7 +39,8 @@ export interface ContentStateType {
   resumeRecording: () => void;
   dismissRecording: () => void;
   startStreaming: () => Promise<void>;
-  openModal: ((
+  openModal:
+  | ((
     title: string,
     description: string,
     action: string | null,
@@ -50,9 +53,16 @@ export interface ContentStateType {
     showX?: boolean,
     middle?: boolean,
     noShowAgainLabel?: string,
-    noShowAgainCallback?: () => void
-  ) => void) | null;
-  openToast: ((title: string, action?: (() => void) | number, durationMs?: number) => void) | null;
+    noShowAgainCallback?: () => void,
+  ) => void)
+  | null;
+  openToast:
+  | ((
+    title: string,
+    action?: (() => void) | number,
+    durationMs?: number,
+  ) => void)
+  | null;
   recordingToScene?: boolean;
   recordingProjectTitle?: string;
   timeWarning: boolean;
@@ -105,7 +115,6 @@ export interface ContentStateType {
   cursorMode: string;
   shape: string;
   shapeFill: boolean;
-  zoomEnabled: boolean;
   offscreenRecording: boolean;
   isAddingImage: boolean;
   pipEnded: boolean;
@@ -124,14 +133,14 @@ export interface ContentStateType {
   askDismiss: boolean;
   quality: string;
   systemAudio: boolean;
-  backup: boolean;
-  backupSetup: boolean;
-  openWarning: ((
+  openWarning:
+  | ((
     title: string,
     description: string,
     icon: string,
-    duration: number
-  ) => void) | false;
+    duration: number,
+  ) => void)
+  | false;
   hasOpenedBefore: boolean;
   qualityValue: string;
   fpsValue: string;
@@ -163,7 +172,7 @@ export interface ContentStateType {
   tryRestartRecording?: () => void;
   tryDismissRecording?: () => void;
   setContentState?: (
-    updater: (prev: ContentStateType) => Partial<ContentStateType>
+    updater: (prev: ContentStateType) => Partial<ContentStateType>,
   ) => void;
   shortcuts?: unknown[];
   // クリップ録画関連
@@ -181,18 +190,26 @@ export interface ContentStateType {
   confirmClipSelection: () => void;
   cancelClipSelection: () => void;
   endClipRecording: () => void;
-  setClipCrop: (crop: { x: number; y: number; width: number; height: number } | null) => void;
+  setClipCrop: (
+    crop: { x: number; y: number; width: number; height: number } | null,
+  ) => void;
 }
 
 type ContextValue = [
   ContentStateType,
-  (updater: ((prev: ContentStateType) => Partial<ContentStateType>) | ContentStateType) => void,
+  (
+    updater:
+      | ((prev: ContentStateType) => Partial<ContentStateType>)
+      | ContentStateType,
+  ) => void,
   number,
-  React.Dispatch<React.SetStateAction<number>>
+  React.Dispatch<React.SetStateAction<number>>,
 ];
 
 //create a context, with createContext api
-export const contentStateContext = createContext<ContextValue | undefined>(undefined);
+export const contentStateContext = createContext<ContextValue | undefined>(
+  undefined,
+);
 
 interface ContentStateRef {
   current: ContentStateType | null;
@@ -200,7 +217,9 @@ interface ContentStateRef {
 
 export const contentStateRef: ContentStateRef = { current: null };
 export let setContentState: (
-  updater: ((prev: ContentStateType) => Partial<ContentStateType>) | ContentStateType
+  updater:
+    | ((prev: ContentStateType) => Partial<ContentStateType>)
+    | ContentStateType,
 ) => void = () => { };
 export let setTimer: React.Dispatch<React.SetStateAction<number>> = () => { };
 
@@ -240,10 +259,10 @@ const ContentState: FC<ContentStateProps> = (props) => {
     process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
   setTimer = setTimerInternal;
   const [URL, setURL] = useState<string>(
-    "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1"
+    "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1",
   );
   const [URL2, setURL2] = useState<string>(
-    "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9"
+    "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9",
   );
 
   /**
@@ -256,39 +275,43 @@ const ContentState: FC<ContentStateProps> = (props) => {
     try {
       const result = await checkAuthStatus();
 
-      setContentState((prev) => ({
-        ...prev,
-        isLoggedIn: result.authenticated,
-        screenityUser: result.user,
-        isSubscribed: result.subscribed,
-        proSubscription: result.proSubscription,
-      } as any));
+      setContentState(
+        (prev) =>
+          ({
+            ...prev,
+            isLoggedIn: result.authenticated,
+            screenityUser: result.user,
+            isSubscribed: result.subscribed,
+            proSubscription: result.proSubscription,
+          }) as any,
+      );
 
       if (result.authenticated) {
-        console.log('✅ Supabase authentication verified:', result.user);
+        console.log("✅ Supabase authentication verified:", result.user);
 
-        // Offscreen recording and client-side zoom are not available for authenticated users
+        // Offscreen recording is not available for authenticated users
         setContentState((prev) => ({
           ...prev,
           offscreenRecording: false,
-          zoomEnabled: false,
         }));
 
         chrome.storage.local.set({
           offscreenRecording: false,
-          zoomEnabled: false,
         });
       }
     } catch (error) {
-      console.error('❌ Failed to verify Supabase auth:', error);
+      console.error("❌ Failed to verify Supabase auth:", error);
       // 認証失敗時はログアウト状態として扱う
-      setContentState((prev) => ({
-        ...prev,
-        isLoggedIn: false,
-        screenityUser: null,
-        isSubscribed: false,
-        proSubscription: null,
-      } as any));
+      setContentState(
+        (prev) =>
+          ({
+            ...prev,
+            isLoggedIn: false,
+            screenityUser: null,
+            isSubscribed: false,
+            proSubscription: null,
+          }) as any,
+      );
     }
   };
 
@@ -296,13 +319,16 @@ const ContentState: FC<ContentStateProps> = (props) => {
     verifyUser();
 
     // skipLogin と wasLoggedIn の初期化
-    chrome.storage.local.get(["skipLogin", "wasLoggedIn"], (result: { skipLogin?: boolean; wasLoggedIn?: boolean }) => {
-      setContentState((prev) => ({
-        ...prev,
-        skipLogin: result.skipLogin || false,
-        wasLoggedIn: result.wasLoggedIn || false,
-      }));
-    });
+    chrome.storage.local.get(
+      ["skipLogin", "wasLoggedIn"],
+      (result: { skipLogin?: boolean; wasLoggedIn?: boolean }) => {
+        setContentState((prev) => ({
+          ...prev,
+          skipLogin: result.skipLogin || false,
+          wasLoggedIn: result.wasLoggedIn || false,
+        }));
+      },
+    );
   }, []);
 
   useEffect(() => {
@@ -311,12 +337,12 @@ const ContentState: FC<ContentStateProps> = (props) => {
       setURL(
         "https://translate.google.com/translate?sl=en&tl=" +
         locale +
-        "&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1"
+        "&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1",
       );
       setURL2(
         "https://translate.google.com/translate?sl=en&tl=" +
         locale +
-        "&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9"
+        "&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9",
       );
     }
   }, []);
@@ -374,7 +400,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           {
             type: "restart-recording",
           },
-          "*"
+          "*",
         );
       }
       if (currentState.alarm) {
@@ -395,7 +421,9 @@ const ContentState: FC<ContentStateProps> = (props) => {
     // クリップ録画中のガード - クリップ録画中は全体の録画を停止できない
     const currentState = contentStateRef.current;
     if (currentState?.clipRecording) {
-      console.warn('[Recording] ⚠️ クリップ録画中は全体の録画を停止できません。先にクリップ録画を終了してください。');
+      console.warn(
+        "[Recording] ⚠️ クリップ録画中は全体の録画を停止できません。先にクリップ録画を終了してください。",
+      );
       return;
     }
 
@@ -446,7 +474,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (!dismiss && currentState.openToast) {
         currentState.openToast(
           chrome.i18n.getMessage("pausedRecordingToast"),
-          function () { }
+          () => { },
         );
       }
     }, 100);
@@ -493,9 +521,12 @@ const ContentState: FC<ContentStateProps> = (props) => {
   const startClipSelection = useCallback((): void => {
     // 録画中かチェック
     if (!contentStateRef.current?.recording) {
-      console.warn('⚠️ クリップ選択を開始できません: 録画中ではありません');
+      console.warn("⚠️ クリップ選択を開始できません: 録画中ではありません");
       if (contentStateRef.current?.openToast) {
-        contentStateRef.current.openToast('先に録画を開始してください', () => { });
+        contentStateRef.current.openToast(
+          "先に録画を開始してください",
+          () => { },
+        );
       }
       return;
     }
@@ -506,29 +537,35 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (contentStateRef.current.openToast) {
         contentStateRef.current.openToast(
           `最大${MAX_CLIPS}個までクリップを記録できます`,
-          () => { }
+          () => { },
         );
       }
       return;
     }
 
     // デフォルトの Region サイズと位置を計算
-    const defaultRegionWidth = 640;   // 640px
-    const defaultRegionHeight = 360;  // 360px (16:9)
-    const defaultRegionX = Math.max(0, (window.innerWidth - defaultRegionWidth) / 2);
-    const defaultRegionY = Math.max(0, (window.innerHeight - defaultRegionHeight) / 2);
+    const defaultRegionWidth = 640; // 640px
+    const defaultRegionHeight = 360; // 360px (16:9)
+    const defaultRegionX = Math.max(
+      0,
+      (window.innerWidth - defaultRegionWidth) / 2,
+    );
+    const defaultRegionY = Math.max(
+      0,
+      (window.innerHeight - defaultRegionHeight) / 2,
+    );
 
     // クリップ選択モードに移行
     setContentState((prev) => ({
       ...prev,
-      clipSelecting: true,        // クロップ選択中フラグON
-      customRegion: true,          // Region UI を表示
-      recordingType: 'region',     // Region コンポーネント表示のため一時的に region に切り替え
-      regionWidth: defaultRegionWidth,   // Region の幅を設定
+      clipSelecting: true, // クロップ選択中フラグON
+      customRegion: true, // Region UI を表示
+      recordingType: "region", // Region コンポーネント表示のため一時的に region に切り替え
+      regionWidth: defaultRegionWidth, // Region の幅を設定
       regionHeight: defaultRegionHeight, // Region の高さを設定
-      regionX: defaultRegionX,           // Region のX座標を設定
-      regionY: defaultRegionY,           // Region のY座標を設定
-      fromRegion: false,                 // Region からの更新ではない
+      regionX: defaultRegionX, // Region のX座標を設定
+      regionY: defaultRegionY, // Region のY座標を設定
+      fromRegion: false, // Region からの更新ではない
     }));
 
     // Chrome Storage に保存
@@ -540,7 +577,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       regionY: defaultRegionY,
     });
 
-    console.log('📐 クリップ選択を開始しました', {
+    console.log("📐 クリップ選択を開始しました", {
       width: defaultRegionWidth,
       height: defaultRegionHeight,
       x: defaultRegionX,
@@ -553,15 +590,15 @@ const ContentState: FC<ContentStateProps> = (props) => {
    */
   const confirmClipSelection = useCallback((): void => {
     if (!contentStateRef.current?.clipSelecting) {
-      console.warn('⚠️ クリップ選択中ではありません');
+      console.warn("⚠️ クリップ選択中ではありません");
       return;
     }
 
     // 録画開始時刻を取得して、現在の経過時間を計算
-    chrome.storage.local.get(['recordingStartTime'], (result) => {
+    chrome.storage.local.get(["recordingStartTime"], (result) => {
       const recordingStartTime = result.recordingStartTime as number;
       if (!recordingStartTime) {
-        console.error('⚠️ recordingStartTime が見つかりません');
+        console.error("⚠️ recordingStartTime が見つかりません");
         return;
       }
 
@@ -579,10 +616,10 @@ const ContentState: FC<ContentStateProps> = (props) => {
       // クリップ録画モードに移行
       setContentState((prev) => ({
         ...prev,
-        clipSelecting: false,        // 選択終了
-        clipRecording: true,         // 録画開始
-        clipStartTime: currentTime,  // この時点で時刻記録
-        clipCrop: clipCrop,          // クロップ範囲を確定
+        clipSelecting: false, // 選択終了
+        clipRecording: true, // 録画開始
+        clipStartTime: currentTime, // この時点で時刻記録
+        clipCrop: clipCrop, // クロップ範囲を確定
         // recordingType は 'region' のまま維持して Region コンポーネントを表示し続ける
       }));
 
@@ -594,7 +631,12 @@ const ContentState: FC<ContentStateProps> = (props) => {
         clipCrop: clipCrop,
       });
 
-      console.log('▶️ クリップ録画を開始しました', currentTime, 'ms, クロップ:', clipCrop);
+      console.log(
+        "▶️ クリップ録画を開始しました",
+        currentTime,
+        "ms, クロップ:",
+        clipCrop,
+      );
     });
   }, []);
 
@@ -603,7 +645,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
    */
   const cancelClipSelection = useCallback((): void => {
     if (!contentStateRef.current?.clipSelecting) {
-      console.warn('⚠️ クリップ選択中ではありません');
+      console.warn("⚠️ クリップ選択中ではありません");
       return;
     }
 
@@ -611,8 +653,8 @@ const ContentState: FC<ContentStateProps> = (props) => {
     setContentState((prev) => ({
       ...prev,
       clipSelecting: false,
-      customRegion: false,  // Region UI を非表示
-      recordingType: 'screen',  // 通常の screen モードに戻す
+      customRegion: false, // Region UI を非表示
+      recordingType: "screen", // 通常の screen モードに戻す
     }));
 
     // Chrome Storage に保存
@@ -620,7 +662,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       clipSelecting: false,
     });
 
-    console.log('❌ クリップ選択をキャンセルしました');
+    console.log("❌ クリップ選択をキャンセルしました");
   }, []);
 
   const endClipRecording = useCallback((): void => {
@@ -629,258 +671,305 @@ const ContentState: FC<ContentStateProps> = (props) => {
 
     // クリップ録画中チェック
     if (!currentState.clipRecording) {
-      console.warn('[ClipRecording] クリップ録画が開始されていません');
+      console.warn("[ClipRecording] クリップ録画が開始されていません");
       return;
     }
 
     // 録画開始時刻と録画メタデータを取得
-    chrome.storage.local.get([
-      'recordingStartTime',
-      'recordingVideoWidth',
-      'recordingVideoHeight',
-      'recordingTabWidth',
-      'recordingTabHeight',
-      'recordingDevicePixelRatio',
-      'clipStartTime',  // 追加: Chrome Storageから取得★
-      'clipCrop',       // 追加: Chrome Storageから取得★
-    ], (result) => {
-      try {
-        const recordingStartTime = result.recordingStartTime as number;
+    chrome.storage.local.get(
+      [
+        "recordingStartTime",
+        "recordingVideoWidth",
+        "recordingVideoHeight",
+        "recordingTabWidth",
+        "recordingTabHeight",
+        "recordingDevicePixelRatio",
+        "clipStartTime", // 追加: Chrome Storageから取得★
+        "clipCrop", // 追加: Chrome Storageから取得★
+      ],
+      (result) => {
+        try {
+          const recordingStartTime = result.recordingStartTime as number;
 
-        // 修正: Chrome Storageから取得（より確実）、取得できない場合はメモリ上の状態を使用★
-        const clipStartTime = (result.clipStartTime as number) || currentState.clipStartTime;
-        let clipEndTime = Date.now() - recordingStartTime;
+          // 修正: Chrome Storageから取得（より確実）、取得できない場合はメモリ上の状態を使用★
+          const clipStartTime =
+            (result.clipStartTime as number) || currentState.clipStartTime;
+          let clipEndTime = Date.now() - recordingStartTime;
 
-        // ★重要★ 60秒自動終了の場合、タイマーの遅延で60秒を超える可能性があるため、
-        // clipEndTime を最大60秒に制限する
-        if (clipEndTime - clipStartTime > MAX_CLIP_DURATION_MS) {
-          console.warn('[ClipRecording] ⚠️ クリップ長が60秒を超えています。60秒に制限します。', {
-            originalDuration: clipEndTime - clipStartTime,
+          // ★重要★ 60秒自動終了の場合、タイマーの遅延で60秒を超える可能性があるため、
+          // clipEndTime を最大60秒に制限する
+          if (clipEndTime - clipStartTime > MAX_CLIP_DURATION_MS) {
+            console.warn(
+              "[ClipRecording] ⚠️ クリップ長が60秒を超えています。60秒に制限します。",
+              {
+                originalDuration: clipEndTime - clipStartTime,
+                clipStartTime,
+                originalClipEndTime: clipEndTime,
+              },
+            );
+            clipEndTime = clipStartTime + MAX_CLIP_DURATION_MS;
+          }
+
+          console.log("[ClipRecording] クリップ録画を終了", {
             clipStartTime,
-            originalClipEndTime: clipEndTime,
+            clipStartTimeFromStorage: result.clipStartTime,
+            clipStartTimeFromMemory: currentState.clipStartTime,
+            clipEndTime,
+            duration: clipEndTime - clipStartTime,
           });
-          clipEndTime = clipStartTime + MAX_CLIP_DURATION_MS;
-        }
 
-        console.log('[ClipRecording] クリップ録画を終了', {
-          clipStartTime,
-          clipStartTimeFromStorage: result.clipStartTime,
-          clipStartTimeFromMemory: currentState.clipStartTime,
-          clipEndTime,
-          duration: clipEndTime - clipStartTime,
-        });
-
-        // 追加: clipStartTime のバリデーション★
-        if (!clipStartTime || clipStartTime < 0) {
-          console.error('[ClipRecording] clipStartTime が無効です:', clipStartTime);
-          throw new Error('クリップの開始時刻が取得できませんでした');
-        }
-
-        // 録画映像の実解像度を取得
-        const recordingVideoWidth = result.recordingVideoWidth as number;
-        const recordingVideoHeight = result.recordingVideoHeight as number;
-
-        // 修正: Chrome Storageから取得したclipCropを優先使用★
-        const clipCropData = (result.clipCrop as { x: number; y: number; width: number; height: number } | undefined) || currentState.clipCrop;
-
-        // CSS ピクセル → 録画ピクセル への座標変換
-        let scaledCrop: { x: number; y: number; width: number; height: number } | undefined;
-
-        if (clipCropData && recordingVideoWidth && recordingVideoHeight) {
-          // タブの実レンダリング解像度（物理ピクセル）
-          // 録画開始時ではなく、現在のウィンドウサイズとDPRを使用する（リサイズ対応）
-          const currentDevicePixelRatio = window.devicePixelRatio || 1;
-          const tabActualWidth = window.innerWidth * currentDevicePixelRatio;
-          const tabActualHeight = window.innerHeight * currentDevicePixelRatio;
-          // アスペクト比の計算
-          const videoAspectRatio = recordingVideoWidth / recordingVideoHeight;
-          const tabAspectRatio = tabActualWidth / tabActualHeight;
-
-          let scaleX = recordingVideoWidth / tabActualWidth;
-          let scaleY = recordingVideoHeight / tabActualHeight;
-          let xOffset = 0;
-          let yOffset = 0;
-
-          // ピラーボックス（左右に黒帯）の判定
-          // タブの方が細長い場合、動画の左右に黒帯が入る
-          if (tabAspectRatio < videoAspectRatio) {
-            // 高さを基準にスケーリングを合わせる（アスペクト比維持のためXもYと同じ倍率にする）
-            scaleX = scaleY;
-
-            // 有効なコンテンツ幅（動画内でのWebページの幅）
-            const videoContentWidth = tabActualWidth * scaleX;
-
-            // 左右の黒帯の幅をオフセットとして加算
-            xOffset = (recordingVideoWidth - videoContentWidth) / 2;
-          }
-          // レターボックス（上下に黒帯）の判定
-          // タブの方が横長（縦短）の場合、動画の上下に黒帯が入る
-          else if (tabAspectRatio > videoAspectRatio) {
-            // 幅を基準にスケーリングを合わせる
-            scaleY = scaleX;
-
-            // 有効なコンテンツ高さ
-            const videoContentHeight = tabActualHeight * scaleY;
-
-            // 上下の黒帯の高さをオフセットとして加算
-            yOffset = (recordingVideoHeight - videoContentHeight) / 2;
+          // 追加: clipStartTime のバリデーション★
+          if (!clipStartTime || clipStartTime < 0) {
+            console.error(
+              "[ClipRecording] clipStartTime が無効です:",
+              clipStartTime,
+            );
+            throw new Error("クリップの開始時刻が取得できませんでした");
           }
 
-          // CSS ピクセル → 物理ピクセル → 録画ピクセル
-          scaledCrop = {
-            x: Math.round((clipCropData.x * currentDevicePixelRatio * scaleX) + xOffset),
-            y: Math.round((clipCropData.y * currentDevicePixelRatio * scaleY) + yOffset + 3), // +3px for possible scrollbar
-            width: Math.round(clipCropData.width * currentDevicePixelRatio * scaleX),
-            height: Math.round((clipCropData.height * currentDevicePixelRatio * scaleY) - 8), // -8px for possible scrollbar
-          };
-        }
+          // 録画映像の実解像度を取得
+          const recordingVideoWidth = result.recordingVideoWidth as number;
+          const recordingVideoHeight = result.recordingVideoHeight as number;
 
-        // バリデーション
-        validateClip(
-          currentState.clips,
-          clipStartTime,
-          clipEndTime,
-          currentState.recording
-        );
+          // 修正: Chrome Storageから取得したclipCropを優先使用★
+          const clipCropData =
+            (result.clipCrop as
+              | { x: number; y: number; width: number; height: number }
+              | undefined) || currentState.clipCrop;
 
-        const clipData = createClipMetadata(
-          recordingStartTime,
-          clipStartTime,
-          clipEndTime,
-          scaledCrop  // 変換後の座標を使用
-        );
+          // CSS ピクセル → 録画ピクセル への座標変換
+          let scaledCrop:
+            | { x: number; y: number; width: number; height: number }
+            | undefined;
 
-        // Background に保存リクエストを送信
-        chrome.runtime.sendMessage(
-          {
-            type: 'save-clip',
-            payload: {
-              clipData,
+          if (clipCropData && recordingVideoWidth && recordingVideoHeight) {
+            // タブの実レンダリング解像度（物理ピクセル）
+            // 録画開始時ではなく、現在のウィンドウサイズとDPRを使用する（リサイズ対応）
+            const currentDevicePixelRatio = window.devicePixelRatio || 1;
+            const tabActualWidth = window.innerWidth * currentDevicePixelRatio;
+            const tabActualHeight =
+              window.innerHeight * currentDevicePixelRatio;
+            // アスペクト比の計算
+            const videoAspectRatio = recordingVideoWidth / recordingVideoHeight;
+            const tabAspectRatio = tabActualWidth / tabActualHeight;
+
+            let scaleX = recordingVideoWidth / tabActualWidth;
+            let scaleY = recordingVideoHeight / tabActualHeight;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            // ピラーボックス（左右に黒帯）の判定
+            // タブの方が細長い場合、動画の左右に黒帯が入る
+            if (tabAspectRatio < videoAspectRatio) {
+              // 高さを基準にスケーリングを合わせる（アスペクト比維持のためXもYと同じ倍率にする）
+              scaleX = scaleY;
+
+              // 有効なコンテンツ幅（動画内でのWebページの幅）
+              const videoContentWidth = tabActualWidth * scaleX;
+
+              // 左右の黒帯の幅をオフセットとして加算
+              xOffset = (recordingVideoWidth - videoContentWidth) / 2;
+            }
+            // レターボックス（上下に黒帯）の判定
+            // タブの方が横長（縦短）の場合、動画の上下に黒帯が入る
+            else if (tabAspectRatio > videoAspectRatio) {
+              // 幅を基準にスケーリングを合わせる
+              scaleY = scaleX;
+
+              // 有効なコンテンツ高さ
+              const videoContentHeight = tabActualHeight * scaleY;
+
+              // 上下の黒帯の高さをオフセットとして加算
+              yOffset = (recordingVideoHeight - videoContentHeight) / 2;
+            }
+
+            // CSS ピクセル → 物理ピクセル → 録画ピクセル
+            scaledCrop = {
+              x: Math.round(
+                clipCropData.x * currentDevicePixelRatio * scaleX + xOffset,
+              ),
+              y: Math.round(
+                clipCropData.y * currentDevicePixelRatio * scaleY + yOffset + 3,
+              ), // +3px for possible scrollbar
+              width: Math.round(
+                clipCropData.width * currentDevicePixelRatio * scaleX,
+              ),
+              height: Math.round(
+                clipCropData.height * currentDevicePixelRatio * scaleY - 8,
+              ), // -8px for possible scrollbar
+            };
+          }
+
+          // バリデーション
+          validateClip(
+            currentState.clips,
+            clipStartTime,
+            clipEndTime,
+            currentState.recording,
+          );
+
+          const clipData = createClipMetadata(
+            clipStartTime,
+            clipEndTime,
+            scaledCrop, // 変換後の座標を使用
+          );
+
+          // Background に保存リクエストを送信
+          chrome.runtime.sendMessage(
+            {
+              type: "save-clip",
+              payload: {
+                clipData,
+              },
             },
-          },
-          (response) => {
-            // 応答を受け取るためのコールバック（エラー抑制）
-            if (chrome.runtime.lastError) {
-              console.error('[ClipRecording] ❌ メッセージ送信エラー:', chrome.runtime.lastError.message);
-              console.error('[ClipRecording] クリップメタデータの保存に失敗しました。Background Scriptが応答していない可能性があります。');
-              return;
-            }
+            (response) => {
+              // 応答を受け取るためのコールバック（エラー抑制）
+              if (chrome.runtime.lastError) {
+                console.error(
+                  "[ClipRecording] ❌ メッセージ送信エラー:",
+                  chrome.runtime.lastError.message,
+                );
+                console.error(
+                  "[ClipRecording] クリップメタデータの保存に失敗しました。Background Scriptが応答していない可能性があります。",
+                );
+                return;
+              }
 
-            // 応答の内容を確認
-            if (response && response.success) {
-              console.log('[ClipRecording] ✅ クリップメタデータが正常にChrome Storageに保存されました', {
-                clipId: clipData.id,
-                response,
-              });
-              console.log('[ClipRecording] 📝 重要: clips.jsonのS3アップロードは画面録画全体を停止したときに実行されます');
-            } else {
-              console.error('[ClipRecording] ❌ クリップメタデータの保存に失敗しました:', response);
-            }
+              // 応答の内容を確認
+              if (response && response.success) {
+                console.log(
+                  "[ClipRecording] ✅ クリップメタデータが正常にChrome Storageに保存されました",
+                  {
+                    clipId: clipData.id,
+                    response,
+                  },
+                );
+                console.log(
+                  "[ClipRecording] 📝 重要: clips.jsonのS3アップロードは画面録画全体を停止したときに実行されます",
+                );
+              } else {
+                console.error(
+                  "[ClipRecording] ❌ クリップメタデータの保存に失敗しました:",
+                  response,
+                );
+              }
+            },
+          );
+
+          // ローカル状態を更新（楽観的UI更新）
+          setContentState((prev) => ({
+            ...prev,
+            clips: [...prev.clips, clipData],
+            clipRecording: false,
+            clipStartTime: null,
+            clipCrop: null,
+            customRegion: false,
+            recordingType: "screen", // 通常の screen モードに戻す
+          }));
+
+          console.log("[ClipRecording] クリップ録画を終了しました:", clipData);
+        } catch (error) {
+          console.error("[ClipRecording] クリップ録画終了エラー:", error);
+
+          let errorMessage = "クリップの保存に失敗しました";
+          if (error instanceof ClipValidationError) {
+            errorMessage = error.message;
           }
-        );
 
-        // ローカル状態を更新（楽観的UI更新）
-        setContentState((prev) => ({
-          ...prev,
-          clips: [...prev.clips, clipData],
-          clipRecording: false,
-          clipStartTime: null,
-          clipCrop: null,
-          customRegion: false,
-          recordingType: 'screen',  // 通常の screen モードに戻す
-        }));
+          if (contentStateRef.current?.openToast) {
+            contentStateRef.current.openToast(errorMessage);
+          }
 
-        console.log('[ClipRecording] クリップ録画を終了しました:', clipData);
-      } catch (error) {
-        console.error('[ClipRecording] クリップ録画終了エラー:', error);
-
-        let errorMessage = 'クリップの保存に失敗しました';
-        if (error instanceof ClipValidationError) {
-          errorMessage = error.message;
+          // 状態をリセット
+          setContentState((prev) => ({
+            ...prev,
+            clipRecording: false,
+            clipStartTime: null,
+            clipCrop: null,
+            customRegion: false,
+            recordingType: "screen", // 通常の screen モードに戻す
+          }));
         }
+      },
+    );
+  }, []);
 
-        if (contentStateRef.current?.openToast) {
-          contentStateRef.current.openToast(errorMessage);
-        }
+  const setClipCrop = useCallback(
+    (
+      crop: { x: number; y: number; width: number; height: number } | null,
+    ): void => {
+      setContentState((prev) => ({
+        ...prev,
+        clipCrop: crop,
+      }));
 
-        // 状態をリセット
-        setContentState((prev) => ({
-          ...prev,
-          clipRecording: false,
-          clipStartTime: null,
-          clipCrop: null,
-          customRegion: false,
-          recordingType: 'screen',  // 通常の screen モードに戻す
-        }));
+      chrome.storage.local.set({ clipCrop: crop });
+    },
+    [],
+  );
+
+  const checkChromeCapturePermissions =
+    useCallback(async (): Promise<boolean> => {
+      const currentState = contentStateRef.current;
+      const permissions: chrome.permissions.Permissions["permissions"] = [
+        "desktopCapture",
+        "alarms",
+        "offscreen",
+      ];
+
+      // Only request clipboardWrite if the user is logged in and subscribed
+      if (currentState?.isLoggedIn && currentState?.isSubscribed) {
+        permissions.push("clipboardWrite");
       }
-    });
-  }, []);
 
-  const setClipCrop = useCallback((crop: { x: number; y: number; width: number; height: number } | null): void => {
-    setContentState((prev) => ({
-      ...prev,
-      clipCrop: crop,
-    }));
-
-    chrome.storage.local.set({ clipCrop: crop });
-  }, []);
-
-  const checkChromeCapturePermissions = useCallback(async (): Promise<boolean> => {
-    const currentState = contentStateRef.current;
-    const permissions: chrome.permissions.Permissions["permissions"] = ["desktopCapture", "alarms", "offscreen"];
-
-    // Only request clipboardWrite if the user is logged in and subscribed
-    if (currentState?.isLoggedIn && currentState?.isSubscribed) {
-      permissions.push("clipboardWrite");
-    }
-
-    const containsPromise = new Promise<boolean>((resolve) => {
-      chrome.permissions.contains({ permissions }, (result) => {
-        resolve(result);
-      });
-    });
-
-    const result = await containsPromise;
-
-    if (!result) {
-      const requestPromise = new Promise<boolean>((resolve) => {
-        chrome.permissions.request({ permissions }, (granted) => {
-          resolve(granted);
+      const containsPromise = new Promise<boolean>((resolve) => {
+        chrome.permissions.contains({ permissions }, (result) => {
+          resolve(result);
         });
       });
 
-      const granted = await requestPromise;
+      const result = await containsPromise;
 
-      if (!granted) {
-        return false;
+      if (!result) {
+        const requestPromise = new Promise<boolean>((resolve) => {
+          chrome.permissions.request({ permissions }, (granted) => {
+            resolve(granted);
+          });
+        });
+
+        const granted = await requestPromise;
+
+        if (!granted) {
+          return false;
+        } else {
+          chrome.runtime.sendMessage({ type: "add-alarm-listener" });
+          return true;
+        }
       } else {
-        chrome.runtime.sendMessage({ type: "add-alarm-listener" });
         return true;
       }
-    } else {
-      return true;
-    }
-  }, []);
+    }, []);
 
-  const checkChromeCapturePermissionsSW = useCallback(async (): Promise<boolean> => {
-    const currentState = contentStateRef.current;
-    if (!currentState) return false;
+  const checkChromeCapturePermissionsSW =
+    useCallback(async (): Promise<boolean> => {
+      const currentState = contentStateRef.current;
+      if (!currentState) return false;
 
-    const { isLoggedIn, isSubscribed } = currentState;
+      const { isLoggedIn, isSubscribed } = currentState;
 
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          type: "check-capture-permissions",
-          isLoggedIn,
-          isSubscribed,
-        },
-        (response: { status: string }) => {
-          resolve(response.status === "ok");
-        }
-      );
-    });
-  }, []);
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+          {
+            type: "check-capture-permissions",
+            isLoggedIn,
+            isSubscribed,
+          },
+          (response: { status: string }) => {
+            resolve(response.status === "ok");
+          },
+        );
+      });
+    }, []);
 
   const startStreaming = useCallback(async (): Promise<void> => {
     const currentState = contentStateRef.current;
@@ -914,9 +1003,13 @@ const ContentState: FC<ContentStateProps> = (props) => {
           () => {
             window.open(process.env.SCREENITY_APP_BASE, "_blank");
           },
-          () => { }
+          () => { },
         );
-      } else if (!success && currentState.openModal && currentState.setContentState) {
+      } else if (
+        !success &&
+        currentState.openModal &&
+        currentState.setContentState
+      ) {
         const isSubError = error === "Subscription inactive";
         const isAuthError = error === "Not authenticated";
 
@@ -948,7 +1041,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           async () => {
             window.location.reload(); // or retry logic
           },
-          () => { }
+          () => { },
         );
       }
 
@@ -983,7 +1076,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
         null,
         chrome.i18n.getMessage("learnMoreDot"),
         URL,
-        true
+        true,
       );
       setContentState((prevContentState) => ({
         ...prevContentState,
@@ -1035,7 +1128,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           () => { },
           null,
           chrome.i18n.getMessage("learnMoreDot"),
-          helpURL
+          helpURL,
         );
       }
       setContentState((prevContentState) => ({
@@ -1061,7 +1154,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           width: currentState.regionWidth,
           height: currentState.regionHeight,
         },
-        "*"
+        "*",
       );
     }
 
@@ -1070,7 +1163,11 @@ const ContentState: FC<ContentStateProps> = (props) => {
       showOnboardingArrow: false,
     }));
 
-    if (!currentState.micActive && currentState.askMicrophone && currentState.openModal) {
+    if (
+      !currentState.micActive &&
+      currentState.askMicrophone &&
+      currentState.openModal
+    ) {
       currentState.openModal(
         chrome.i18n.getMessage("micMutedModalTitle"),
         chrome.i18n.getMessage("micMutedModalDescription"),
@@ -1110,7 +1207,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
             askMicrophone: false,
           }));
           chrome.storage.local.set({ askMicrophone: false });
-        }
+        },
       );
     } else {
       chrome.runtime.sendMessage({
@@ -1126,7 +1223,12 @@ const ContentState: FC<ContentStateProps> = (props) => {
         pipEnded: false,
       }));
     }
-  }, [URL, checkChromeCapturePermissions, checkChromeCapturePermissionsSW, CLOUD_FEATURES_ENABLED]);
+  }, [
+    URL,
+    checkChromeCapturePermissions,
+    checkChromeCapturePermissionsSW,
+    CLOUD_FEATURES_ENABLED,
+  ]);
 
   const tryRestartRecording = useCallback((): void => {
     const currentState = contentStateRef.current;
@@ -1143,7 +1245,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       },
       () => {
         currentState.resumeRecording();
-      }
+      },
     );
   }, []);
 
@@ -1163,7 +1265,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
         },
         () => {
           currentState.resumeRecording();
-        }
+        },
       );
     } else {
       currentState.dismissRecording();
@@ -1224,7 +1326,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           chrome.i18n.getMessage("learnMoreDot"),
           URL2,
           true,
-          false
+          false,
         );
       }
     }
@@ -1334,7 +1436,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     cursorMode: "none",
     shape: "rectangle",
     shapeFill: false,
-    zoomEnabled: false,
     offscreenRecording: false,
     isAddingImage: false,
     pipEnded: false,
@@ -1353,8 +1454,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     askDismiss: true,
     quality: "max",
     systemAudio: true,
-    backup: false,
-    backupSetup: false,
     openWarning: false,
     hasOpenedBefore: false,
     qualityValue: "1080p",
@@ -1379,7 +1478,10 @@ const ContentState: FC<ContentStateProps> = (props) => {
     startRecordingAfterCountdown: () => {
       playBeepSound();
       setTimeout(() => {
-        if (contentStateRef.current && !contentStateRef.current.countdownCancelled) {
+        if (
+          contentStateRef.current &&
+          !contentStateRef.current.countdownCancelled
+        ) {
           contentStateRef.current.startRecording();
         }
       }, 500);
@@ -1436,27 +1538,30 @@ const ContentState: FC<ContentStateProps> = (props) => {
     if (!CLOUD_FEATURES_ENABLED) return;
     if (!contentState.isLoggedIn || !contentState.isSubscribed) return;
 
-    chrome.storage.local.get(["firstTimePro"], (res: { firstTimePro?: boolean }) => {
-      if (
-        res.firstTimePro &&
-        typeof contentStateRef.current?.openModal === "function"
-      ) {
-        setTimeout(() => {
-          if (contentStateRef.current?.openModal) {
-            contentStateRef.current.openModal(
-              chrome.i18n.getMessage("welcomeToProTitleModal"),
-              chrome.i18n.getMessage("welcomeToProDescriptionModal"),
-              chrome.i18n.getMessage("welcomeToProActionModal"),
-              null,
-              () => {
-                chrome.storage.local.set({ firstTimePro: false });
-              },
-              () => { }
-            );
-          }
-        }, 300);
-      }
-    });
+    chrome.storage.local.get(
+      ["firstTimePro"],
+      (res: { firstTimePro?: boolean }) => {
+        if (
+          res.firstTimePro &&
+          typeof contentStateRef.current?.openModal === "function"
+        ) {
+          setTimeout(() => {
+            if (contentStateRef.current?.openModal) {
+              contentStateRef.current.openModal(
+                chrome.i18n.getMessage("welcomeToProTitleModal"),
+                chrome.i18n.getMessage("welcomeToProDescriptionModal"),
+                chrome.i18n.getMessage("welcomeToProActionModal"),
+                null,
+                () => {
+                  chrome.storage.local.set({ firstTimePro: false });
+                },
+                () => { },
+              );
+            }
+          }, 300);
+        }
+      },
+    );
   }, [contentState?.isLoggedIn, contentState?.isSubscribed]);
 
   // Check Chrome version
@@ -1485,14 +1590,11 @@ const ContentState: FC<ContentStateProps> = (props) => {
           chrome.i18n.getMessage("extensionNotSupportedTitle"),
           chrome.i18n.getMessage("extensionNotSupportedDescription"),
           "NotSupportedIcon",
-          10000
+          10000,
         );
       }
     }
-  }, [
-    contentState.openWarning,
-    contentState.recording,
-  ]);
+  }, [contentState.openWarning, contentState.recording]);
 
   useEffect(() => {
     if (!contentState) return;
@@ -1524,7 +1626,12 @@ const ContentState: FC<ContentStateProps> = (props) => {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [contentState.recording, contentState.paused, contentState.alarm, contentState.timer]);
+  }, [
+    contentState.recording,
+    contentState.paused,
+    contentState.alarm,
+    contentState.timer,
+  ]);
 
   useEffect(() => {
     if (!contentState.customRegion) {
@@ -1581,7 +1688,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
             setTimer(timeElapsedSeconds);
           }
         }
-      }
+      },
     );
   }, [contentState.alarm, contentState.alarmTime]);
 
@@ -1636,7 +1743,9 @@ const ContentState: FC<ContentStateProps> = (props) => {
     const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
     if (isMac) return;
 
-    const shadowRoot = (contentState.shadowRef as unknown as { shadowRoot: ShadowRoot }).shadowRoot;
+    const shadowRoot = (
+      contentState.shadowRef as unknown as { shadowRoot: ShadowRoot }
+    ).shadowRoot;
 
     const elements = shadowRoot.querySelectorAll("*");
     elements.forEach((element) => {
@@ -1695,14 +1804,14 @@ const ContentState: FC<ContentStateProps> = (props) => {
   useEffect(() => {
     // クリップ録画中かつ開始時刻が記録されている場合のみ動作
     if (contentState.clipRecording && contentState.clipStartTime !== null) {
-      console.log('[ClipAutoStop] クリップ録画60秒自動終了タイマーを開始', {
+      console.log("[ClipAutoStop] クリップ録画60秒自動終了タイマーを開始", {
         clipStartTime: contentState.clipStartTime,
         targetEndTime: contentState.clipStartTime + 60000,
       });
 
       // 既存のタイマーをクリア（念のため）
       if (clipAutoStopTimerRef.current !== null) {
-        console.warn('[ClipAutoStop] 既存タイマーを検出 - クリアして再セット');
+        console.warn("[ClipAutoStop] 既存タイマーを検出 - クリアして再セット");
         clearTimeout(clipAutoStopTimerRef.current);
         clipAutoStopTimerRef.current = null;
       }
@@ -1711,34 +1820,45 @@ const ContentState: FC<ContentStateProps> = (props) => {
       const AUTO_STOP_DURATION_MS = 60 * 1000; // 60秒 = 60,000ミリ秒
 
       clipAutoStopTimerRef.current = window.setTimeout(() => {
-        console.log('[ClipAutoStop] ⏰ 60秒経過 - クリップ録画を自動終了します', {
-          clipRecording: contentStateRef.current?.clipRecording,
-          clipStartTime: contentStateRef.current?.clipStartTime,
-          clipCrop: contentStateRef.current?.clipCrop,
-        });
+        console.log(
+          "[ClipAutoStop] ⏰ 60秒経過 - クリップ録画を自動終了します",
+          {
+            clipRecording: contentStateRef.current?.clipRecording,
+            clipStartTime: contentStateRef.current?.clipStartTime,
+            clipCrop: contentStateRef.current?.clipCrop,
+          },
+        );
 
         // contentStateRef.current で最新の状態を取得
         if (contentStateRef.current?.clipRecording) {
           // 既存の endClipRecording() をそのまま呼び出す
-          console.log('[ClipAutoStop] 📤 endClipRecording() を呼び出します');
+          console.log("[ClipAutoStop] 📤 endClipRecording() を呼び出します");
           try {
             contentStateRef.current.endClipRecording();
-            console.log('[ClipAutoStop] ✅ endClipRecording() の呼び出しが完了しました');
-            console.log('[ClipAutoStop] 📝 重要: clips.jsonのS3アップロードは画面録画全体を停止したときに実行されます');
+            console.log(
+              "[ClipAutoStop] ✅ endClipRecording() の呼び出しが完了しました",
+            );
+            console.log(
+              "[ClipAutoStop] 📝 重要: clips.jsonのS3アップロードは画面録画全体を停止したときに実行されます",
+            );
           } catch (error) {
-            console.error('[ClipAutoStop] ❌ endClipRecording()でエラーが発生しました:', error);
+            console.error(
+              "[ClipAutoStop] ❌ endClipRecording()でエラーが発生しました:",
+              error,
+            );
           }
         } else {
-          console.warn('[ClipAutoStop] ⚠️ クリップ録画は既に終了しています - メタデータを保存できません');
+          console.warn(
+            "[ClipAutoStop] ⚠️ クリップ録画は既に終了しています - メタデータを保存できません",
+          );
         }
 
         clipAutoStopTimerRef.current = null;
       }, AUTO_STOP_DURATION_MS);
-
     } else {
       // クリップ録画が終了した場合、タイマーをクリア
       if (clipAutoStopTimerRef.current !== null) {
-        console.log('[ClipAutoStop] クリップ録画終了 - タイマーをクリア');
+        console.log("[ClipAutoStop] クリップ録画終了 - タイマーをクリア");
         clearTimeout(clipAutoStopTimerRef.current);
         clipAutoStopTimerRef.current = null;
       }
@@ -1747,7 +1867,9 @@ const ContentState: FC<ContentStateProps> = (props) => {
     // クリーンアップ関数: コンポーネントアンマウント時やdeps変更時
     return () => {
       if (clipAutoStopTimerRef.current !== null) {
-        console.log('[ClipAutoStop] useEffect クリーンアップ - タイマーをクリア');
+        console.log(
+          "[ClipAutoStop] useEffect クリーンアップ - タイマーをクリア",
+        );
         clearTimeout(clipAutoStopTimerRef.current);
         clipAutoStopTimerRef.current = null;
       }

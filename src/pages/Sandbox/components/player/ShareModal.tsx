@@ -1,11 +1,9 @@
-import React, { useContext } from "react";
-
-import styles from "../../styles/player/_ShareModal.module.scss";
-
+import type React from "react";
+import { useContext } from "react";
 import { ReactSVG } from "react-svg";
-
 // Context
 import { ContentStateContext } from "../../context/ContentState";
+import styles from "../../styles/player/_ShareModal.module.scss";
 
 const URL = "/assets/";
 

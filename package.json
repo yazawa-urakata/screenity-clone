@@ -8,12 +8,14 @@
     "dev": "npm run hot-reload",
     "watch": "cross-env NODE_ENV=development webpack --watch",
     "hot-reload": "cross-env NODE_ENV=development webpack serve --hot",
-    "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
     "postinstall": "patch-package",
     "package": "npm run build && cd build && zip -r ../extension.zip . && cd ..",
     "clean": "rm -rf build && mkdir build",
     "lint": "eslint src/**/*.js --fix",
-    "knip": "knip"
+    "knip": "knip",
+    "biome:check": "biome check .",
+    "biome:format": "biome format . --write",
+    "biome:lint": "biome lint ."
   },
   "dependencies": {
     "@babel/plugin-transform-react-jsx": "^7.27.1",
@@ -58,6 +60,7 @@
     "@babel/plugin-transform-runtime": "^7.27.1",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-react": "^7.27.1",
+    "@biomejs/biome": "2.3.8",
     "@types/chrome": "^0.1.29",
     "@types/node": "^24.10.1",
     "@types/react": "^18.3.21",
@@ -71,7 +74,6 @@
     "html-loader": "^3.1.0",
     "html-webpack-plugin": "^5.5.0",
     "knip": "^5.70.2",
-    "prettier": "^2.7.1",
     "sass": "^1.53.0",
     "sass-loader": "^13.2.0",
     "source-map-loader": "^3.0.1",

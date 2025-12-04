@@ -1,11 +1,14 @@
-import React from "react";
+import type React from "react";
 
 interface LoggedOutProps {
   onManageClick: () => void;
   onDowngradeClick: () => void;
 }
 
-const LoggedOut: React.FC<LoggedOutProps> = ({ onManageClick, onDowngradeClick }) => {
+const LoggedOut: React.FC<LoggedOutProps> = ({
+  onManageClick,
+  onDowngradeClick,
+}) => {
   return (
     <div
       className="announcement"

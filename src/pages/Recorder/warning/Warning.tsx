@@ -1,12 +1,7 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-
-import { ReactSVG } from "react-svg";
-
 import * as ToastEl from "@radix-ui/react-toast";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ReactSVG } from "react-svg";
 
 const Warning: React.FC = () => {
   const [open, setOpen] = useState<boolean>(false);
@@ -14,12 +9,15 @@ const Warning: React.FC = () => {
   const [description, setDescription] = useState<string>("");
   const [duration, setDuration] = useState<number>(10000);
 
-  const openWarning = useCallback((title: string, description: string, duration: number) => {
-    setTitle(title);
-    setDescription(description);
-    setDuration(duration);
-    setOpen(true);
-  }, []);
+  const openWarning = useCallback(
+    (title: string, description: string, duration: number) => {
+      setTitle(title);
+      setDescription(description);
+      setDuration(duration);
+      setOpen(true);
+    },
+    [],
+  );
 
   useEffect(() => {
     // Check if macOS
@@ -28,13 +26,13 @@ const Warning: React.FC = () => {
       openWarning(
         chrome.i18n.getMessage("recordAudioWarningMacTitle"),
         chrome.i18n.getMessage("recordAudioWarningMacDescription"),
-        10000
+        10000,
       );
     } else {
       openWarning(
         chrome.i18n.getMessage("recordAudioWarningOtherTitle"),
         chrome.i18n.getMessage("recordAudioWarningOtherDescription"),
-        10000
+        10000,
       );
     }
   }, [openWarning]);

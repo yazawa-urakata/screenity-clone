@@ -1,14 +1,13 @@
 import "./styles/edit/_VideoPlayer.scss";
 import "./styles/global/_app.scss";
 
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import Modal from "./components/global/Modal";
+// Context
+import { ContentStateContext } from "./context/ContentState"; // Import the ContentState context
 // Layout
 import Editor from "./layout/editor/Editor";
 import Player from "./layout/player/Player";
-import Modal from "./components/global/Modal";
-
-// Context
-import { ContentStateContext } from "./context/ContentState"; // Import the ContentState context
 
 const Sandbox = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context

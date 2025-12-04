@@ -1,28 +1,28 @@
 /**
  * Supabase トークンストレージ管理モジュール
- * 
+ *
  * chrome.storage.session を使用して、セッション限定でトークンを安全に管理します。
- * 
+ *
  * セキュリティ上の利点:
  * - インメモリストレージ（ディスクに書き込まれない）
  * - セッション限定（ブラウザを閉じると自動的にクリア）
  * - デフォルトで Content scripts からアクセス不可
- * 
+ *
  * @see https://developer.chrome.com/docs/extensions/reference/storage/#property-session
  */
 
-import type { SupabaseUser } from '../types/supabase';
+import type { SupabaseUser } from "../types/supabase";
 
 /**
  * ストレージキーの定義
- * 
+ *
  * 一箇所で管理することで、将来的な変更を容易にする
  */
 const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'supabase_access_token',
-  USER: 'supabase_user',
-  EXPIRES_AT: 'supabase_expires_at',
-  AUTHENTICATED: 'supabase_authenticated',
+  ACCESS_TOKEN: "supabase_access_token",
+  USER: "supabase_user",
+  EXPIRES_AT: "supabase_expires_at",
+  AUTHENTICATED: "supabase_authenticated",
 } as const;
 
 /**
@@ -46,10 +46,10 @@ interface AuthState {
 
 /**
  * トークンと認証情報を保存
- * 
+ *
  * @param tokens - 保存するトークンとユーザー情報
  * @returns Promise<void>
- * 
+ *
  * @example
  * await setAuthTokens({
  *   accessToken: 'eyJ...',
@@ -59,7 +59,7 @@ interface AuthState {
  */
 export async function setAuthTokens(tokens: AuthTokens): Promise<void> {
   if (!chrome.storage.session) {
-    console.warn('⚠️ chrome.storage.session is not available in this context');
+    console.warn("⚠️ chrome.storage.session is not available in this context");
     return;
   }
 
@@ -70,14 +70,14 @@ export async function setAuthTokens(tokens: AuthTokens): Promise<void> {
     [STORAGE_KEYS.AUTHENTICATED]: true,
   });
 
-  console.log('✅ Supabase tokens saved to session storage');
+  console.log("✅ Supabase tokens saved to session storage");
 }
 
 /**
  * トークンと認証情報を取得
- * 
+ *
  * @returns Promise<AuthState> - 認証状態とトークン情報
- * 
+ *
  * @example
  * const { isAuthenticated, accessToken, user } = await getAuthTokens();
  * if (isAuthenticated) {
@@ -86,7 +86,7 @@ export async function setAuthTokens(tokens: AuthTokens): Promise<void> {
  */
 export async function getAuthTokens(): Promise<AuthState> {
   if (!chrome.storage.session) {
-    console.warn('⚠️ chrome.storage.session is not available in this context');
+    console.warn("⚠️ chrome.storage.session is not available in this context");
     return {
       isAuthenticated: false,
       accessToken: null,
@@ -106,29 +106,31 @@ export async function getAuthTokens(): Promise<AuthState> {
       (data) => {
         resolve({
           isAuthenticated: !!data[STORAGE_KEYS.AUTHENTICATED],
-          accessToken: (data[STORAGE_KEYS.ACCESS_TOKEN] as string | undefined) || null,
+          accessToken:
+            (data[STORAGE_KEYS.ACCESS_TOKEN] as string | undefined) || null,
           user: (data[STORAGE_KEYS.USER] as SupabaseUser | undefined) || null,
-          expiresAt: (data[STORAGE_KEYS.EXPIRES_AT] as number | undefined) || null,
+          expiresAt:
+            (data[STORAGE_KEYS.EXPIRES_AT] as number | undefined) || null,
         });
-      }
+      },
     );
   });
 }
 
 /**
  * すべての認証情報をクリア
- * 
+ *
  * ログアウト時やセッション期限切れ時に使用します。
- * 
+ *
  * @returns Promise<void>
- * 
+ *
  * @example
  * await clearAuthTokens();
  * console.log('User logged out');
  */
 export async function clearAuthTokens(): Promise<void> {
   if (!chrome.storage.session) {
-    console.warn('⚠️ chrome.storage.session is not available in this context');
+    console.warn("⚠️ chrome.storage.session is not available in this context");
     return;
   }
 
@@ -139,5 +141,5 @@ export async function clearAuthTokens(): Promise<void> {
     STORAGE_KEYS.AUTHENTICATED,
   ]);
 
-  console.log('🔐 Supabase tokens cleared from session storage');
+  console.log("🔐 Supabase tokens cleared from session storage");
 }

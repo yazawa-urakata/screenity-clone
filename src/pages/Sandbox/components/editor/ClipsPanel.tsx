@@ -1,7 +1,8 @@
-import React, { useContext } from "react";
+import type React from "react";
+import { useContext } from "react";
 import { formatClipTime } from "../../../../utils/clipUtils";
-import styles from "../../styles/edit/_ClipsPanel.module.scss";
 import { ContentStateContext } from "../../context/ContentState";
+import styles from "../../styles/edit/_ClipsPanel.module.scss";
 
 const ClipsPanel: React.FC = () => {
   const contextValue = useContext(ContentStateContext);
@@ -35,7 +36,8 @@ const ClipsPanel: React.FC = () => {
               <div className={styles.clipTime}>
                 <span className={styles.clipLabel}>時間:</span>
                 <span className={styles.clipValue}>
-                  {formatClipTime(clip.startTime)} - {formatClipTime(clip.endTime)}
+                  {formatClipTime(clip.startTime)} -{" "}
+                  {formatClipTime(clip.endTime)}
                 </span>
               </div>
               <div className={styles.clipDuration}>
@@ -48,7 +50,8 @@ const ClipsPanel: React.FC = () => {
                 <div className={styles.clipCrop}>
                   <span className={styles.clipLabel}>範囲:</span>
                   <span className={styles.clipValue}>
-                    {clip.crop.width} × {clip.crop.height} (x: {clip.crop.x}, y: {clip.crop.y})
+                    {clip.crop.width} × {clip.crop.height} (x: {clip.crop.x}, y:{" "}
+                    {clip.crop.y})
                   </span>
                 </div>
               )}

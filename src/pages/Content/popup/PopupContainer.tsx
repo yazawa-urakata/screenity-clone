@@ -1,33 +1,24 @@
-import React, {
-  useState,
-  useEffect,
+import type React from "react";
+import {
   useContext,
+  useEffect,
   useLayoutEffect,
   useRef,
+  useState,
 } from "react";
-
-import Welcome from "./layout/Welcome";
-import LoginPrompt from "./layout/LoginPrompt";
-
-import { Rnd } from "react-rnd";
 import type { DraggableData } from "react-rnd";
-
-import {
-  CloseIconPopup,
-  GrabIconPopup,
-} from "../toolbar/components/SVG";
-
-/* Component import */
-import RecordingTab from "./layout/RecordingTab";
-
-// Layouts
-import Announcement from "./layout/Announcement";
-import SettingsMenu from "./layout/SettingsMenu";
-import InactiveSubscription from "./layout/InactiveSubscription";
-import LoggedOut from "./layout/LoggedOut";
-
+import { Rnd } from "react-rnd";
 // Context
 import { contentStateContext } from "../context/ContentState";
+import { CloseIconPopup } from "../toolbar/components/SVG";
+// Layouts
+import InactiveSubscription from "./layout/InactiveSubscription";
+import LoggedOut from "./layout/LoggedOut";
+import LoginPrompt from "./layout/LoginPrompt";
+/* Component import */
+import RecordingTab from "./layout/RecordingTab";
+import SettingsMenu from "./layout/SettingsMenu";
+import Welcome from "./layout/Welcome";
 
 interface PopupContainerProps {
   shadowRef: React.RefObject<HTMLDivElement & { shadowRoot: ShadowRoot }>;
@@ -47,25 +38,22 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
 
   useEffect(() => {
     // Check chrome storage
-    chrome.storage.local.get(
-      ["onboarding", "showProSplash"],
-      function (result) {
-        if (result.onboarding) {
-          setOnboarding(true);
-          setContentState((prevContentState: any) => ({
-            ...prevContentState,
-            onboarding: true,
-          }));
-        }
-        if (result.showProSplash) {
-          setShowProSplash(true);
-          setContentState((prevContentState: any) => ({
-            ...prevContentState,
-            showProSplash: true,
-          }));
-        }
+    chrome.storage.local.get(["onboarding", "showProSplash"], (result) => {
+      if (result.onboarding) {
+        setOnboarding(true);
+        setContentState((prevContentState: any) => ({
+          ...prevContentState,
+          onboarding: true,
+        }));
       }
-    );
+      if (result.showProSplash) {
+        setShowProSplash(true);
+        setContentState((prevContentState: any) => ({
+          ...prevContentState,
+          showProSplash: true,
+        }));
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -194,13 +182,13 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
     }));
 
     // Is it on the left or right, also top or bottom
-    let left = xpos < window.innerWidth / 2 ? true : false;
-    let right = xpos < window.innerWidth / 2 ? false : true;
-    let top = ypos < window.innerHeight / 2 ? true : false;
-    let bottom = ypos < window.innerHeight / 2 ? false : true;
+    const left = xpos < window.innerWidth / 2 ? true : false;
+    const right = xpos < window.innerWidth / 2 ? false : true;
+    const top = ypos < window.innerHeight / 2 ? true : false;
+    const bottom = ypos < window.innerHeight / 2 ? false : true;
     let offsetX = xpos;
     let offsetY = ypos;
-    let fixed = d.x + 9 > window.innerWidth ? true : false;
+    const fixed = d.x + 9 > window.innerWidth ? true : false;
 
     if (right) {
       offsetX = window.innerWidth - xpos;
@@ -252,9 +240,16 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
 
     DragRef.current.updatePosition({ x: x, y: y });
 
-    handleDrop(null, { x: x, y: y, deltaX: 0, deltaY: 0, lastX: x, lastY: y, node: null as any });
+    handleDrop(null, {
+      x: x,
+      y: y,
+      deltaX: 0,
+      deltaY: 0,
+      lastX: x,
+      lastY: y,
+      node: null as any,
+    });
   }, []);
-
 
   return (
     <div
@@ -316,7 +311,7 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
           <div className="popup-content">
             {/* ケース1: ログイン済み + サブスクリプション無効 */}
             {contentState.isSubscribed === false &&
-              contentState.isLoggedIn === true ? (
+            contentState.isLoggedIn === true ? (
               <InactiveSubscription
                 subscription={contentState.proSubscription}
                 hasSubscribedBefore={contentState.hasSubscribedBefore}
@@ -328,7 +323,9 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                 }}
                 onDowngradeClick={async () => {
                   // Supabaseログアウト
-                  await chrome.runtime.sendMessage({ type: 'SUPABASE_CLEAR_AUTH' });
+                  await chrome.runtime.sendMessage({
+                    type: "SUPABASE_CLEAR_AUTH",
+                  });
 
                   setContentState((prev: any) => ({
                     ...prev,
@@ -344,12 +341,12 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
 
                   contentState.openToast(
                     chrome.i18n.getMessage("loggedOutToastTitle"),
-                    () => { },
-                    2000
+                    () => {},
+                    2000,
                   );
                 }}
               />
-            ) : (onboarding || showProSplash) ? (
+            ) : onboarding || showProSplash ? (
               /* ケース2: オンボーディング中 */
               <Welcome
                 setOnboarding={setOnboarding}
@@ -369,7 +366,9 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
               <LoggedOut
                 onManageClick={() => {
                   // Supabaseログインページを開く
-                  chrome.runtime.sendMessage({ type: 'SUPABASE_LOGIN_REQUEST' });
+                  chrome.runtime.sendMessage({
+                    type: "SUPABASE_LOGIN_REQUEST",
+                  });
                 }}
                 onDowngradeClick={() => {
                   chrome.storage.local.set({ wasLoggedIn: false });
@@ -380,12 +379,16 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                   }));
                 }}
               />
-            ) : !contentState.isLoggedIn && !contentState.wasLoggedIn && !contentState.skipLogin ? (
+            ) : !contentState.isLoggedIn &&
+              !contentState.wasLoggedIn &&
+              !contentState.skipLogin ? (
               /* ケース4: 初回ユーザー（未ログイン） */
               <LoginPrompt
                 onLoginClick={() => {
                   // Supabaseログインページを開く
-                  chrome.runtime.sendMessage({ type: 'SUPABASE_LOGIN_REQUEST' });
+                  chrome.runtime.sendMessage({
+                    type: "SUPABASE_LOGIN_REQUEST",
+                  });
                 }}
               />
             ) : (

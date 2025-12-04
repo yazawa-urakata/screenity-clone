@@ -1,22 +1,13 @@
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useCallback,
-  useRef,
-} from "react";
-
+import * as ToastEl from "@radix-ui/react-toast";
+import { useCallback, useContext, useEffect, useState } from "react";
+// Context
+import { contentStateContext } from "../context/ContentState";
 import {
   AudioIcon,
   CameraCloseIcon,
-  NotSupportedIcon,
   CameraIcon,
+  NotSupportedIcon,
 } from "../toolbar/components/SVG";
-
-import * as ToastEl from "@radix-ui/react-toast";
-
-// Context
-import { contentStateContext } from "../context/ContentState";
 
 const Warning = () => {
   const [contentState, setContentState] = useContext(contentStateContext);

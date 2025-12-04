@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 // Components
-import Switch from "../components/Switch";;
+import Switch from "../components/Switch";
 
 const Settings: React.FC = () => {
-  const [chromeVersion, setChromeVersion] = useState<number | false | null>(null);
+  const [chromeVersion, setChromeVersion] = useState<number | false | null>(
+    null,
+  );
 
   // Get Chrome version
   const getChromeVersion = (): number | false => {

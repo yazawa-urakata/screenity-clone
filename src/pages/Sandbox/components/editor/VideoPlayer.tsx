@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useState, useRef, useMemo } from "react";
 import Plyr from "plyr-react";
+import type React from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import "plyr-react/plyr.css";
+import type { APITypes, PlyrInstance, PlyrProps } from "plyr-react";
 import { ContentStateContext } from "../../context/ContentState";
-import type { APITypes, PlyrProps, PlyrInstance } from "plyr-react";
 
 interface PlyrSource {
   type: "video" | "audio";
@@ -53,7 +54,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
         global: true,
       },
     }),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -93,7 +94,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
     }
 
     return () => {
-      if (playerRef.current && playerRef.current.plyr && timeupdateCallbackRef.current) {
+      if (
+        playerRef.current &&
+        playerRef.current.plyr &&
+        timeupdateCallbackRef.current
+      ) {
         playerRef.current.plyr.off("timeupdate", timeupdateCallbackRef.current);
       }
     };

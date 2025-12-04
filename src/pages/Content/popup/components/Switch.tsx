@@ -1,19 +1,8 @@
-import React, {
-  FC,
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-  MouseEvent,
-} from "react";
 import * as S from "@radix-ui/react-switch";
-
-// Components
-import { DropdownIcon } from "../../images/popup/images";
+import React, { type FC, useContext, useRef } from "react";
 
 // Context
 import { contentStateContext } from "../../context/ContentState";
-import { ContentStateContextType } from "../../../../types/context";
 
 interface BaseSwitchProps {
   value: string;
@@ -21,7 +10,11 @@ interface BaseSwitchProps {
   onChange: (checked: boolean) => void;
 }
 
-export const BaseSwitch: FC<BaseSwitchProps> = ({ value, checked, onChange }) => (
+export const BaseSwitch: FC<BaseSwitchProps> = ({
+  value,
+  checked,
+  onChange,
+}) => (
   <S.Root
     className="SwitchRoot"
     id={value}

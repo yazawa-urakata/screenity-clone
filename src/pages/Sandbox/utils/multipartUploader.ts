@@ -65,7 +65,7 @@ export class MultipartUploader {
     fileName: string,
     uploadPath: string,
     config: MultipartUploadConfig,
-    onProgress: (progress: UploadProgress) => void
+    onProgress: (progress: UploadProgress) => void,
   ) {
     this.blob = blob;
     this.apiBaseUrl = apiBaseUrl;
@@ -125,25 +125,30 @@ export class MultipartUploader {
    * Step 1: Initiate multipart upload and get UploadId
    */
   private async initiateMultipartUpload(): Promise<void> {
-    const response = await fetch(`${this.apiBaseUrl}/api/s3/multipart/initiate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.authToken}`,
+    const response = await fetch(
+      `${this.apiBaseUrl}/api/s3/multipart/initiate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.authToken}`,
+        },
+        body: JSON.stringify({
+          fileName: this.fileName,
+          fileType: this.getNormalizedMimeType(this.blob.type),
+          fileSize: this.blob.size,
+          uploadPath: this.uploadPath,
+          partSize: this.config.partSize, // 動的partSizeを送信
+        }),
+        signal: this.abortController.signal,
       },
-      body: JSON.stringify({
-        fileName: this.fileName,
-        fileType: this.getNormalizedMimeType(this.blob.type),
-        fileSize: this.blob.size,
-        uploadPath: this.uploadPath,
-        partSize: this.config.partSize, // 動的partSizeを送信
-      }),
-      signal: this.abortController.signal,
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to initiate multipart upload: ${errorData.error || response.statusText}`);
+      throw new Error(
+        `Failed to initiate multipart upload: ${errorData.error || response.statusText}`,
+      );
     }
 
     const data: MultipartInitiateResponse = await response.json();
@@ -163,7 +168,10 @@ export class MultipartUploader {
 
     while (partIndex < this.totalParts || activeTasks.size > 0) {
       // Fill queue up to queueSize
-      while (activeTasks.size < this.config.queueSize && partIndex < this.totalParts) {
+      while (
+        activeTasks.size < this.config.queueSize &&
+        partIndex < this.totalParts
+      ) {
         const currentPartIndex = partIndex;
         const partNumber = currentPartIndex + 1;
 
@@ -173,11 +181,13 @@ export class MultipartUploader {
         const part = this.blob.slice(start, end);
 
         // Create upload promise with automatic cleanup
-        const uploadPromise = this.uploadSinglePart(part, partNumber).finally(() => {
-          // Remove from active tasks immediately after completion
-          // This allows GC to reclaim memory from uploaded blob slice
-          activeTasks.delete(currentPartIndex);
-        });
+        const uploadPromise = this.uploadSinglePart(part, partNumber).finally(
+          () => {
+            // Remove from active tasks immediately after completion
+            // This allows GC to reclaim memory from uploaded blob slice
+            activeTasks.delete(currentPartIndex);
+          },
+        );
 
         activeTasks.set(currentPartIndex, uploadPromise);
         partIndex++;
@@ -209,7 +219,10 @@ export class MultipartUploader {
    * @param partNumber - Part number (1-indexed)
    * @throws Error if upload fails after all retry attempts
    */
-  private async uploadSinglePart(part: Blob, partNumber: number): Promise<void> {
+  private async uploadSinglePart(
+    part: Blob,
+    partNumber: number,
+  ): Promise<void> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= this.config.retryAttempts; attempt++) {
@@ -236,7 +249,9 @@ export class MultipartUploader {
         });
 
         if (!response.ok) {
-          throw new Error(`Upload failed with status ${response.status}: ${response.statusText}`);
+          throw new Error(
+            `Upload failed with status ${response.status}: ${response.statusText}`,
+          );
         }
 
         // Extract ETag from response headers (required for CompleteMultipartUpload)
@@ -255,7 +270,6 @@ export class MultipartUploader {
         this.uploadedBytes += part.size;
         this.updateProgress(partNumber);
         return; // Success
-
       } catch (error) {
         // Handle abort error specially
         if (error instanceof Error && error.name === "AbortError") {
@@ -274,7 +288,7 @@ export class MultipartUploader {
 
     // All retries exhausted
     throw new Error(
-      `Failed to upload part ${partNumber} after ${this.config.retryAttempts} retries: ${lastError?.message}`
+      `Failed to upload part ${partNumber} after ${this.config.retryAttempts} retries: ${lastError?.message}`,
     );
   }
 
@@ -284,23 +298,28 @@ export class MultipartUploader {
    * @returns Presigned URL
    */
   private async getPartUploadUrl(partNumber: number): Promise<string> {
-    const response = await fetch(`${this.apiBaseUrl}/api/s3/multipart/part-url`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.authToken}`,
+    const response = await fetch(
+      `${this.apiBaseUrl}/api/s3/multipart/part-url`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.authToken}`,
+        },
+        body: JSON.stringify({
+          uploadId: this.uploadId,
+          key: this.s3Key,
+          partNumber,
+        }),
+        signal: this.abortController.signal,
       },
-      body: JSON.stringify({
-        uploadId: this.uploadId,
-        key: this.s3Key,
-        partNumber,
-      }),
-      signal: this.abortController.signal,
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to get part upload URL: ${errorData.error || response.statusText}`);
+      throw new Error(
+        `Failed to get part upload URL: ${errorData.error || response.statusText}`,
+      );
     }
 
     const data: MultipartPartUrlResponse = await response.json();
@@ -311,23 +330,28 @@ export class MultipartUploader {
    * Step 3: Complete multipart upload by assembling all parts
    */
   private async completeMultipartUpload(): Promise<void> {
-    const response = await fetch(`${this.apiBaseUrl}/api/s3/multipart/complete`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.authToken}`,
+    const response = await fetch(
+      `${this.apiBaseUrl}/api/s3/multipart/complete`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.authToken}`,
+        },
+        body: JSON.stringify({
+          uploadId: this.uploadId,
+          key: this.s3Key,
+          parts: this.uploadedParts,
+        }),
+        signal: this.abortController.signal,
       },
-      body: JSON.stringify({
-        uploadId: this.uploadId,
-        key: this.s3Key,
-        parts: this.uploadedParts,
-      }),
-      signal: this.abortController.signal,
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to complete multipart upload: ${errorData.error || response.statusText}`);
+      throw new Error(
+        `Failed to complete multipart upload: ${errorData.error || response.statusText}`,
+      );
     }
 
     const data: MultipartCompleteResponse = await response.json();
@@ -367,18 +391,26 @@ export class MultipartUploader {
     const isLastPart = currentPart === this.totalParts;
 
     // 最後のパートは必ず通知、それ以外はスロットリング
-    if (!isLastPart && now - this.lastProgressUpdate < this.PROGRESS_THROTTLE_MS) {
+    if (
+      !isLastPart &&
+      now - this.lastProgressUpdate < this.PROGRESS_THROTTLE_MS
+    ) {
       return; // スキップ
     }
 
     this.lastProgressUpdate = now;
 
     const totalBytes = this.blob.size;
-    const percentage = Math.min(100, Math.round((this.uploadedBytes / totalBytes) * 100));
+    const percentage = Math.min(
+      100,
+      Math.round((this.uploadedBytes / totalBytes) * 100),
+    );
     const elapsedSeconds = (now - this.startTime) / 1000;
-    const bytesPerSecond = elapsedSeconds > 0 ? this.uploadedBytes / elapsedSeconds : 0;
+    const bytesPerSecond =
+      elapsedSeconds > 0 ? this.uploadedBytes / elapsedSeconds : 0;
     const remainingBytes = totalBytes - this.uploadedBytes;
-    const estimatedTimeRemaining = bytesPerSecond > 0 ? remainingBytes / bytesPerSecond : 0;
+    const estimatedTimeRemaining =
+      bytesPerSecond > 0 ? remainingBytes / bytesPerSecond : 0;
 
     const progress: UploadProgress = {
       uploadedBytes: this.uploadedBytes,

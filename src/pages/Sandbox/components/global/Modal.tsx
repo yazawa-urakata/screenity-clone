@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import type React from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 // Context
 import { ContentStateContext } from "../../context/ContentState";
 
-interface ModalProps {}
+type ModalProps = {};
 
 const Modal: React.FC<ModalProps> = (props) => {
   const contextValue = useContext(ContentStateContext);
@@ -23,10 +24,14 @@ const Modal: React.FC<ModalProps> = (props) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [image, setImage] = useState<string | null>(null);
   const [learnmore, setLearnMore] = useState<string | null>(null);
-  const [learnMoreLink, setLearnMoreLink] = useState<(() => void) | null>(() => {});
+  const [learnMoreLink, setLearnMoreLink] = useState<(() => void) | null>(
+    () => {},
+  );
   const [colorSafe, setColorSafe] = useState<boolean>(false);
   const [sideButton, setSideButton] = useState<string | false>(false);
-  const [sideButtonAction, setSideButtonAction] = useState<() => void>(() => {});
+  const [sideButtonAction, setSideButtonAction] = useState<() => void>(
+    () => {},
+  );
 
   const openModal = useCallback(
     (
@@ -41,7 +46,7 @@ const Modal: React.FC<ModalProps> = (props) => {
       learnMoreLink: (() => void) | null = null,
       colorSafe: boolean = false,
       sideButton: string | false = false,
-      sideButtonAction: () => void = () => {}
+      sideButtonAction: () => void = () => {},
     ): void => {
       setTitle(title);
       setDescription(description);
@@ -57,7 +62,7 @@ const Modal: React.FC<ModalProps> = (props) => {
       setSideButton(sideButton);
       setSideButtonAction(() => sideButtonAction);
     },
-    []
+    [],
   );
 
   useEffect(() => {

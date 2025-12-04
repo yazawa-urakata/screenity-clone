@@ -1,6 +1,7 @@
-import React, { useContext } from "react";
-import styles from "../../styles/edit/_EditorNav.module.scss";
+import type React from "react";
+import { useContext } from "react";
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import styles from "../../styles/edit/_EditorNav.module.scss";
 
 const URL = "/assets/";
 

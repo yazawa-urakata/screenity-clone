@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 
 // Context
 import { contentStateContext } from "../context/ContentState";
@@ -33,7 +33,7 @@ const Modal = (props) => {
       learnMoreLink = null,
       colorSafe = false,
       sideButton = false,
-      sideButtonAction = () => {}
+      sideButtonAction = () => {},
     ) => {
       setTitle(title);
       setDescription(description);
@@ -48,7 +48,7 @@ const Modal = (props) => {
       setColorSafe(colorSafe);
       setSideButton(sideButton);
       setSideButtonAction(() => sideButtonAction);
-    }
+    },
   );
 
   useEffect(() => {
@@ -76,7 +76,7 @@ const Modal = (props) => {
       <AlertDialog.Trigger asChild />
       <AlertDialog.Portal
         container={props.shadowRef.current.shadowRoot.querySelector(
-          ".container"
+          ".container",
         )}
       >
         <div className="AlertDialogOverlay"></div>

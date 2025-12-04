@@ -8,7 +8,7 @@ interface CropParameters {
 async function cropVideo(
   ffmpeg: FFmpeg,
   videoBlob: Blob,
-  cropParameters: CropParameters
+  cropParameters: CropParameters,
 ): Promise<Blob> {
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
   ffmpeg.FS("writeFile", "input.mp4", videoData);

@@ -1,5 +1,5 @@
-import { sendMessageRecord } from "./sendMessageRecord";
 import { clearClips } from "../clip/clipHandlers";
+import { sendMessageRecord } from "./sendMessageRecord";
 
 export const startRecording = async () => {
   // 前回の録画のクリップをクリア

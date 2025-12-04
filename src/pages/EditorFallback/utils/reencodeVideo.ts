@@ -13,7 +13,7 @@ async function reencodeVideo(ffmpeg: FFmpeg, videoBlob: Blob): Promise<Blob> {
     "30",
     "-tune",
     "fastdecode",
-    "output.mp4"
+    "output.mp4",
   );
 
   const data = new Uint8Array(ffmpeg.FS("readFile", "output.mp4"));

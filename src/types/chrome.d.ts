@@ -6,15 +6,15 @@ declare namespace chrome {
   // Offscreen API (Manifest V3)
   namespace offscreen {
     export enum Reason {
-      AUDIO_PLAYBACK = 'AUDIO_PLAYBACK',
-      IFRAME_SCRIPTING = 'IFRAME_SCRIPTING',
-      DOM_SCRAPING = 'DOM_SCRAPING',
-      BLOBS = 'BLOBS',
-      DOM_PARSER = 'DOM_PARSER',
-      USER_MEDIA = 'USER_MEDIA',
-      DISPLAY_MEDIA = 'DISPLAY_MEDIA',
-      WEB_RTC = 'WEB_RTC',
-      CLIPBOARD = 'CLIPBOARD',
+      AUDIO_PLAYBACK = "AUDIO_PLAYBACK",
+      IFRAME_SCRIPTING = "IFRAME_SCRIPTING",
+      DOM_SCRAPING = "DOM_SCRAPING",
+      BLOBS = "BLOBS",
+      DOM_PARSER = "DOM_PARSER",
+      USER_MEDIA = "USER_MEDIA",
+      DISPLAY_MEDIA = "DISPLAY_MEDIA",
+      WEB_RTC = "WEB_RTC",
+      CLIPBOARD = "CLIPBOARD",
     }
 
     interface CreateParameters {
@@ -23,9 +23,7 @@ declare namespace chrome {
       justification: string;
     }
 
-    export function createDocument(
-      parameters: CreateParameters
-    ): Promise<void>;
+    export function createDocument(parameters: CreateParameters): Promise<void>;
 
     export function closeDocument(): Promise<void>;
 
@@ -37,16 +35,23 @@ declare namespace chrome {
     export function chooseDesktopMedia(
       sources: string[],
       targetTab: chrome.tabs.Tab | undefined,
-      callback: (streamId: string, options: { canRequestAudioTrack: boolean }) => void
+      callback: (
+        streamId: string,
+        options: { canRequestAudioTrack: boolean },
+      ) => void,
     ): number;
 
-    export function cancelChooseDesktopMedia(desktopMediaRequestId: number): void;
+    export function cancelChooseDesktopMedia(
+      desktopMediaRequestId: number,
+    ): void;
   }
 
   // Runtime Contexts API (Manifest V3)
   namespace runtime {
     interface ContextFilter {
-      contextTypes?: Array<'TAB' | 'POPUP' | 'BACKGROUND' | 'OFFSCREEN_DOCUMENT' | 'SIDE_PANEL'>;
+      contextTypes?: Array<
+        "TAB" | "POPUP" | "BACKGROUND" | "OFFSCREEN_DOCUMENT" | "SIDE_PANEL"
+      >;
       documentIds?: string[];
       documentOrigins?: string[];
       documentUrls?: string[];
@@ -58,7 +63,12 @@ declare namespace chrome {
 
     interface ExtensionContext {
       contextId: string;
-      contextType: 'TAB' | 'POPUP' | 'BACKGROUND' | 'OFFSCREEN_DOCUMENT' | 'SIDE_PANEL';
+      contextType:
+        | "TAB"
+        | "POPUP"
+        | "BACKGROUND"
+        | "OFFSCREEN_DOCUMENT"
+        | "SIDE_PANEL";
       documentId: string;
       documentOrigin: string;
       documentUrl: string;
@@ -68,7 +78,9 @@ declare namespace chrome {
       windowId: number;
     }
 
-    export function getContexts(filter: ContextFilter): Promise<ExtensionContext[]>;
+    export function getContexts(
+      filter: ContextFilter,
+    ): Promise<ExtensionContext[]>;
   }
 
   // Scripting API型の補完

@@ -1,14 +1,13 @@
-import React, { useEffect, useContext, useState, useRef } from "react";
-
-import Dropdown from "../components/Dropdown";
-import Switch from "../components/Switch";
-import RegionDimensions from "../components/RegionDimensions";
-import Settings from "./Settings";
+import type React from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { contentStateContext } from "../../context/ContentState";
 import { MicOffBlue } from "../../images/popup/images";
+import { AlertIcon, TimeIcon } from "../../toolbar/components/SVG";
+import Dropdown from "../components/Dropdown";
+import RegionDimensions from "../components/RegionDimensions";
+import Switch from "../components/Switch";
 import TooltipWrap from "../components/TooltipWrap";
-
-import { AlertIcon, TimeIcon, NoInternet } from "../../toolbar/components/SVG";
+import Settings from "./Settings";
 
 const CLOUD_FEATURES_ENABLED =
   process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
@@ -21,10 +20,10 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
   const [contentState, setContentState] = useContext(contentStateContext);
   const [time, setTime] = useState<string>("0:00");
   const [URL, setURL] = useState<string>(
-    "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9"
+    "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9",
   );
   const [URL2, setURL2] = useState<string>(
-    "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9"
+    "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9",
   );
 
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -34,17 +33,17 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
     const locale = chrome.i18n.getMessage("@@ui_locale");
     if (!locale.includes("en")) {
       setURL(
-        `https://translate.google.com/translate?sl=en&tl=${locale}&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9`
+        `https://translate.google.com/translate?sl=en&tl=${locale}&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9`,
       );
       setURL2(
-        `https://translate.google.com/translate?sl=en&tl=${locale}&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9`
+        `https://translate.google.com/translate?sl=en&tl=${locale}&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9`,
       );
     }
   }, []);
 
   useEffect(() => {
     // Convert seconds to mm:ss
-    let minutes = Math.floor(contentState.alarmTime / 60);
+    const minutes = Math.floor(contentState.alarmTime / 60);
     let seconds: string | number = contentState.alarmTime - minutes * 60;
     if (seconds < 10) {
       seconds = "0" + seconds;
@@ -54,7 +53,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
 
   useEffect(() => {
     // Convert seconds to mm:ss
-    let minutes = Math.floor(contentState.alarmTime / 60);
+    const minutes = Math.floor(contentState.alarmTime / 60);
     let seconds: string | number = contentState.alarmTime - minutes * 60;
     if (seconds < 10) {
       seconds = "0" + seconds;
@@ -113,12 +112,12 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
                     type: "extension-media-permissions",
                   });
                 },
-                () => { },
+                () => {},
                 chrome.runtime.getURL("assets/helper/permissions.webp"),
                 chrome.i18n.getMessage("learnMoreDot"),
                 URL2,
                 true,
-                false
+                false,
               );
             }
           }}
@@ -156,22 +155,22 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
                     if (checked) {
                       contentState.openModal(
                         chrome.i18n.getMessage("instantRecordingModeTitle") ||
-                        "Instant recording mode",
+                          "Instant recording mode",
                         chrome.i18n.getMessage(
-                          "instantRecordingModeDescription"
+                          "instantRecordingModeDescription",
                         ) ||
-                        "This records everything into one video for instant download and sharing. You won't be able to change the camera layout afterward, but other edits are still possible.",
+                          "This records everything into one video for instant download and sharing. You won't be able to change the camera layout afterward, but other edits are still possible.",
                         chrome.i18n.getMessage("instantRecordingModeAction") ||
-                        "Got it",
+                          "Got it",
                         chrome.i18n.getMessage("permissionsModalDismiss") ||
-                        "Dismiss",
-                        () => { },
-                        () => { },
+                          "Dismiss",
+                        () => {},
+                        () => {},
                         null,
                         "",
                         "",
                         true,
-                        false
+                        false,
                       );
                     }
                   }}

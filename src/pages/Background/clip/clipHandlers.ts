@@ -2,27 +2,27 @@
  * クリップ録画機能のバックグラウンドハンドラー
  */
 
-import type { SaveClipMessage } from '../../../types/message';
-import type { ClipList, ClipMetadata } from '../../../types/clip';
-import { validateClip } from '../../../utils/clipUtils';
-import { ClipValidationError, ClipErrorCode } from '../../../types/clip';
-import { sendMessageTab } from '../tabManagement/sendMessageTab';
+import type { ClipList } from "../../../types/clip";
+import { ClipErrorCode, ClipValidationError } from "../../../types/clip";
+import type { SaveClipMessage } from "../../../types/message";
+import { validateClip } from "../../../utils/clipUtils";
+import { sendMessageTab } from "../tabManagement/sendMessageTab";
 
 /**
  * クリップを保存するハンドラー
  */
 export async function handleSaveClip(
   message: SaveClipMessage,
-  sender: chrome.runtime.MessageSender
+  sender: chrome.runtime.MessageSender,
 ): Promise<void> {
   try {
     const { clipData } = message.payload;
 
     // Chrome Storage から必要なデータを取得
     const result = await chrome.storage.local.get([
-      'clips',
-      'recording',
-      'recordingTab',
+      "clips",
+      "recording",
+      "recordingTab",
     ]);
 
     const clips = (result.clips as ClipList) || [];
@@ -42,7 +42,10 @@ export async function handleSaveClip(
     const clipNumber = updatedClips.length;
     const durationSeconds = Math.floor(clipData.duration / 1000);
 
-    console.log(`[ClipHandlers] クリップ ${clipNumber} を保存しました (${durationSeconds}秒)`, clipData);
+    console.log(
+      `[ClipHandlers] クリップ ${clipNumber} を保存しました (${durationSeconds}秒)`,
+      clipData,
+    );
 
     // Content Script に成功メッセージを送信（エラーは無視）
     // sender.tab.id を優先的に使用（メッセージ送信元のタブに確実に返す）
@@ -51,33 +54,40 @@ export async function handleSaveClip(
     if (targetTabId) {
       try {
         await sendMessageTab(targetTabId, {
-          type: 'clip-saved',
+          type: "clip-saved",
           payload: {
             clipId: clipData.id,
             clipNumber,
             duration: durationSeconds,
           },
         });
-        console.log(`[ClipHandlers] clip-saved メッセージを送信しました (tab: ${targetTabId})`);
+        console.log(
+          `[ClipHandlers] clip-saved メッセージを送信しました (tab: ${targetTabId})`,
+        );
       } catch (messageError) {
         // メッセージ送信エラーは無視（Chrome Storage には保存済み）
-        console.warn('[ClipHandlers] clip-saved メッセージの送信に失敗しましたが、クリップは保存されています:', messageError);
+        console.warn(
+          "[ClipHandlers] clip-saved メッセージの送信に失敗しましたが、クリップは保存されています:",
+          messageError,
+        );
       }
     } else {
-      console.warn('[ClipHandlers] 送信先タブIDが見つかりません。クリップは保存されていますが、通知は送信されませんでした。');
+      console.warn(
+        "[ClipHandlers] 送信先タブIDが見つかりません。クリップは保存されていますが、通知は送信されませんでした。",
+      );
     }
   } catch (error) {
-    console.error('[ClipHandlers] クリップ保存エラー:', error);
+    console.error("[ClipHandlers] クリップ保存エラー:", error);
 
     // エラーメッセージを送信（エラーは無視）
     // sender.tab.id を優先的に使用
-    const result = await chrome.storage.local.get(['recordingTab']);
+    const result = await chrome.storage.local.get(["recordingTab"]);
     const recordingTab = result.recordingTab as number;
     const targetTabId = sender.tab?.id || recordingTab;
 
     if (targetTabId) {
       let errorCode = ClipErrorCode.NOT_RECORDING;
-      let errorMessage = 'クリップの保存に失敗しました';
+      let errorMessage = "クリップの保存に失敗しました";
 
       if (error instanceof ClipValidationError) {
         errorCode = error.code;
@@ -86,14 +96,17 @@ export async function handleSaveClip(
 
       try {
         await sendMessageTab(targetTabId, {
-          type: 'clip-error',
+          type: "clip-error",
           payload: {
             code: errorCode,
             message: errorMessage,
           },
         });
       } catch (messageError) {
-        console.warn('[ClipHandlers] clip-error メッセージの送信に失敗しました:', messageError);
+        console.warn(
+          "[ClipHandlers] clip-error メッセージの送信に失敗しました:",
+          messageError,
+        );
       }
     }
 
@@ -112,9 +125,9 @@ export async function handleSaveClip(
 export async function clearClips(): Promise<void> {
   try {
     await chrome.storage.local.set({ clips: [] });
-    console.log('[ClipHandlers] クリップをクリアしました');
+    console.log("[ClipHandlers] クリップをクリアしました");
   } catch (error) {
-    console.error('[ClipHandlers] クリップクリアエラー:', error);
+    console.error("[ClipHandlers] クリップクリアエラー:", error);
     throw error;
   }
 }

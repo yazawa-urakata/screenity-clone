@@ -12,22 +12,21 @@ export const forceProcessing = async () => {
       active: true,
     },
     (tab) => {
-      chrome.tabs.onUpdated.addListener(function onTabUpdate(
-        tabId,
-        changeInfo
-      ) {
-        if (tabId === tab.id && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(onTabUpdate);
+      chrome.tabs.onUpdated.addListener(
+        function onTabUpdate(tabId, changeInfo) {
+          if (tabId === tab.id && changeInfo.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(onTabUpdate);
 
-          if (sandboxTab) {
-            removeTab(sandboxTab as number);
+            if (sandboxTab) {
+              removeTab(sandboxTab as number);
+            }
+
+            chrome.storage.local.set({ sandboxTab: tab.id });
+
+            sendChunks(true);
           }
-
-          chrome.storage.local.set({ sandboxTab: tab.id });
-
-          sendChunks(true);
-        }
-      });
-    }
+        },
+      );
+    },
   );
 };

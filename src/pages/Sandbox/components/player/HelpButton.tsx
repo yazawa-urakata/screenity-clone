@@ -1,7 +1,8 @@
-import React, { useContext, useState, useEffect } from "react";
-import styles from "../../styles/player/_HelpButton.module.scss";
+import type React from "react";
+import { useContext, useEffect, useState } from "react";
 import { ReactSVG } from "react-svg";
 import { ContentStateContext } from "../../context/ContentState";
+import styles from "../../styles/player/_HelpButton.module.scss";
 
 const HelpButton: React.FC = () => {
   const contextValue = useContext(ContentStateContext);
@@ -12,7 +13,7 @@ const HelpButton: React.FC = () => {
 
   const [contentState] = contextValue;
   const [windowWidth, setWindowWidth] = useState<number>(
-    typeof window !== "undefined" ? window.innerWidth : 1000
+    typeof window !== "undefined" ? window.innerWidth : 1000,
   );
 
   useEffect(() => {

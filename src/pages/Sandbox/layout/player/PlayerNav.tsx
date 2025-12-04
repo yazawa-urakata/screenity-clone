@@ -1,9 +1,9 @@
-import React, { useContext, useRef, useEffect } from "react";
-import styles from "../../styles/player/_Nav.module.scss";
-import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
-
+import type React from "react";
+import { useContext, useEffect, useRef } from "react";
 // Icons
 import { ReactSVG } from "react-svg";
+import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import styles from "../../styles/player/_Nav.module.scss";
 
 const URL = "/assets/";
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 
 // Context
 import { contentStateContext } from "../context/ContentState";
@@ -48,8 +48,8 @@ const CursorModes = () => {
       modeRef.current === "target"
         ? document.querySelector(".cursor-click-target")
         : modeRef.current === "highlight"
-        ? document.querySelector(".cursor-highlight")
-        : document.querySelector(".spotlight");
+          ? document.querySelector(".cursor-highlight")
+          : document.querySelector(".spotlight");
 
     if (cursorElement) {
       cursorElement.style.top = lastMouseRef.current.y + scrollTop + "px";

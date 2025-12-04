@@ -1,6 +1,12 @@
-import React, { FC, useEffect, useContext, useState, ReactNode, CSSProperties } from "react";
-
 import * as Tooltip from "@radix-ui/react-tooltip";
+import React, {
+  type CSSProperties,
+  type FC,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 // Context
 import { contentStateContext } from "../../context/ContentState";

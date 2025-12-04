@@ -1,6 +1,6 @@
+import { sendMessageRecord } from "../recording/sendMessageRecord";
 import { stopRecording } from "../recording/stopRecording";
 import { sendMessageTab } from "../tabManagement";
-import { sendMessageRecord } from "../recording/sendMessageRecord";
 
 // Utility to handle tab messaging logic
 const handleTabMessaging = async (): Promise<void> => {
@@ -18,7 +18,9 @@ const handleTabMessaging = async (): Promise<void> => {
   }
 };
 
-export const handleAlarm = async (alarm: chrome.alarms.Alarm): Promise<void> => {
+export const handleAlarm = async (
+  alarm: chrome.alarms.Alarm,
+): Promise<void> => {
   if (alarm.name === "recording-alarm") {
     const { recording } = await chrome.storage.local.get(["recording"]);
 

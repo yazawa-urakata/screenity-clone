@@ -54,10 +54,14 @@ export class InstantUploader {
     this.bufferedChunks.push(blob);
     this.bufferedBytes += blob.size;
 
-    console.log(`[InstantUploader] Buffering: ${(this.bufferedBytes / 1024 / 1024).toFixed(2)}MB / ${(MIN_PART_SIZE_BYTES / 1024 / 1024).toFixed(2)}MB`);
+    console.log(
+      `[InstantUploader] Buffering: ${(this.bufferedBytes / 1024 / 1024).toFixed(2)}MB / ${(MIN_PART_SIZE_BYTES / 1024 / 1024).toFixed(2)}MB`,
+    );
 
     if (this.bufferedBytes >= MIN_PART_SIZE_BYTES) {
-      console.log(`[InstantUploader] Buffer full, flushing part ${this.nextPartNumber}`);
+      console.log(
+        `[InstantUploader] Buffer full, flushing part ${this.nextPartNumber}`,
+      );
       this.flushBuffer();
     }
   }
@@ -79,17 +83,22 @@ export class InstantUploader {
     this.uploadPromise = this.uploadPromise
       .then(() => this.uploadPart(partNumber, part))
       .catch((error) => {
-        console.error(`[InstantUploader] Failed to upload part ${partNumber}:`, {
-          partNumber,
-          partSize: part.size,
-          error: error.message || error,
-        });
+        console.error(
+          `[InstantUploader] Failed to upload part ${partNumber}:`,
+          {
+            partNumber,
+            partSize: part.size,
+            error: error.message || error,
+          },
+        );
         throw error;
       });
   }
 
   private async uploadPart(partNumber: number, part: Blob): Promise<void> {
-    console.log(`[InstantUploader] Uploading part ${partNumber}, size: ${(part.size / 1024 / 1024).toFixed(2)}MB`);
+    console.log(
+      `[InstantUploader] Uploading part ${partNumber}, size: ${(part.size / 1024 / 1024).toFixed(2)}MB`,
+    );
 
     const response = await fetch(
       `${this.apiBaseUrl}/api/s3/multipart/part-url`,
@@ -104,14 +113,18 @@ export class InstantUploader {
           key: this.key,
           partNumber: partNumber,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorType = response.status >= 500 ? "Server error" : "Client error";
+      const errorType =
+        response.status >= 500 ? "Server error" : "Client error";
       const errorMessage = `Failed to get presigned URL (${errorType} ${response.status}): ${errorData.error || response.statusText}`;
-      console.error(`[InstantUploader] ${errorMessage}`, { partNumber, errorData });
+      console.error(`[InstantUploader] ${errorMessage}`, {
+        partNumber,
+        errorData,
+      });
       throw new Error(errorMessage);
     }
 
@@ -125,7 +138,9 @@ export class InstantUploader {
 
     this.parts.push({ partNumber, etag, size: part.size });
     this.uploadedBytes += part.size;
-    console.log(`[InstantUploader] ✅ Part ${partNumber} uploaded successfully, ETag: ${etag.substring(0, 8)}...`);
+    console.log(
+      `[InstantUploader] ✅ Part ${partNumber} uploaded successfully, ETag: ${etag.substring(0, 8)}...`,
+    );
     this.emitProgress();
   }
 
@@ -180,8 +195,8 @@ export class InstantUploader {
 
         reject(
           new Error(
-            `Failed to upload part ${partNumber}: ${xhr.status} ${xhr.statusText}`
-          )
+            `Failed to upload part ${partNumber}: ${xhr.status} ${xhr.statusText}`,
+          ),
         );
       };
 
@@ -209,9 +224,7 @@ export class InstantUploader {
     const percentage =
       totalBytes > 0 ? (this.uploadedBytes / totalBytes) * 100 : 0;
 
-    const estimatedTotalParts = Math.ceil(
-      totalBytes / this.config.minPartSize
-    );
+    const estimatedTotalParts = Math.ceil(totalBytes / this.config.minPartSize);
 
     this.onProgress({
       uploadedBytes: this.uploadedBytes,
@@ -228,7 +241,9 @@ export class InstantUploader {
 
     // Flush any remaining buffered data as the final part
     if (this.bufferedBytes > 0) {
-      console.log(`[InstantUploader] Flushing final part: ${(this.bufferedBytes / 1024 / 1024).toFixed(2)}MB`);
+      console.log(
+        `[InstantUploader] Flushing final part: ${(this.bufferedBytes / 1024 / 1024).toFixed(2)}MB`,
+      );
       this.flushBuffer(true);
     }
 
@@ -241,7 +256,9 @@ export class InstantUploader {
       return;
     }
 
-    console.log(`[InstantUploader] Completing multipart upload with ${this.parts.length} parts`);
+    console.log(
+      `[InstantUploader] Completing multipart upload with ${this.parts.length} parts`,
+    );
 
     const response = await fetch(
       `${this.apiBaseUrl}/api/s3/multipart/complete`,
@@ -259,12 +276,13 @@ export class InstantUploader {
             ETag: p.etag,
           })),
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorType = response.status >= 500 ? "Server error" : "Client error";
+      const errorType =
+        response.status >= 500 ? "Server error" : "Client error";
       const errorMessage = `Failed to complete multipart upload (${errorType} ${response.status}): ${errorData.error || response.statusText}`;
       console.error(`[InstantUploader] ${errorMessage}`, {
         videoId: this.videoId,
@@ -278,13 +296,16 @@ export class InstantUploader {
     const result = await response.json();
     this.finished = true;
 
-    console.log(`[InstantUploader] ✅ Multipart upload completed successfully`, {
-      location: result.location,
-      key: result.key,
-      etag: result.etag,
-      totalParts: this.parts.length,
-      totalBytes: this.uploadedBytes,
-    });
+    console.log(
+      `[InstantUploader] ✅ Multipart upload completed successfully`,
+      {
+        location: result.location,
+        key: result.key,
+        etag: result.etag,
+        totalParts: this.parts.length,
+        totalBytes: this.uploadedBytes,
+      },
+    );
 
     this.onProgress({
       uploadedBytes: this.uploadedBytes,

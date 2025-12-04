@@ -1,6 +1,6 @@
 import localforage from "localforage";
-import { blobToBase64 } from "../utils/blobToBase64";
 import { sendMessageTab } from "../tabManagement";
+import { blobToBase64 } from "../utils/blobToBase64";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -10,10 +10,6 @@ localforage.config({
 
 export const chunksStore = localforage.createInstance({
   name: "chunks",
-});
-
-export const localDirectoryStore = localforage.createInstance({
-  name: "localDirectory",
 });
 
 export const clearAllRecordings = async () => {
@@ -73,7 +69,7 @@ export const handleChunks = async (chunks: any[], override = false) => {
       if (retryCount < maxRetries) {
         console.error(
           `Sending batch failed, retrying... Attempt ${retryCount + 1}`,
-          error
+          error,
         );
         setTimeout(() => sendBatch(batch, retryCount + 1), retryDelay);
       } else {
@@ -93,7 +89,7 @@ export const handleChunks = async (chunks: any[], override = false) => {
           console.error("Error converting chunk to Base64", error);
           return null;
         }
-      })
+      }),
     );
 
     const filteredBatch = batch.filter((chunk) => chunk !== null);
@@ -107,7 +103,10 @@ export const handleChunks = async (chunks: any[], override = false) => {
   sendMessageTab(sandboxTab as number, { type: "make-video-tab", override });
 };
 
-export const newChunk = async (request: any, sendResponse?: (response: any) => void) => {
+export const newChunk = async (
+  request: any,
+  sendResponse?: (response: any) => void,
+) => {
   const { sandboxTab } = await chrome.storage.local.get(["sandboxTab"]);
   sendMessageTab(sandboxTab as number, {
     type: "new-chunk-tab",

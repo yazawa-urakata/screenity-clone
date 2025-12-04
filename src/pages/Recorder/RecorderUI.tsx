@@ -1,11 +1,11 @@
 // RecorderUI.tsx
-import React from "react";
-import Warning from "./warning/Warning";
+import type React from "react";
 import type {
-  InstantUploadState,
-  InstantUploadProgress,
   InstantUploadError,
+  InstantUploadProgress,
+  InstantUploadState,
 } from "../../types/instantUpload";
+import Warning from "./warning/Warning";
 
 interface RecorderUIProps {
   started: boolean;
@@ -63,17 +63,15 @@ const RecorderUI: React.FC<RecorderUIProps> = ({
               </div>
 
               <div className="upload-details">
-                {Math.round(uploadProgress.percentage)}%
-                ({Math.round(uploadProgress.uploadedBytes / 1024 / 1024)} MB
-                / {Math.round(uploadProgress.totalBytes / 1024 / 1024)} MB)
+                {Math.round(uploadProgress.percentage)}% (
+                {Math.round(uploadProgress.uploadedBytes / 1024 / 1024)} MB /{" "}
+                {Math.round(uploadProgress.totalBytes / 1024 / 1024)} MB)
               </div>
             </>
           )}
 
           {uploadError && (
-            <div className="upload-error">
-              {uploadError.message}
-            </div>
+            <div className="upload-error">{uploadError.message}</div>
           )}
         </div>
       )}
@@ -108,7 +106,7 @@ const RecorderUI: React.FC<RecorderUIProps> = ({
             width: 100%;
             height:100%;
             background: url('${chrome.runtime.getURL(
-              "assets/helper/pattern-svg.svg"
+              "assets/helper/pattern-svg.svg",
             )}') repeat;
             background-size: 62px 23.5px;
             animation: moveBackground 138s linear infinite;

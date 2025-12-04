@@ -47,7 +47,7 @@ export async function saveS3Key(key: string): Promise<void> {
           } else {
             resolve();
           }
-        }
+        },
       );
     });
   });
@@ -66,8 +66,12 @@ export async function saveS3Key(key: string): Promise<void> {
 export function generateFileName(originalFileName: string): string {
   // 拡張子を抽出
   const lastDotIndex = originalFileName.lastIndexOf(".");
-  const nameWithoutExt = lastDotIndex > 0 ? originalFileName.slice(0, lastDotIndex) : originalFileName;
-  const extension = lastDotIndex > 0 ? originalFileName.slice(lastDotIndex) : "";
+  const nameWithoutExt =
+    lastDotIndex > 0
+      ? originalFileName.slice(0, lastDotIndex)
+      : originalFileName;
+  const extension =
+    lastDotIndex > 0 ? originalFileName.slice(lastDotIndex) : "";
 
   // タイムスタンプを生成（YYYYMMDD_HHMMSS形式）
   const now = new Date();

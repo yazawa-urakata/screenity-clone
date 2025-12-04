@@ -6,13 +6,13 @@
  * Upload status states throughout the upload lifecycle
  */
 export type UploadStatus =
-  | "idle"             // Initial state, no upload in progress
-  | "authenticating"   // Checking Supabase authentication
-  | "requesting-url"   // Requesting presigned URL from API
-  | "uploading"        // Uploading file to S3
-  | "completed"        // Upload completed successfully
-  | "failed"           // Upload failed with error
-  | "cancelled";       // Upload cancelled by user
+  | "idle" // Initial state, no upload in progress
+  | "authenticating" // Checking Supabase authentication
+  | "requesting-url" // Requesting presigned URL from API
+  | "uploading" // Uploading file to S3
+  | "completed" // Upload completed successfully
+  | "failed" // Upload failed with error
+  | "cancelled"; // Upload cancelled by user
 
 /**
  * Progress information during multipart upload
@@ -54,11 +54,11 @@ export interface MultipartUploadConfig {
 export interface UploadError {
   /** Error code for categorization */
   code:
-    | "AUTH_ERROR"           // Authentication failed
-    | "PRESIGNED_URL_ERROR"  // Failed to obtain presigned URL
-    | "NETWORK_ERROR"        // Network connection error
-    | "UPLOAD_ERROR"         // Upload failed
-    | "CANCELLED";           // Upload cancelled by user
+    | "AUTH_ERROR" // Authentication failed
+    | "PRESIGNED_URL_ERROR" // Failed to obtain presigned URL
+    | "NETWORK_ERROR" // Network connection error
+    | "UPLOAD_ERROR" // Upload failed
+    | "CANCELLED"; // Upload cancelled by user
   /** Human-readable error message */
   message: string;
   /** Original error object (if available) */

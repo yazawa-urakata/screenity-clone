@@ -1,5 +1,5 @@
-import { sendMessageTab, focusTab } from "../tabManagement";
 import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocuments";
+import { focusTab, sendMessageTab } from "../tabManagement";
 
 export const handleDismiss = async () => {
   try {

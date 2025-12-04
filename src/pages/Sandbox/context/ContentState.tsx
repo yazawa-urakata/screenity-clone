@@ -1,17 +1,15 @@
+import fixWebmDuration from "fix-webm-duration";
+import localforage from "localforage";
 import React, {
   createContext,
-  useContext,
-  useState,
+  type FC,
+  type ReactNode,
   useCallback,
+  useEffect,
   useRef,
-  ReactNode,
+  useState,
 } from "react";
-import { useEffect } from "react";
-
-import fixWebmDuration from "fix-webm-duration";
 import { default as fixWebmDurationFallback } from "webm-duration-fix";
-
-import localforage from "localforage";
 import type { ClipList } from "../../../types/clip";
 
 localforage.config({
@@ -76,17 +74,19 @@ export interface SandboxContentStateType {
   hasBeenEdited: boolean;
   dragInteracted: boolean;
   noffmpeg: boolean;
-  openModal: ((
-    title: string,
-    description: string,
-    action: string | null,
-    cancel: string | null,
-    actionCallback: () => void,
-    cancelCallback: () => void,
-    image?: string | null | false,
-    learn?: string | false,
-    learnURL?: string | (() => void) | false
-  ) => void) | null;
+  openModal:
+    | ((
+        title: string,
+        description: string,
+        action: string | null,
+        cancel: string | null,
+        actionCallback: () => void,
+        cancelCallback: () => void,
+        image?: string | null | false,
+        learn?: string | false,
+        learnURL?: string | (() => void) | false,
+      ) => void)
+    | null;
   rawBlob: Blob | null;
   override: boolean;
   fallback: boolean;
@@ -101,19 +101,30 @@ export interface SandboxContentStateType {
   handleTrim?: (cut: boolean) => Promise<void>;
   handleMute?: () => Promise<void>;
   download?: () => Promise<void>;
-  handleCrop?: (x: number, y: number, width: number, height: number) => Promise<boolean>;
+  handleCrop?: (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) => Promise<boolean>;
   handleReencode?: () => Promise<boolean>;
   downloadWEBM?: () => Promise<void>;
-  addAudio?: (videoBlob: Blob, audioBlob: Blob, volume: number) => Promise<void>;
+  addAudio?: (
+    videoBlob: Blob,
+    audioBlob: Blob,
+    volume: number,
+  ) => Promise<void>;
   loadFFmpeg?: () => Promise<void>;
 }
 
 type SandboxContextValue = [
   SandboxContentStateType,
-  React.Dispatch<React.SetStateAction<SandboxContentStateType>>
+  React.Dispatch<React.SetStateAction<SandboxContentStateType>>,
 ];
 
-export const ContentStateContext = createContext<SandboxContextValue | undefined>(undefined);
+export const ContentStateContext = createContext<
+  SandboxContextValue | undefined
+>(undefined);
 
 interface ContentStateProps {
   children: ReactNode;
@@ -200,7 +211,8 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     clips: [],
   };
 
-  const [contentState, setContentState] = useState<SandboxContentStateType>(defaultState);
+  const [contentState, setContentState] =
+    useState<SandboxContentStateType>(defaultState);
   const contentStateRef = useRef<SandboxContentStateType>(contentState);
 
   const buildBlobFromChunks = async (): Promise<void> => {
@@ -208,11 +220,13 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
 
     await chunksStore.ready();
 
-    await chunksStore.iterate((value) => (items.push(value as ChunkItem), undefined));
+    await chunksStore.iterate(
+      (value) => (items.push(value as ChunkItem), undefined),
+    );
 
     items.sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0));
     const parts = items.map((c) =>
-      c.chunk instanceof Blob ? c.chunk : new Blob([c.chunk])
+      c.chunk instanceof Blob ? c.chunk : new Blob([c.chunk]),
     );
 
     const blob = new Blob(parts, { type: "video/webm" });
@@ -257,9 +271,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
   // Show a popup when attempting to close the tab if the user has not downloaded their video
   useEffect(() => {
     if (!contentState.saved) {
-      window.onbeforeunload = function () {
-        return true;
-      };
+      window.onbeforeunload = () => true;
     } else {
       window.onbeforeunload = null;
     }
@@ -346,13 +358,13 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     const blob = withBlob
       ? withBlob
       : new Blob(
-        videoChunks.current.map(chunk =>
-          chunk instanceof Blob ? chunk : (chunk.buffer as ArrayBuffer)
-        ),
-        {
-          type: "video/webm; codecs=vp8, opus",
-        }
-      );
+          videoChunks.current.map((chunk) =>
+            chunk instanceof Blob ? chunk : (chunk.buffer as ArrayBuffer),
+          ),
+          {
+            type: "video/webm; codecs=vp8, opus",
+          },
+        );
 
     const storage = await chrome.storage.local.get("recordingDuration");
     const recordingDuration = storage.recordingDuration as number | undefined;
@@ -377,21 +389,17 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     try {
       if (recordingDuration && recordingDuration > 0) {
         if (!isWindows10) {
-          fixWebmDuration(
-            blob,
-            recordingDuration,
-            async (fixedWebm: Blob) => {
-              // MP4変換を無効化: 常にWebMのみを保存
-              setContentState((prevState) => ({
-                ...prevState,
-                webm: fixedWebm,
-                ready: true,
-              }));
-              chrome.runtime.sendMessage({ type: "recording-complete" });
-            }
-          );
+          fixWebmDuration(blob, recordingDuration, async (fixedWebm: Blob) => {
+            // MP4変換を無効化: 常にWebMのみを保存
+            setContentState((prevState) => ({
+              ...prevState,
+              webm: fixedWebm,
+              ready: true,
+            }));
+            chrome.runtime.sendMessage({ type: "recording-complete" });
+          });
         } else {
-          const fixedWebm = await fixWebmDurationFallback(blob) as Blob;
+          const fixedWebm = (await fixWebmDurationFallback(blob)) as Blob;
 
           // MP4変換を無効化: 常にWebMのみを保存
           setContentState((prevState) => ({
@@ -420,7 +428,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
         }
 
         const reader = new FileReader();
-        reader.onloadend = function () {
+        reader.onloadend = () => {
           const base64data = reader.result as string;
           setContentState((prevContentState) => ({
             ...prevContentState,
@@ -451,13 +459,13 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
             chrome.i18n.getMessage("memoryLimitDescription"),
             chrome.i18n.getMessage("understoodButton"),
             null,
-            () => { },
-            () => { },
+            () => {},
+            () => {},
             null,
             chrome.i18n.getMessage("learnMoreDot"),
             () => {
               chrome.runtime.sendMessage({ type: "memory-limit-help" });
-            }
+            },
           );
         }
       });
@@ -468,7 +476,10 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     chunkCount.current = contentState.chunkCount;
   }, [contentState.chunkCount]);
 
-  const handleBatch = (chunks: ChunkMessage[], sendResponse: (response: { status: string }) => void): boolean => {
+  const handleBatch = (
+    chunks: ChunkMessage[],
+    sendResponse: (response: { status: string }) => void,
+  ): boolean => {
     (async () => {
       try {
         await Promise.all(
@@ -485,7 +496,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
               ...prevState,
               chunkIndex: prevState.chunkIndex + 1,
             }));
-          })
+          }),
         );
 
         sendResponse({ status: "ok" });
@@ -512,7 +523,10 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     }
   }, []);
 
-  const makeVideoTab = (sendResponse: ((response: { status: string }) => void) | null, message: { override: boolean }): void => {
+  const makeVideoTab = (
+    sendResponse: ((response: { status: string }) => void) | null,
+    message: { override: boolean },
+  ): void => {
     if (makeVideoCheck.current) return;
     makeVideoCheck.current = true;
 
@@ -541,7 +555,11 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
   };
 
   const onChromeMessage = useCallback(
-    (request: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): boolean | undefined => {
+    (
+      request: any,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: any) => void,
+    ): boolean | undefined => {
       const message = request;
       if (message.type === "chunk-count") {
         // リアルタイムアップロードでは chunk 処理は不要
@@ -613,11 +631,15 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
       videoChunks.current,
       contentState,
       contentStateRef.current,
-    ]
+    ],
   );
 
   useEffect(() => {
-    const messageListener = (message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void): boolean => {
+    const messageListener = (
+      message: any,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: any) => void,
+    ): boolean => {
       const shouldKeepPortOpen = onChromeMessage(message, sender, sendResponse);
       return shouldKeepPortOpen === true;
     };
@@ -633,9 +655,12 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     if (event.data.type === "updated-blob") {
       const base64 = event.data.base64 as string;
       const data = base64ToUint8Array(base64);
-      const blob = data instanceof Blob ? data : new Blob([data.buffer as ArrayBuffer], {
-        type: "video/mp4",
-      });
+      const blob =
+        data instanceof Blob
+          ? data
+          : new Blob([data.buffer as ArrayBuffer], {
+              type: "video/mp4",
+            });
 
       setContentState((prevContentState) => ({
         ...prevContentState,
@@ -680,9 +705,12 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     } else if (event.data.type === "download-mp4") {
       const base64 = event.data.base64 as string;
       const data = base64ToUint8Array(base64);
-      const blob = data instanceof Blob ? data : new Blob([data.buffer as ArrayBuffer], {
-        type: "video/mp4",
-      });
+      const blob =
+        data instanceof Blob
+          ? data
+          : new Blob([data.buffer as ArrayBuffer], {
+              type: "video/mp4",
+            });
       const url = URL.createObjectURL(blob);
       requestDownload(url, ".mp4");
       setContentState((prevContentState) => ({
@@ -740,9 +768,12 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     )
       return;
     const data = base64ToUint8Array(contentState.base64!);
-    const webmVideo = data instanceof Blob ? data : new Blob([data.buffer as ArrayBuffer], {
-      type: "video/webm",
-    });
+    const webmVideo =
+      data instanceof Blob
+        ? data
+        : new Blob([data.buffer as ArrayBuffer], {
+            type: "video/webm",
+          });
 
     setContentState((prevState) => ({
       ...prevState,
@@ -784,7 +815,11 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     sendMessage({ type: "get-frame", time: 0, blob: contentState.blob });
   }, [contentState.blob, contentState.ffmpeg, contentState.isFfmpegRunning]);
 
-  const addAudio = async (videoBlob: Blob, audioBlob: Blob, volume: number): Promise<void> => {
+  const addAudio = async (
+    videoBlob: Blob,
+    audioBlob: Blob,
+    volume: number,
+  ): Promise<void> => {
     if (contentState.isFfmpegRunning) return;
     if (
       contentState.duration > contentState.editLimit &&
@@ -868,7 +903,12 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     });
   };
 
-  const handleCrop = async (x: number, y: number, width: number, height: number): Promise<boolean> => {
+  const handleCrop = async (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): Promise<boolean> => {
     if (contentState.isFfmpegRunning || contentState.cropping) {
       return false;
     }
@@ -916,12 +956,12 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
 
   const requestDownload = async (url: string, ext: string): Promise<void> => {
     const title =
-      contentStateRef.current.title!.replace(/[\/\\:?~<>|*]/g, " ").trim() + ext;
+      contentStateRef.current.title!.replace(/[/\\:?~<>|*]/g, " ").trim() + ext;
 
     const revoke = () => {
       try {
         URL.revokeObjectURL(url);
-      } catch { }
+      } catch {}
     };
 
     // Brave fallback
@@ -953,7 +993,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
           } else {
             resolve(id);
           }
-        }
+        },
       );
     });
 

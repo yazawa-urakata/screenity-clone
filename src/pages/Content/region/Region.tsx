@@ -1,6 +1,7 @@
-import React, { useState, useRef, useContext, useEffect } from "react";
+import type React from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import type { DraggableData, Position, ResizableDelta } from "react-rnd";
 import { Rnd } from "react-rnd";
-import type { DraggableData, ResizableDelta, Position } from "react-rnd";
 
 // Context
 import { contentStateContext } from "../context/ContentState";
@@ -40,11 +41,11 @@ const ResizableBox: React.FC = () => {
 
   // デバッグ用: clipSelecting の変更を監視
   useEffect(() => {
-    console.log('[Region Debug] clipSelecting:', contentState.clipSelecting);
-    console.log('[Region Debug] recording:', contentState.recording);
-    console.log('[Region Debug] clipRecording:', contentState.clipRecording);
-    console.log('[Region Debug] drawingMode:', contentState.drawingMode);
-    console.log('[Region Debug] blurMode:', contentState.blurMode);
+    console.log("[Region Debug] clipSelecting:", contentState.clipSelecting);
+    console.log("[Region Debug] recording:", contentState.recording);
+    console.log("[Region Debug] clipRecording:", contentState.clipRecording);
+    console.log("[Region Debug] drawingMode:", contentState.drawingMode);
+    console.log("[Region Debug] blurMode:", contentState.blurMode);
 
     const shouldEnablePointerEvents = !(
       contentState.clipRecording ||
@@ -52,7 +53,10 @@ const ResizableBox: React.FC = () => {
       contentState.drawingMode ||
       contentState.blurMode
     );
-    console.log('[Region Debug] pointerEvents should be:', shouldEnablePointerEvents ? 'auto' : 'none');
+    console.log(
+      "[Region Debug] pointerEvents should be:",
+      shouldEnablePointerEvents ? "auto" : "none",
+    );
 
     const shouldEnableDragging = !(
       contentState.clipRecording ||
@@ -60,16 +64,27 @@ const ResizableBox: React.FC = () => {
       contentState.drawingMode ||
       contentState.blurMode
     );
-    console.log('[Region Debug] disableDragging should be:', !shouldEnableDragging);
+    console.log(
+      "[Region Debug] disableDragging should be:",
+      !shouldEnableDragging,
+    );
 
-    const shouldEnableResizing = (
+    const shouldEnableResizing =
       !contentState.clipRecording &&
       (!contentState.recording || contentState.clipSelecting) &&
       !contentState.drawingMode &&
-      !contentState.blurMode
+      !contentState.blurMode;
+    console.log(
+      "[Region Debug] enableResizing should be:",
+      shouldEnableResizing,
     );
-    console.log('[Region Debug] enableResizing should be:', shouldEnableResizing);
-  }, [contentState.clipSelecting, contentState.recording, contentState.clipRecording, contentState.drawingMode, contentState.blurMode]);
+  }, [
+    contentState.clipSelecting,
+    contentState.recording,
+    contentState.clipRecording,
+    contentState.drawingMode,
+    contentState.blurMode,
+  ]);
 
   // Check for contentState.regionDimensions to update the Rnd component width and height
   useEffect(() => {
@@ -78,13 +93,15 @@ const ResizableBox: React.FC = () => {
       contentState.recordingType != "region" &&
       !contentState.clipSelecting &&
       !contentState.clipRecording
-    ) return;
+    )
+      return;
 
     if (
       !contentState.customRegion &&
       !contentState.clipSelecting &&
       !contentState.clipRecording
-    ) return;
+    )
+      return;
 
     if (regionRef.current === null) return;
     if (
@@ -146,7 +163,9 @@ const ResizableBox: React.FC = () => {
 
   const setCropTarget = async (): Promise<void> => {
     if (!cropRef.current) return;
-    const target = await (window as any).CropTarget.fromElement(cropRef.current);
+    const target = await (window as any).CropTarget.fromElement(
+      cropRef.current,
+    );
     setContentState((prevContentState: ContentStateType) => ({
       ...prevContentState,
       cropTarget: target,
@@ -158,7 +177,7 @@ const ResizableBox: React.FC = () => {
     direction: string,
     ref: HTMLElement,
     delta: ResizableDelta,
-    position: Position
+    position: Position,
   ): void => {
     // Get numeric values of width and height
     const width = parseInt(ref.style.width, 10);
@@ -234,12 +253,17 @@ const ResizableBox: React.FC = () => {
             ? "none"
             : "auto",
       }}
-      className={recordingRef.current && !clipSelectingRef.current ? "region-recording" : ""}
+      className={
+        recordingRef.current && !clipSelectingRef.current
+          ? "region-recording"
+          : ""
+      }
       onClick={(e: React.MouseEvent) => {
         // showExtension false, as long as not clicking on the region
         if (
           (e.target as HTMLElement).className.indexOf("resize-handle") === -1 &&
-          (e.target as HTMLElement).className.indexOf("react-draggable") === -1 &&
+          (e.target as HTMLElement).className.indexOf("react-draggable") ===
+            -1 &&
           (e.target as HTMLElement).className.indexOf("region-rect") === -1
         ) {
           // setContentState((prevContentState) => ({

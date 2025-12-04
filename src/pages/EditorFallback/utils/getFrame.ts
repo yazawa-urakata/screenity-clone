@@ -1,7 +1,7 @@
 async function getFrame(
   ffmpeg: FFmpeg,
   videoBlob: Blob,
-  time: number
+  time: number,
 ): Promise<Blob> {
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
   ffmpeg.FS("writeFile", "input.mp4", videoData);
@@ -15,7 +15,7 @@ async function getFrame(
     "1",
     "-q:v",
     "2",
-    "frame.jpg"
+    "frame.jpg",
   );
 
   const data = new Uint8Array(ffmpeg.FS("readFile", "frame.jpg"));

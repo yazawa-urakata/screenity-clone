@@ -20,7 +20,7 @@ webpack(config, (err, stats) => {
   if (stats.hasErrors()) {
     console.error("Webpack compilation errors:");
     const info = stats.toJson();
-    info.errors.forEach(error => console.error(error));
+    info.errors.forEach((error) => console.error(error));
     process.exit(1);
   }
 

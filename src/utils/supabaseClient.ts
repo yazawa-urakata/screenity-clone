@@ -2,8 +2,8 @@
  * Supabase認証ユーティリティ
  */
 
-import type { SupabaseUser } from '../types/supabase';
-import { getAuthTokens } from './supabaseTokenStorage';
+import type { SupabaseUser } from "../types/supabase";
+import { getAuthTokens } from "./supabaseTokenStorage";
 
 /**
  * 認証状態を取得
@@ -22,9 +22,7 @@ export async function getSupabaseAuthState(): Promise<{
  */
 export function getWebAppUrl(): string {
   // 開発環境判定（拡張機能IDや他の条件でも可）
-  const isDev = !('update_url' in chrome.runtime.getManifest());
+  const isDev = !("update_url" in chrome.runtime.getManifest());
 
-  return isDev
-    ? process.env.WEBAPP_URL_DEV!
-    : process.env.WEBAPP_URL_PROD!;
+  return isDev ? process.env.WEBAPP_URL_DEV! : process.env.WEBAPP_URL_PROD!;
 }

@@ -1,8 +1,6 @@
-import React from "react";
-
-import Wrapper from "./Wrapper";
-
+import type React from "react";
 import ContentState from "./context/ContentState";
+import Wrapper from "./Wrapper";
 
 const Content: React.FC = () => {
   return (

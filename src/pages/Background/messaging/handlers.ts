@@ -1,65 +1,55 @@
 import { registerMessage } from "../../../messaging/messageRouter";
-import {
-  focusTab,
-  createTab,
-  resetActiveTab,
-  resetActiveTabRestart,
-  setSurface,
-} from "../tabManagement";
-import { handleSaveClip } from "../clip/clipHandlers";
-import type { SaveClipMessage } from "../../../types/message";
-
-import { startRecording } from "../recording/startRecording";
-import {
-  handleStopRecordingTab,
-  handleStopRecordingTabBackup,
-} from "../recording/stopRecording";
+import type {
+  SaveClipMessage,
+  SupabaseAuthCheckMessage,
+  SupabaseLoginRequestMessage,
+  SupabaseSessionExpiredMessage,
+  SupabaseSessionSyncedMessage,
+} from "../../../types/message";
 import { addAlarmListener } from "../alarms/addAlarmListener";
+import { checkSupabaseAuth, openLoginPage } from "../auth/supabaseAuth";
+import { handleSaveClip } from "../clip/clipHandlers";
 import { cancelRecording, handleDismiss } from "../recording/cancelRecording";
+import { checkRecording } from "../recording/checkRecording";
+import { clearAllRecordings, newChunk } from "../recording/chunkHandler";
+import { desktopCapture } from "../recording/desktopCapture";
 import { handleDismissRecordingTab } from "../recording/discardRecording";
-import { sendMessageRecord } from "../recording/sendMessageRecord";
-import { offscreenDocument } from "../offscreen/offscreenDocument";
-import type { RecordingRequest } from "../offscreen/offscreenDocument";
 import { forceProcessing } from "../recording/forceProcessing";
 import {
-  restartActiveTab,
-  getCurrentTab,
-  sendMessageTab,
-} from "../tabManagement";
+  checkCapturePermissions,
+  handleGetStreamingData,
+  handleOnGetPermissions,
+  handlePip,
+  handleRecordingComplete,
+  handleRecordingError,
+  videoReady,
+} from "../recording/recordingHelpers";
 import {
   handleRestart,
   handleRestartRecordingTab,
 } from "../recording/restartRecording";
-import { checkRecording } from "../recording/checkRecording";
+import { checkRestore, restoreRecording } from "../recording/restoreRecording";
+import { sendMessageRecord } from "../recording/sendMessageRecord";
+import { startRecording } from "../recording/startRecording";
+import { handleStopRecordingTab } from "../recording/stopRecording";
 import {
-  isPinned,
-  getPlatformInfo,
-  resizeWindow,
-  checkAvailableMemory,
-} from "../utils/browserHelpers";
-import { requestDownload, downloadIndexedDB } from "../utils/downloadHelpers";
-import { restoreRecording, checkRestore } from "../recording/restoreRecording";
-import { desktopCapture } from "../recording/desktopCapture";
-import {
-  writeFile,
-  videoReady,
-  handleGetStreamingData,
-  handleRecordingError,
-  handleRecordingComplete,
-  handleOnGetPermissions,
-  handlePip,
-  checkCapturePermissions,
-} from "../recording/recordingHelpers";
-import { newChunk, clearAllRecordings } from "../recording/chunkHandler";
+  createTab,
+  focusTab,
+  getCurrentTab,
+  resetActiveTab,
+  resetActiveTabRestart,
+  restartActiveTab,
+  sendMessageTab,
+  setSurface,
+} from "../tabManagement";
 import { setMicActiveTab } from "../tabManagement/tabHelpers";
-import { checkSupabaseAuth, openLoginPage } from '../auth/supabaseAuth';
-import type {
-  SupabaseSessionSyncedMessage,
-  SupabaseSessionExpiredMessage,
-  SupabaseAuthCheckMessage,
-  SupabaseClearAuthMessage,
-  SupabaseLoginRequestMessage,
-} from '../../../types/message';
+import {
+  checkAvailableMemory,
+  getPlatformInfo,
+  isPinned,
+  resizeWindow,
+} from "../utils/browserHelpers";
+import { downloadIndexedDB, requestDownload } from "../utils/downloadHelpers";
 
 const API_BASE = process.env.SCREENITY_API_BASE_URL;
 const CLOUD_FEATURES_ENABLED =
@@ -83,77 +73,73 @@ interface ClickEvent {
 
 export const copyToClipboard = (text: string): void => {
   if (!text) return;
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-    if (!tabs.length) return;
-    const tabId = tabs[0].id;
-    chrome.scripting.executeScript({
-      target: { tabId: tabId as number },
-      func: (content: string) => {
-        navigator.clipboard.writeText(content).catch((err) => {
-          console.warn(
-            "❌ Failed to copy to clipboard in content script:",
-            err
-          );
-        });
-      },
-      args: [text],
-    });
-  });
+  chrome.tabs.query(
+    { active: true, currentWindow: true },
+    (tabs: chrome.tabs.Tab[]) => {
+      if (!tabs.length) return;
+      const tabId = tabs[0].id;
+      chrome.scripting.executeScript({
+        target: { tabId: tabId as number },
+        func: (content: string) => {
+          navigator.clipboard.writeText(content).catch((err) => {
+            console.warn(
+              "❌ Failed to copy to clipboard in content script:",
+              err,
+            );
+          });
+        },
+        args: [text],
+      });
+    },
+  );
 };
 
 // Initialize message router and register all handlers
 export const setupHandlers = (): void => {
-  registerMessage("desktop-capture", (message) => desktopCapture((message as unknown) as Record<string, unknown>));
-  registerMessage("backup-created", (message) => {
-    const msg = (message as unknown) as Record<string, unknown>;
-    return offscreenDocument(msg.request as RecordingRequest, msg.tabId as number | null);
-  });
-  registerMessage("write-file", (message) => writeFile((message as unknown) as Record<string, unknown>));
+  registerMessage("desktop-capture", (message) =>
+    desktopCapture(message as unknown as Record<string, unknown>),
+  );
   registerMessage("handle-restart", () => handleRestart());
   registerMessage("handle-dismiss", () => handleDismiss());
   registerMessage("reset-active-tab", () => resetActiveTab(false));
-  registerMessage("reset-active-tab-restart", () =>
-    resetActiveTabRestart()
-  );
+  registerMessage("reset-active-tab-restart", () => resetActiveTabRestart());
   registerMessage("video-ready", () => videoReady());
   registerMessage("start-recording", () => startRecording());
   registerMessage("restarted", () => restartActiveTab());
 
   registerMessage("new-chunk", (message) => {
-    newChunk((message as unknown) as Record<string, unknown>);
+    newChunk(message as unknown as Record<string, unknown>);
     return true;
   });
 
   registerMessage(
     "get-streaming-data",
-    async () => await handleGetStreamingData()
+    async () => await handleGetStreamingData(),
   );
   registerMessage("cancel-recording", () => cancelRecording());
   registerMessage("stop-recording-tab", (message) =>
-    handleStopRecordingTab((message as unknown) as Record<string, unknown>)
+    handleStopRecordingTab(message as unknown as Record<string, unknown>),
   );
-  registerMessage("restart-recording-tab", (message) =>
-    handleRestartRecordingTab((message as unknown) as Record<string, unknown>)
-  );
-  registerMessage("dismiss-recording-tab", () =>
-    handleDismissRecordingTab()
-  );
+  registerMessage("restart-recording-tab", () => handleRestartRecordingTab());
+  registerMessage("dismiss-recording-tab", () => handleDismissRecordingTab());
   registerMessage("pause-recording-tab", () =>
-    sendMessageRecord({ type: "pause-recording-tab" })
+    sendMessageRecord({ type: "pause-recording-tab" }),
   );
   registerMessage("resume-recording-tab", () =>
-    sendMessageRecord({ type: "resume-recording-tab" })
+    sendMessageRecord({ type: "resume-recording-tab" }),
   );
-  registerMessage("set-mic-active-tab", (message) => setMicActiveTab((message as unknown) as Record<string, unknown>));
+  registerMessage("set-mic-active-tab", (message) =>
+    setMicActiveTab(message as unknown as Record<string, unknown>),
+  );
   registerMessage("recording-error", (message) =>
-    handleRecordingError((message as unknown) as Record<string, unknown>)
+    handleRecordingError(message as unknown as Record<string, unknown>),
   );
   registerMessage("on-get-permissions", (message) =>
-    handleOnGetPermissions((message as unknown) as Record<string, unknown>)
+    handleOnGetPermissions(message as unknown as Record<string, unknown>),
   );
   registerMessage(
     "recording-complete",
-    async () => await handleRecordingComplete()
+    async () => await handleRecordingComplete(),
   );
   registerMessage("check-recording", () => checkRecording());
 
@@ -167,91 +153,88 @@ export const setupHandlers = (): void => {
     createTab(
       "https://chrome.google.com/webstore/detail/screenity-screen-recorder/kbbdabhdfibnancpjfhlkhafgdilcnji/reviews",
       false,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("follow-twitter", () =>
-    createTab("https://alyssax.substack.com/", false, true)
+    createTab("https://alyssax.substack.com/", false, true),
   );
   registerMessage("pricing", () =>
-    createTab("https://screenity.io/pro", false, true)
+    createTab("https://screenity.io/pro", false, true),
   );
   registerMessage("open-processing-info", () =>
     createTab(
       "https://help.screenity.io/editing-and-exporting/dJRFpGq56JFKC7k8zEvsqb/why-is-there-a-5-minute-limit-for-editing/ddy4e4TpbnrFJ8VoRT37tQ",
       true,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("upgrade-info", () =>
     createTab(
       "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9",
       true,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("trim-info", () =>
     createTab(
       "https://help.screenity.io/editing-and-exporting/dJRFpGq56JFKC7k8zEvsqb/how-to-cut-trim-or-mute-parts-of-your-video/svNbM7YHYY717MuSWXrKXH",
       true,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("join-waitlist", () =>
-    createTab("https://tally.so/r/npojNV", true, true)
+    createTab("https://tally.so/r/npojNV", true, true),
   );
   registerMessage("chrome-update-info", () =>
     createTab(
       "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what-are-the-technical-requirements-for-using-screenity/6kdB6qru6naVD8ZLFvX3m9",
       true,
-      true
-    )
+      true,
+    ),
   );
-  registerMessage("set-surface", (message) => setSurface((message as unknown) as Record<string, unknown>));
+  registerMessage("set-surface", (message) =>
+    setSurface(message as unknown as Record<string, unknown>),
+  );
   registerMessage("pip-ended", () => handlePip(false));
   registerMessage("pip-started", () => handlePip(true));
   registerMessage("open-help", () =>
-    createTab("https://help.screenity.io/", true, true)
+    createTab("https://help.screenity.io/", true, true),
   );
   registerMessage("memory-limit-help", () =>
     createTab(
       "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/what-does-%E2%80%9Cmemory-limit-reached%E2%80%9D-mean-when-recording/8WkwHbt3puuXunYqQnyPcb",
       true,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("open-home", () =>
-    createTab("https://screenity.io/", false, true)
+    createTab("https://screenity.io/", false, true),
   );
   registerMessage("report-bug", () =>
     createTab(
       "https://tally.so/r/3ElpXq?version=" +
-      chrome.runtime.getManifest().version,
+        chrome.runtime.getManifest().version,
       false,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("clear-recordings", () => clearAllRecordings());
   registerMessage("force-processing", () => forceProcessing());
   registerMessage("focus-this-tab", (message, sender) =>
-    focusTab(sender.tab?.id as number)
+    focusTab(sender.tab?.id as number),
   );
-  registerMessage("stop-recording-tab-backup", (message) =>
-    handleStopRecordingTabBackup((message as unknown) as Record<string, unknown>)
-  );
-  registerMessage("indexed-db-download", () =>
-    downloadIndexedDB()
-  );
+  registerMessage("indexed-db-download", () => downloadIndexedDB());
   registerMessage("get-platform-info", async () => await getPlatformInfo());
   registerMessage("restore-recording", () => restoreRecording());
   registerMessage(
     "check-restore",
-    async (sendResponse) => await checkRestore(sendResponse)
+    async (sendResponse) => await checkRestore(sendResponse),
   );
   registerMessage(
     "check-capture-permissions",
     async (message, sender, sendResponse) => {
-      const msg = (message as unknown) as Record<string, unknown>;
+      const msg = message as unknown as Record<string, unknown>;
       const { isLoggedIn, isSubscribed } = msg;
 
       const response = await checkCapturePermissions({
@@ -261,15 +244,15 @@ export const setupHandlers = (): void => {
 
       sendResponse(response);
       return true;
-    }
+    },
   );
   registerMessage("is-pinned", async () => await isPinned());
   registerMessage("request-download", (message) => {
-    const msg = (message as unknown) as Record<string, unknown>;
+    const msg = message as unknown as Record<string, unknown>;
     return requestDownload(msg.base64 as string, msg.title as string);
   });
   registerMessage("resize-window", (message) => {
-    const msg = (message as unknown) as Record<string, unknown>;
+    const msg = message as unknown as Record<string, unknown>;
     return resizeWindow(msg.width as number, msg.height as number);
   });
   registerMessage("available-memory", async () => {
@@ -279,8 +262,8 @@ export const setupHandlers = (): void => {
     createTab(
       `chrome://settings/content/siteDetails?site=chrome-extension://${chrome.runtime.id}`,
       false,
-      true
-    )
+      true,
+    ),
   );
   registerMessage("add-alarm-listener", () => addAlarmListener());
   registerMessage("handle-login", async () => {
@@ -317,92 +300,118 @@ export const setupHandlers = (): void => {
     return true;
   });
 
-  registerMessage("click-event", async (message, sender: chrome.runtime.MessageSender) => {
-    if (!CLOUD_FEATURES_ENABLED) return;
-    const msg = (message as unknown) as Record<string, unknown>;
-    const payload = msg.payload as ClickPayload;
-    const { x, y, surface, region, isTab } = payload;
-    const senderWindowId = sender.tab?.windowId;
+  registerMessage(
+    "click-event",
+    async (message, sender: chrome.runtime.MessageSender) => {
+      if (!CLOUD_FEATURES_ENABLED) return;
+      const msg = message as unknown as Record<string, unknown>;
+      const payload = msg.payload as ClickPayload;
+      const { x, y, surface, region, isTab } = payload;
+      const senderWindowId = sender.tab?.windowId;
 
-    // Ask Recorder for current video time
-    sendMessageRecord({ type: "get-video-time" }, (response?: { videoTime?: number }) => {
-      const videoTime = response?.videoTime ?? null;
+      // Ask Recorder for current video time
+      sendMessageRecord(
+        { type: "get-video-time" },
+        (response?: { videoTime?: number }) => {
+          const videoTime = response?.videoTime ?? null;
 
-      const baseClick: ClickEvent = { x, y, surface, region, timestamp: videoTime };
+          const baseClick: ClickEvent = {
+            x,
+            y,
+            surface,
+            region,
+            timestamp: videoTime,
+          };
 
-      if (region || isTab) {
-        storeClick(baseClick);
-        return;
-      }
-
-      if (surface === "monitor" && typeof senderWindowId === "number") {
-        chrome.windows.get(senderWindowId, (win?: chrome.windows.Window) => {
-          if (!win || chrome.runtime.lastError) {
-            console.warn("Failed to get window for click");
+          if (region || isTab) {
+            storeClick(baseClick);
             return;
           }
 
-          chrome.system.display.getInfo((displays) => {
-            const monitor = displays.find(
-              (d) =>
-                (win.left as number) >= d.bounds.left &&
-                (win.left as number) < d.bounds.left + d.bounds.width &&
-                (win.top as number) >= d.bounds.top &&
-                (win.top as number) < d.bounds.top + d.bounds.height
+          if (surface === "monitor" && typeof senderWindowId === "number") {
+            chrome.windows.get(
+              senderWindowId,
+              (win?: chrome.windows.Window) => {
+                if (!win || chrome.runtime.lastError) {
+                  console.warn("Failed to get window for click");
+                  return;
+                }
+
+                chrome.system.display.getInfo((displays) => {
+                  const monitor = displays.find(
+                    (d) =>
+                      (win.left as number) >= d.bounds.left &&
+                      (win.left as number) < d.bounds.left + d.bounds.width &&
+                      (win.top as number) >= d.bounds.top &&
+                      (win.top as number) < d.bounds.top + d.bounds.height,
+                  );
+
+                  if (!monitor) {
+                    console.warn("[click-event] No matching monitor found");
+                    return;
+                  }
+
+                  const screenX = (win.left as number) + x;
+                  const screenY = (win.top as number) + y;
+                  const adjX = screenX - monitor.bounds.left;
+                  const adjY = screenY - monitor.bounds.top;
+
+                  storeClick({ ...baseClick, x: adjX, y: adjY });
+                });
+              },
             );
-
-            if (!monitor) {
-              console.warn("[click-event] No matching monitor found");
-              return;
-            }
-
-            const screenX = (win.left as number) + x;
-            const screenY = (win.top as number) + y;
-            const adjX = screenX - monitor.bounds.left;
-            const adjY = screenY - monitor.bounds.top;
-
-            storeClick({ ...baseClick, x: adjX, y: adjY });
-          });
-        });
-        return;
-      }
-
-      if (surface === "window" && typeof senderWindowId === "number") {
-        chrome.windows.get(senderWindowId, (win?: chrome.windows.Window) => {
-          if (!win || chrome.runtime.lastError) {
-            console.warn("Failed to get window for window click");
             return;
           }
 
-          const screenX = (win.left as number) + x;
-          const screenY = (win.top as number) + y;
+          if (surface === "window" && typeof senderWindowId === "number") {
+            chrome.windows.get(
+              senderWindowId,
+              (win?: chrome.windows.Window) => {
+                if (!win || chrome.runtime.lastError) {
+                  console.warn("Failed to get window for window click");
+                  return;
+                }
 
-          storeClick({ ...baseClick, x: screenX, y: screenY });
-        });
-        return;
-      }
+                const screenX = (win.left as number) + x;
+                const screenY = (win.top as number) + y;
 
-      storeClick(baseClick);
-    });
-  });
+                storeClick({ ...baseClick, x: screenX, y: screenY });
+              },
+            );
+            return;
+          }
+
+          storeClick(baseClick);
+        },
+      );
+    },
+  );
 
   function storeClick(click: ClickEvent): void {
-    chrome.storage.local.get({ clickEvents: [] }, (data: { clickEvents: ClickEvent[] }) => {
-      chrome.storage.local.set({ clickEvents: [...data.clickEvents, click] });
-    });
+    chrome.storage.local.get(
+      { clickEvents: [] },
+      (data: { clickEvents: ClickEvent[] }) => {
+        chrome.storage.local.set({ clickEvents: [...data.clickEvents, click] });
+      },
+    );
   }
 
   function getMonitorForWindow(
     message: unknown,
     sender: chrome.runtime.MessageSender,
-    sendResponse: (response?: { error?: string; monitorId?: string; monitorBounds?: chrome.system.display.Bounds; displays?: unknown[] }) => void
+    sendResponse: (response?: {
+      error?: string;
+      monitorId?: string;
+      monitorBounds?: chrome.system.display.Bounds;
+      displays?: unknown[];
+    }) => void,
   ): boolean {
     chrome.system.display.getInfo((displays) => {
       chrome.windows.getCurrent((win?: chrome.windows.Window) => {
         if (!win || chrome.runtime.lastError) {
           console.warn(
             "[get-monitor-for-window] No window found",
-            chrome.runtime.lastError
+            chrome.runtime.lastError,
           );
           sendResponse({ error: "No window found" });
           return;
@@ -413,7 +422,7 @@ export const setupHandlers = (): void => {
             (win.left as number) >= d.bounds.left &&
             (win.left as number) < d.bounds.left + d.bounds.width &&
             (win.top as number) >= d.bounds.top &&
-            (win.top as number) < d.bounds.top + d.bounds.height
+            (win.top as number) < d.bounds.top + d.bounds.height,
         );
 
         if (!monitor) {
@@ -433,7 +442,7 @@ export const setupHandlers = (): void => {
                 monitorBounds: monitor.bounds,
                 displays,
               });
-            }
+            },
           );
         }
       });
@@ -484,7 +493,7 @@ export const setupHandlers = (): void => {
       await sendMessageTab(tab.id, {
         type: "preparing-recording",
       }).catch((e) =>
-        console.warn("Failed to send preparing-recording to tab:", e)
+        console.warn("Failed to send preparing-recording to tab:", e),
       );
     }
   });
@@ -493,7 +502,7 @@ export const setupHandlers = (): void => {
       console.warn("Cloud features disabled");
       return;
     }
-    const msg = (message as unknown) as Record<string, unknown>;
+    const msg = message as unknown as Record<string, unknown>;
     let messageTab: number | null = null;
     const sceneId = msg.sceneId || null;
 
@@ -514,7 +523,7 @@ export const setupHandlers = (): void => {
               .get("screenityToken")
               .then((r) => r.screenityToken)}`,
           },
-        }
+        },
       );
 
       if (editorTab) {
@@ -579,7 +588,7 @@ export const setupHandlers = (): void => {
                 .get("screenityToken")
                 .then((r) => r.screenityToken)}`,
             },
-          }
+          },
         );
 
         const url = `${process.env.SCREENITY_APP_BASE}/editor/${multiProjectId as string}/edit?share=true`;
@@ -668,11 +677,16 @@ export const setupHandlers = (): void => {
       active: true,
     });
   });
-  registerMessage("check-banner-support", async (message, sender, sendResponse) => {
-    const { bannerSupport } = await chrome.storage.local.get(["bannerSupport"]);
-    sendResponse({ bannerSupport: Boolean(bannerSupport) });
-    return true;
-  });
+  registerMessage(
+    "check-banner-support",
+    async (message, sender, sendResponse) => {
+      const { bannerSupport } = await chrome.storage.local.get([
+        "bannerSupport",
+      ]);
+      sendResponse({ bannerSupport: Boolean(bannerSupport) });
+      return true;
+    },
+  );
   registerMessage("hide-banner", async () => {
     await chrome.storage.local.set({ bannerSupport: false });
     chrome.runtime.sendMessage({ type: "hide-banner" });
@@ -684,65 +698,81 @@ export const setupHandlers = (): void => {
   /**
    * Supabaseセッション同期通知ハンドラー
    */
-  registerMessage('SUPABASE_SESSION_SYNCED', async (message: SupabaseSessionSyncedMessage) => {
-    console.log('✅ Background: Supabase session synced', message.payload.user.email);
+  registerMessage(
+    "SUPABASE_SESSION_SYNCED",
+    async (message: SupabaseSessionSyncedMessage) => {
+      console.log(
+        "✅ Background: Supabase session synced",
+        message.payload.user.email,
+      );
 
-    // Popupに直接通知（chrome.runtime.sendMessageですべてのリスナーに届く）
-    try {
-      await chrome.runtime.sendMessage({
-        type: 'AUTH_STATE_CHANGED',
-        payload: { authenticated: true },
-      });
-      console.log('📢 Background: Notified Popup of auth state change');
-    } catch (err) {
-      // Popupが開いていない場合はエラーを無視
-      console.log('ℹ️ Background: Popup not open, notification skipped');
-    }
-
-    // 必要に応じて他のタブに通知
-    const tabs = await chrome.tabs.query({});
-    tabs.forEach((tab) => {
-      if (tab.id) {
-        chrome.tabs.sendMessage(tab.id, {
-          type: 'AUTH_STATE_CHANGED',
+      // Popupに直接通知（chrome.runtime.sendMessageですべてのリスナーに届く）
+      try {
+        await chrome.runtime.sendMessage({
+          type: "AUTH_STATE_CHANGED",
           payload: { authenticated: true },
-        }).catch(() => {
-          // タブがメッセージを受け取れない場合は無視
         });
+        console.log("📢 Background: Notified Popup of auth state change");
+      } catch (err) {
+        // Popupが開いていない場合はエラーを無視
+        console.log("ℹ️ Background: Popup not open, notification skipped");
       }
-    });
 
-    return { success: true };
-  });
+      // 必要に応じて他のタブに通知
+      const tabs = await chrome.tabs.query({});
+      tabs.forEach((tab) => {
+        if (tab.id) {
+          chrome.tabs
+            .sendMessage(tab.id, {
+              type: "AUTH_STATE_CHANGED",
+              payload: { authenticated: true },
+            })
+            .catch(() => {
+              // タブがメッセージを受け取れない場合は無視
+            });
+        }
+      });
+
+      return { success: true };
+    },
+  );
 
   /**
    * Supabase認証状態チェックハンドラー
    */
-  registerMessage('SUPABASE_AUTH_CHECK', async (message: SupabaseAuthCheckMessage) => {
-    const authState = await checkSupabaseAuth();
-    return authState;
-  });
+  registerMessage(
+    "SUPABASE_AUTH_CHECK",
+    async (message: SupabaseAuthCheckMessage) => {
+      const authState = await checkSupabaseAuth();
+      return authState;
+    },
+  );
 
   /**
    * Supabaseログインリクエストハンドラー
    */
-  registerMessage('SUPABASE_LOGIN_REQUEST', async (message: SupabaseLoginRequestMessage) => {
-    console.log('🔐 Background: Received SUPABASE_LOGIN_REQUEST');
-    try {
-      await openLoginPage();
-      console.log('✅ Background: openLoginPage() executed successfully');
-      return { success: true };
-    } catch (error) {
-      console.error('❌ Background: Error in openLoginPage():', error);
-      return { success: false, error: String(error) };
-    }
-  });
+  registerMessage(
+    "SUPABASE_LOGIN_REQUEST",
+    async (message: SupabaseLoginRequestMessage) => {
+      console.log("🔐 Background: Received SUPABASE_LOGIN_REQUEST");
+      try {
+        await openLoginPage();
+        console.log("✅ Background: openLoginPage() executed successfully");
+        return { success: true };
+      } catch (error) {
+        console.error("❌ Background: Error in openLoginPage():", error);
+        return { success: false, error: String(error) };
+      }
+    },
+  );
 
   // Supabase 認証クリア（Content Script からの要求）
   // Content Script は chrome.storage.session に直接アクセスできないため、
   // Background Script 経由でクリアする
-  registerMessage('SUPABASE_CLEAR_AUTH', async () => {
-    const { clearAuthTokens } = await import('../../../utils/supabaseTokenStorage');
+  registerMessage("SUPABASE_CLEAR_AUTH", async () => {
+    const { clearAuthTokens } = await import(
+      "../../../utils/supabaseTokenStorage"
+    );
     await clearAuthTokens();
     return { success: true };
   });
@@ -750,8 +780,10 @@ export const setupHandlers = (): void => {
   // Supabase 認証設定（Content Script からの要求）
   // Content Script は chrome.storage.session に直接アクセスできないため、
   // Background Script 経由で保存する
-  registerMessage('SUPABASE_SET_AUTH', async (message: any) => {
-    const { setAuthTokens } = await import('../../../utils/supabaseTokenStorage');
+  registerMessage("SUPABASE_SET_AUTH", async (message: any) => {
+    const { setAuthTokens } = await import(
+      "../../../utils/supabaseTokenStorage"
+    );
     const { accessToken, user, expiresAt } = message.payload;
     await setAuthTokens({ accessToken, user, expiresAt });
     return { success: true };
@@ -761,35 +793,40 @@ export const setupHandlers = (): void => {
    * Supabaseセッション期限切れ通知ハンドラー
    * ログアウト時にSupabaseAuthSyncから呼ばれる
    */
-  registerMessage('SUPABASE_SESSION_EXPIRED', async (message: SupabaseSessionExpiredMessage) => {
-    console.log('🔐 Background: Supabase session expired (logout detected)');
+  registerMessage(
+    "SUPABASE_SESSION_EXPIRED",
+    async (message: SupabaseSessionExpiredMessage) => {
+      console.log("🔐 Background: Supabase session expired (logout detected)");
 
-    // 全タブに認証状態変更を通知
-    try {
-      await chrome.runtime.sendMessage({
-        type: 'AUTH_STATE_CHANGED',
-        payload: { authenticated: false },
-      });
-      console.log('📢 Background: Notified Popup of logout');
-    } catch (err) {
-      // Popupが開いていない場合はエラーを無視
-      console.log('ℹ️ Background: Popup not open, notification skipped');
-    }
-
-    // 必要に応じて他のタブに通知
-    const tabs = await chrome.tabs.query({});
-    tabs.forEach((tab) => {
-      if (tab.id) {
-        chrome.tabs.sendMessage(tab.id, {
-          type: 'AUTH_STATE_CHANGED',
+      // 全タブに認証状態変更を通知
+      try {
+        await chrome.runtime.sendMessage({
+          type: "AUTH_STATE_CHANGED",
           payload: { authenticated: false },
-        }).catch(() => {
-          // タブがメッセージを受け取れない場合は無視
         });
+        console.log("📢 Background: Notified Popup of logout");
+      } catch (err) {
+        // Popupが開いていない場合はエラーを無視
+        console.log("ℹ️ Background: Popup not open, notification skipped");
       }
-    });
 
-    console.log('✅ Background: Logout notification completed');
-    return { success: true };
-  });
+      // 必要に応じて他のタブに通知
+      const tabs = await chrome.tabs.query({});
+      tabs.forEach((tab) => {
+        if (tab.id) {
+          chrome.tabs
+            .sendMessage(tab.id, {
+              type: "AUTH_STATE_CHANGED",
+              payload: { authenticated: false },
+            })
+            .catch(() => {
+              // タブがメッセージを受け取れない場合は無視
+            });
+        }
+      });
+
+      console.log("✅ Background: Logout notification completed");
+      return { success: true };
+    },
+  );
 };

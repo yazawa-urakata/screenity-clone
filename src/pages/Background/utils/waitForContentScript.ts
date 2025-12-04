@@ -8,7 +8,7 @@
 export const waitForContentScript = async (
   tabId: number,
   interval = 500,
-  timeout = 10000
+  timeout = 10000,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const maxAttempts = Math.floor(timeout / interval);
@@ -33,7 +33,7 @@ export const waitForContentScript = async (
             clearInterval(intervalId);
             resolve();
           }
-        }
+        },
       );
     }, interval);
   });

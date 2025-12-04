@@ -2,7 +2,7 @@ export const sendMessageTab = async (
   tabId: number | null,
   message: any,
   responseCallback: ((response: any) => void) | null = null,
-  noTab: (() => void) | null = null
+  noTab: (() => void) | null = null,
 ): Promise<any> => {
   if (tabId === null || message === null)
     return Promise.reject("Tab ID or message is null");

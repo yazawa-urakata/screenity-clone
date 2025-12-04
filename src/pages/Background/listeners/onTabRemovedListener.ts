@@ -7,23 +7,16 @@ import { sendMessageTab } from "../tabManagement";
 export const onTabRemovedListener = (): void => {
   chrome.tabs.onRemoved.addListener(async (tabId: number) => {
     try {
-      const {
-        region,
-        customRegion,
-        recording,
-        restarting,
-        recordingTab,
-        tabRecordedID,
-      } = await chrome.storage.local.get([
-        "region",
-        "customRegion",
-        "recording",
-        "restarting",
-        "recordingTab",
-        "tabRecordedID",
-      ]);
+      const { recording, restarting, recordingTab, tabRecordedID } =
+        await chrome.storage.local.get([
+          "region",
+          "customRegion",
+          "recording",
+          "restarting",
+          "recordingTab",
+          "tabRecordedID",
+        ]);
 
-      const isRegionMode = region || customRegion;
       const recordedTabId = tabRecordedID || recordingTab;
 
       if (!recording || restarting) return;
@@ -37,7 +30,9 @@ export const onTabRemovedListener = (): void => {
 
         try {
           if (activeTab) {
-            await sendMessageTab(activeTab as number, { type: "stop-recording-tab" });
+            await sendMessageTab(activeTab as number, {
+              type: "stop-recording-tab",
+            });
           }
         } catch (err) {
           console.warn("Could not message active tab to stop recording:", err);

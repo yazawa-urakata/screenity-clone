@@ -12,9 +12,12 @@ export const addAlarmListener = (): void => {
 
 // Check if the permission is granted
 if (chrome.permissions) {
-  chrome.permissions.contains({ permissions: ["alarms"] }, (result: boolean) => {
-    if (result) {
-      addAlarmListener();
-    }
-  });
+  chrome.permissions.contains(
+    { permissions: ["alarms"] },
+    (result: boolean) => {
+      if (result) {
+        addAlarmListener();
+      }
+    },
+  );
 }

@@ -1,25 +1,23 @@
-import React, {
-  FC,
-  useEffect,
-  useState,
-  useContext,
-  useRef,
-  MouseEvent,
-  forwardRef,
-  ReactNode,
-} from "react";
-
 import * as Select from "@radix-ui/react-select";
-import {
-  DropdownIcon,
-  CheckWhiteIcon,
-  MicOnIcon,
-  MicOffIcon,
-} from "../../images/popup/images";
+import React, {
+  type FC,
+  forwardRef,
+  type MouseEvent,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 // Context
 import { contentStateContext } from "../../context/ContentState";
-import { ContentStateContextType } from "../../../../types/context";
+import {
+  CheckWhiteIcon,
+  DropdownIcon,
+  MicOffIcon,
+  MicOnIcon,
+} from "../../images/popup/images";
 
 interface DropdownProps {
   type: "mic";
@@ -44,11 +42,11 @@ const Dropdown: FC<DropdownProps> = (props) => {
       // Check if defaultAudioInput is in micdevices, if not set to none
       if (
         contentState?.audioInput?.find(
-          (device) => device.deviceId === contentState?.defaultAudioInput
+          (device) => device.deviceId === contentState?.defaultAudioInput,
         )
       ) {
         const device = contentState.audioInput.find(
-          (device) => device.deviceId === contentState.defaultAudioInput
+          (device) => device.deviceId === contentState.defaultAudioInput,
         );
         if (device) {
           setLabel(device.label);
@@ -94,7 +92,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
         micActive: true,
       });
       const device = contentState?.audioInput?.find(
-        (device) => device.deviceId === contentState?.defaultAudioInput
+        (device) => device.deviceId === contentState?.defaultAudioInput,
       );
       if (device) {
         setLabel(device.label);
@@ -112,7 +110,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
         setOpen(open);
       }}
       value={
-        (contentState?.micActive || contentState?.pushToTalk)
+        contentState?.micActive || contentState?.pushToTalk
           ? contentState?.defaultAudioInput
           : "none"
       }
@@ -137,7 +135,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
             micActive: true,
           });
           const device = contentState?.audioInput?.find(
-            (device) => device.deviceId === newValue
+            (device) => device.deviceId === newValue,
           );
           if (device) {
             setLabel(device.label);
@@ -200,7 +198,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
         <div className="SelectValue">
           <Select.Value
             placeholder={chrome.i18n.getMessage(
-              "selectSourceDropdownPlaceholder"
+              "selectSourceDropdownPlaceholder",
             )}
           >
             {label}
@@ -208,9 +206,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
         </div>
         {(contentState?.defaultAudioInput === "none" ||
           (!contentState?.micActive && !contentState?.pushToTalk)) && (
-          <div className="SelectOff">
-            {chrome.i18n.getMessage("offLabel")}
-          </div>
+          <div className="SelectOff">{chrome.i18n.getMessage("offLabel")}</div>
         )}
         <Select.Icon className="SelectIconDrop">
           <img src={DropdownIcon} alt="dropdown" />
@@ -219,7 +215,7 @@ const Dropdown: FC<DropdownProps> = (props) => {
       <Select.Portal
         container={
           props.shadowRef.current?.shadowRoot?.querySelector(
-            ".container"
+            ".container",
           ) as HTMLElement
         }
       >
@@ -231,10 +227,9 @@ const Dropdown: FC<DropdownProps> = (props) => {
                 {chrome.i18n.getMessage("noMicrophoneDropdownLabel")}
               </SelectItem>
             </Select.Group>
-            {contentState?.audioInput &&
-              contentState.audioInput.length > 0 && (
-                <Select.Separator className="SelectSeparator" />
-              )}
+            {contentState?.audioInput && contentState.audioInput.length > 0 && (
+              <Select.Separator className="SelectSeparator" />
+            )}
             <Select.Group>
               {contentState?.audioInput?.map((device) => (
                 <SelectItem value={device.deviceId} key={device.deviceId}>
@@ -266,7 +261,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
         </Select.ItemIndicator>
       </Select.Item>
     );
-  }
+  },
 );
 
 SelectItem.displayName = "SelectItem";

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 interface SetupCompleteMessage {
   type: string;
@@ -29,15 +30,17 @@ const Setup: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    chrome.runtime.onMessage.addListener(function (
-      request: SetupCompleteMessage,
-      sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: unknown) => void
-    ) {
-      if (request.type === "setup-complete") {
-        setSetupComplete(true);
-      }
-    });
+    chrome.runtime.onMessage.addListener(
+      (
+        request: SetupCompleteMessage,
+        sender: chrome.runtime.MessageSender,
+        sendResponse: (response?: unknown) => void,
+      ) => {
+        if (request.type === "setup-complete") {
+          setSetupComplete(true);
+        }
+      },
+    );
   }, []);
 
   return (

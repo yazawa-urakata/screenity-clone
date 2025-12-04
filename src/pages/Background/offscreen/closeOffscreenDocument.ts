@@ -2,7 +2,7 @@ export const closeOffscreenDocument = async (): Promise<void> => {
   try {
     const existingContexts = await chrome.runtime.getContexts({});
     const offscreenDocument = existingContexts.find(
-      (c) => c.contextType === "OFFSCREEN_DOCUMENT"
+      (c) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
 
     if (offscreenDocument) {

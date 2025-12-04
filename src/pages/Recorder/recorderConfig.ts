@@ -7,7 +7,14 @@ export const MIME_TYPES = [
   "video/webm;codecs=avc1",
 ] as const;
 
-export type QualityValue = "4k" | "1080p" | "720p" | "480p" | "360p" | "240p" | "default";
+export type QualityValue =
+  | "4k"
+  | "1080p"
+  | "720p"
+  | "480p"
+  | "360p"
+  | "240p"
+  | "default";
 
 interface Bitrates {
   audioBitsPerSecond: number;
@@ -49,6 +56,10 @@ export const VIDEO_QUALITIES: Record<QualityValue, VideoResolution> = {
   default: { width: 1920, height: 1080 },
 };
 
-export function getResolutionForQuality(qualityValue: string = "default"): VideoResolution {
-  return VIDEO_QUALITIES[qualityValue as QualityValue] || VIDEO_QUALITIES.default;
+export function getResolutionForQuality(
+  qualityValue: string = "default",
+): VideoResolution {
+  return (
+    VIDEO_QUALITIES[qualityValue as QualityValue] || VIDEO_QUALITIES.default
+  );
 }

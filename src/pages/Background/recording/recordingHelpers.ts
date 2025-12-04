@@ -1,14 +1,14 @@
-import {
-  sendMessageTab,
-  focusTab,
-  removeTab,
-  getCurrentTab,
-} from "../tabManagement";
-import { sendMessageRecord } from "./sendMessageRecord";
-import { stopRecording } from "./stopRecording";
 import { addAlarmListener } from "../alarms/addAlarmListener";
-import { getStreamingData } from "./getStreamingData";
 import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocuments";
+import {
+  focusTab,
+  getCurrentTab,
+  removeTab,
+  sendMessageTab,
+} from "../tabManagement";
+import { getStreamingData } from "./getStreamingData";
+import { sendMessageRecord } from "./sendMessageRecord";
+
 interface CheckCapturePermissionsParams {
   isLoggedIn: boolean;
   isSubscribed: boolean;
@@ -102,8 +102,6 @@ export const handleRecordingError = async (request: any) => {
     focusTab(activeTab as number);
     if (request.error === "stream-error") {
       sendMessageTab(activeTab as number, { type: "stream-error" });
-    } else if (request.error === "backup-error") {
-      sendMessageTab(activeTab as number, { type: "backup-error" });
     }
   });
 
@@ -123,30 +121,6 @@ export const handleGetStreamingData = async () => {
 };
 
 export const videoReady = async () => {
-  const { backupTab } = await chrome.storage.local.get(["backupTab"]);
-  if (backupTab) {
-    sendMessageTab(backupTab as number, { type: "close-writable" });
-  }
   // stopRecording() は handleStopRecordingTab() で既に呼ばれているため、
   // ここでは何もしない（重複したタブ作成を防ぐ）
-};
-
-export const writeFile = async (request: any) => {
-  const { backupTab } = await chrome.storage.local.get(["backupTab"]);
-
-  if (backupTab) {
-    sendMessageTab(
-      backupTab as number,
-      {
-        type: "write-file",
-        index: request.index,
-      },
-      null,
-      () => {
-        sendMessageRecord({ type: "stop-recording-tab" });
-      }
-    );
-  } else {
-    sendMessageRecord({ type: "stop-recording-tab" });
-  }
 };

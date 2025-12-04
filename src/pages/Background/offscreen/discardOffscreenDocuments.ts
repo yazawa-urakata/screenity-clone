@@ -5,13 +5,16 @@ export const discardOffscreenDocuments = async (): Promise<void> => {
   try {
     const existingContexts = await chrome.runtime.getContexts({});
     const offscreenDocument = existingContexts.find(
-      (c) => c.contextType === "OFFSCREEN_DOCUMENT"
+      (c) => c.contextType === "OFFSCREEN_DOCUMENT",
     );
 
     if (offscreenDocument) {
       await chrome.offscreen.closeDocument();
     }
   } catch (error) {
-    console.error("Failed to discard offscreen documents:", (error as Error).message);
+    console.error(
+      "Failed to discard offscreen documents:",
+      (error as Error).message,
+    );
   }
 };

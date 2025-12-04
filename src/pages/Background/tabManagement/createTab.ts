@@ -1,7 +1,7 @@
 export const createTab = async (
   url: string,
   translate = false,
-  active = false
+  active = false,
 ): Promise<chrome.tabs.Tab | undefined> => {
   if (!url) return;
 
@@ -25,7 +25,7 @@ export const createTab = async (
       },
       (tab) => {
         resolve(tab);
-      }
+      },
     );
   });
 };

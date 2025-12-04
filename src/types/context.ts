@@ -26,8 +26,6 @@ export interface ContentStateContextType {
   // 録画設定
   offscreenRecording: boolean;
   setOffscreenRecording: (offscreenRecording: boolean) => void;
-  zoomEnabled: boolean;
-  setZoomEnabled: (zoomEnabled: boolean) => void;
 
   // アラーム
   alarm: boolean;

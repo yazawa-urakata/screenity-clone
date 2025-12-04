@@ -2,7 +2,7 @@ async function muteVideo(
   ffmpeg: FFmpeg,
   videoBlob: Blob,
   start: number,
-  end: number
+  end: number,
 ): Promise<Blob> {
   const videoData = new Uint8Array(await videoBlob.arrayBuffer());
   ffmpeg.FS("writeFile", "input.mp4", videoData);
@@ -14,7 +14,7 @@ async function muteVideo(
     `volume=enable='between(t,${start},${end})':volume=0`,
     "-c:v",
     "copy",
-    "output-muted.mp4"
+    "output-muted.mp4",
   );
 
   const data = new Uint8Array(ffmpeg.FS("readFile", "output-muted.mp4"));

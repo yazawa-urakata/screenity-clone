@@ -1,14 +1,12 @@
-import React, { useContext } from "react";
-
-// Components
-import PlayerNav from "./PlayerNav";
-import AudioNav from "../editor/AudioNav";
-import Content from "./Content";
-
-import styles from "../../styles/player/_Player.module.scss";
-
+import type React from "react";
+import { useContext } from "react";
 // Context
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import styles from "../../styles/player/_Player.module.scss";
+import AudioNav from "../editor/AudioNav";
+import Content from "./Content";
+// Components
+import PlayerNav from "./PlayerNav";
 
 const Player: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context

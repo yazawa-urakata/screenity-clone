@@ -58,7 +58,7 @@ const Sandbox = () => {
           message.endTime,
           message.cut,
           message.duration,
-          message.encode
+          message.encode,
         );
         const base64 = await toBase64(blob);
         sendMessage({
@@ -74,7 +74,7 @@ const Sandbox = () => {
         const blob = await getFrame(
           ffmpegInstance.current,
           message.blob,
-          message.time
+          message.time,
         );
         sendMessage({ type: "new-frame", frame: blob });
       } catch (error) {
@@ -87,7 +87,7 @@ const Sandbox = () => {
           message.blob,
           message.startTime,
           message.endTime,
-          message.duration
+          message.duration,
         );
         const base64 = await toBase64(blob);
         sendMessage({
@@ -103,7 +103,7 @@ const Sandbox = () => {
         const blob = await reencodeVideo(
           ffmpegInstance.current,
           message.blob,
-          message.duration
+          message.duration,
         );
         const base64 = await toBase64(blob);
         sendMessage({ type: "updated-blob", base64: base64 });

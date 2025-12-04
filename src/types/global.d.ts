@@ -9,15 +9,13 @@ declare namespace NodeJS {
     SCREENITY_ENABLE_CLOUD_FEATURES: string;
     MAX_RECORDING_DURATION: string;
     RECORDING_WARNING_THRESHOLD: string;
-    NODE_ENV: 'development' | 'production';
+    NODE_ENV: "development" | "production";
     ASSET_PATH?: string;
   }
 }
 
 // Window拡張（必要に応じて）
-interface Window {
-  // カスタムプロパティがあればここに追加
-}
+type Window = {};
 
 // ImportMeta拡張（Webpack HMR対応）
 interface ImportMeta {
@@ -47,53 +45,53 @@ interface MediaStreamTrack {
 
 // MediaTrackSettings拡張
 interface MediaTrackSettings {
-  displaySurface?: 'browser' | 'window' | 'monitor';
+  displaySurface?: "browser" | "window" | "monitor";
 }
 
 // Raw loader module declaration
-declare module '!raw-loader!*' {
+declare module "!raw-loader!*" {
   const content: string;
   export default content;
 }
 
 // SCSS module declarations
-declare module '*.module.scss' {
+declare module "*.module.scss" {
   const classes: { [key: string]: string };
   export default classes;
 }
 
-declare module '*.scss' {
+declare module "*.scss" {
   const content: { [className: string]: string };
   export default content;
 }
 
 // Image module declarations
-declare module '*.png' {
+declare module "*.png" {
   const value: string;
   export default value;
 }
 
-declare module '*.jpg' {
+declare module "*.jpg" {
   const value: string;
   export default value;
 }
 
-declare module '*.jpeg' {
+declare module "*.jpeg" {
   const value: string;
   export default value;
 }
 
-declare module '*.gif' {
+declare module "*.gif" {
   const value: string;
   export default value;
 }
 
-declare module '*.svg' {
+declare module "*.svg" {
   const value: string;
   export default value;
 }
 
-declare module '*.webp' {
+declare module "*.webp" {
   const value: string;
   export default value;
 }
@@ -101,15 +99,17 @@ declare module '*.webp' {
 // FFmpeg.js type definitions
 interface FFmpeg {
   // FS method overloads for type safety
-  FS(method: 'writeFile', path: string, data: Uint8Array): void;
-  FS(method: 'readFile', path: string): Uint8Array;
-  FS(method: 'unlink', path: string): void;
-  FS(method: 'readdir', path: string): string[];
-  FS(method: 'mkdir', path: string): void;
-  FS(method: 'rmdir', path: string): void;
+  FS(method: "writeFile", path: string, data: Uint8Array): void;
+  FS(method: "readFile", path: string): Uint8Array;
+  FS(method: "unlink", path: string): void;
+  FS(method: "readdir", path: string): string[];
+  FS(method: "mkdir", path: string): void;
+  FS(method: "rmdir", path: string): void;
 
   run: (...args: string[]) => Promise<void>;
   getInfo: (key: string) => string | number;
   setProgress: (callback: (progress: { ratio: number }) => void) => void;
-  setLogger: (callback: (log: { type: string; message: string }) => void) => void;
+  setLogger: (
+    callback: (log: { type: string; message: string }) => void,
+  ) => void;
 }

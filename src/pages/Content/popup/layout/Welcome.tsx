@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import SoloDev from "../../../../assets/solo-dev.png";
+
 // import EditorPreview from "../../../../assets/editor-preview.png"; // replace with actual screenshot file
 
 interface WelcomeProps {

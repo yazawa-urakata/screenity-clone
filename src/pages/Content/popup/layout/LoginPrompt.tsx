@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface LoginPromptProps {
   onLoginClick: () => void;
@@ -9,9 +9,7 @@ interface LoginPromptProps {
  *
  * LoggedOut コンポーネントと同じデザイン
  */
-const LoginPrompt: React.FC<LoginPromptProps> = ({
-  onLoginClick,
-}) => {
+const LoginPrompt: React.FC<LoginPromptProps> = ({ onLoginClick }) => {
   return (
     <div
       className="announcement"

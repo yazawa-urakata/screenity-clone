@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
 import localforage from "localforage";
-import RecorderUI from "./RecorderUI";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ClipList } from "../../types/clip";
+import { getSupabaseAuthState, getWebAppUrl } from "../../utils/supabaseClient";
 import { createMediaRecorder } from "./mediaRecorderUtils";
 import { sendRecordingError, sendStopRecording } from "./messaging";
+import RecorderUI from "./RecorderUI";
 import { getBitrates, getResolutionForQuality } from "./recorderConfig";
-import { useInstantUpload } from "./useInstantUpload";
 import { uploadSingleFile } from "./uploadUtils";
-import { getSupabaseAuthState, getWebAppUrl } from "../../utils/supabaseClient";
-import type { ClipList } from "../../types/clip";
+import { useInstantUpload } from "./useInstantUpload";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -81,8 +82,6 @@ const Recorder: React.FC = () => {
   const isTab = useRef<boolean>(false);
   const tabID = useRef<string | null>(null);
   const tabPreferred = useRef<boolean>(false);
-
-  const backupRef = useRef<boolean>(false);
 
   const {
     uploaderRef,
@@ -168,9 +167,6 @@ const Recorder: React.FC = () => {
     lastSize.current = e.data.size;
     savedCount.current += 1;
 
-    if (backupRef.current) {
-      chrome.runtime.sendMessage({ type: "write-file", index: i });
-    }
     return true;
   }
 
@@ -220,23 +216,16 @@ const Recorder: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    chrome.storage.local.get(["backup"], (result) => {
-      if (result.backup) {
-        backupRef.current = true;
-      } else {
-        backupRef.current = false;
-      }
-    });
-  }, []);
-
   async function startRecording(): Promise<void> {
     // Check that a recording is not already in progress
     if (recorder.current !== null) return;
 
     navigator.storage.persist();
     // Check if the stream actually has data in it
-    if (!helperVideoStream.current || helperVideoStream.current.getVideoTracks().length === 0) {
+    if (
+      !helperVideoStream.current ||
+      helperVideoStream.current.getVideoTracks().length === 0
+    ) {
       sendRecordingError("No video tracks available");
       return;
     }
@@ -259,14 +248,18 @@ const Recorder: React.FC = () => {
       await initializeUpload(videoId);
       console.log("✅ Real-time upload initialized");
     } catch (err) {
-      console.warn("⚠️ Failed to initialize real-time upload, falling back to normal recording:", err);
+      console.warn(
+        "⚠️ Failed to initialize real-time upload, falling back to normal recording:",
+        err,
+      );
     }
 
     try {
       const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
 
-      const { audioBitsPerSecond, videoBitsPerSecond } =
-        getBitrates(qualityValue as string);
+      const { audioBitsPerSecond, videoBitsPerSecond } = getBitrates(
+        qualityValue as string,
+      );
 
       recorder.current = createMediaRecorder(liveStream.current!, {
         audioBitsPerSecond,
@@ -315,10 +308,13 @@ const Recorder: React.FC = () => {
           console.log("✅ Real-time upload finalized from onstop", result);
 
           // clips.json のアップロード処理
-          console.log("[Recorder] 📦 録画停止 - clips.jsonアップロード処理を開始", {
-            result,
-            hasKey: result && result.key,
-          });
+          console.log(
+            "[Recorder] 📦 録画停止 - clips.jsonアップロード処理を開始",
+            {
+              result,
+              hasKey: result && result.key,
+            },
+          );
 
           if (result && result.key) {
             try {
@@ -329,19 +325,35 @@ const Recorder: React.FC = () => {
 
               console.log("[Recorder] 📋 Chrome Storageから取得したclips:", {
                 clipsLength: clips.length,
-                clips: clips.map(c => ({ id: c.id, startTime: c.startTime, endTime: c.endTime, duration: c.duration })),
+                clips: clips.map((c) => ({
+                  id: c.id,
+                  startTime: c.startTime,
+                  endTime: c.endTime,
+                  duration: c.duration,
+                })),
               });
 
               if (clips.length > 0) {
-                console.log("[Recorder] ✅ Found clips to upload:", clips.length);
-                const { isAuthenticated, accessToken } = await getSupabaseAuthState();
-                console.log("[Recorder] 🔐 認証状態:", { isAuthenticated, hasToken: !!accessToken });
+                console.log(
+                  "[Recorder] ✅ Found clips to upload:",
+                  clips.length,
+                );
+                const { isAuthenticated, accessToken } =
+                  await getSupabaseAuthState();
+                console.log("[Recorder] 🔐 認証状態:", {
+                  isAuthenticated,
+                  hasToken: !!accessToken,
+                });
 
                 if (isAuthenticated && accessToken) {
                   const uploadedS3Key = result.key;
                   const lastSlashIndex = uploadedS3Key.lastIndexOf("/");
-                  const recordingDir = lastSlashIndex > 0 ? uploadedS3Key.slice(0, lastSlashIndex) : "recordings";
-                  const recordingId = recordingDir.split("/").pop() || "unknown";
+                  const recordingDir =
+                    lastSlashIndex > 0
+                      ? uploadedS3Key.slice(0, lastSlashIndex)
+                      : "recordings";
+                  const recordingId =
+                    recordingDir.split("/").pop() || "unknown";
 
                   const clipsData = {
                     recordingId,
@@ -349,7 +361,9 @@ const Recorder: React.FC = () => {
                     clips,
                   };
 
-                  const clipsBlob = new Blob([JSON.stringify(clipsData)], { type: "application/json" });
+                  const clipsBlob = new Blob([JSON.stringify(clipsData)], {
+                    type: "application/json",
+                  });
                   const apiBaseUrl = getWebAppUrl();
 
                   await uploadSingleFile(
@@ -358,23 +372,33 @@ const Recorder: React.FC = () => {
                     "application/json",
                     recordingDir,
                     apiBaseUrl,
-                    accessToken
+                    accessToken,
                   );
                   console.log("✅ clips.json uploaded successfully");
                 } else {
                   console.warn("⚠️ Cannot upload clips.json: Not authenticated");
-                  console.warn("⚠️ Supabase認証が失敗しました。Web Applicationにログインしてください。");
+                  console.warn(
+                    "⚠️ Supabase認証が失敗しました。Web Applicationにログインしてください。",
+                  );
                 }
               } else {
-                console.warn("[Recorder] ⚠️ Chrome Storageにclipsが保存されていません");
-                console.warn("[Recorder] クリップ録画を終了していない可能性があります");
+                console.warn(
+                  "[Recorder] ⚠️ Chrome Storageにclipsが保存されていません",
+                );
+                console.warn(
+                  "[Recorder] クリップ録画を終了していない可能性があります",
+                );
               }
             } catch (clipError) {
               console.error("❌ Failed to upload clips.json:", clipError);
             }
           } else {
-            console.warn("[Recorder] ⚠️ 録画ファイルのS3キーが取得できませんでした");
-            console.warn("[Recorder] InstantUpload（リアルタイムアップロード）が失敗している可能性があります");
+            console.warn(
+              "[Recorder] ⚠️ 録画ファイルのS3キーが取得できませんでした",
+            );
+            console.warn(
+              "[Recorder] InstantUpload（リアルタイムアップロード）が失敗している可能性があります",
+            );
           }
 
           // アップロード完了状態を Chrome Storage に保存
@@ -388,7 +412,8 @@ const Recorder: React.FC = () => {
           // アップロード失敗状態を Chrome Storage に保存
           await chrome.storage.local.set({
             instantUploadStatus: "error",
-            instantUploadError: err instanceof Error ? err.message : String(err),
+            instantUploadError:
+              err instanceof Error ? err.message : String(err),
           });
         }
       }
@@ -417,7 +442,7 @@ const Recorder: React.FC = () => {
         });
       } catch (err) {
         sendRecordingError(
-          "Failed to check available memory: " + JSON.stringify(err)
+          "Failed to check available memory: " + JSON.stringify(err),
         );
       }
     };
@@ -451,7 +476,9 @@ const Recorder: React.FC = () => {
       if (uploaderRef.current && e.data.size > 0) {
         totalRecordedBytes.current += e.data.size;
         uploaderRef.current.handleChunk(e.data, totalRecordedBytes.current);
-        console.log(`[InstantUpload] Chunk sent: ${(e.data.size / 1024 / 1024).toFixed(2)}MB, Total: ${(totalRecordedBytes.current / 1024 / 1024).toFixed(2)}MB`);
+        console.log(
+          `[InstantUpload] Chunk sent: ${(e.data.size / 1024 / 1024).toFixed(2)}MB, Total: ${(totalRecordedBytes.current / 1024 / 1024).toFixed(2)}MB`,
+        );
       }
     };
 
@@ -498,7 +525,7 @@ const Recorder: React.FC = () => {
     if (recorder.current) {
       try {
         recorder.current.requestData();
-      } catch { }
+      } catch {}
       recorder.current.stop();
       console.log("[Recorder] Recording stopped, waiting for onstop event...");
 
@@ -605,7 +632,7 @@ const Recorder: React.FC = () => {
     data: StreamingData,
     id: string | null,
     options: DesktopCaptureOptions | null,
-    permissions2: PermissionStatus
+    permissions2: PermissionStatus,
   ): Promise<void> {
     // Get quality value
     const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
@@ -642,7 +669,9 @@ const Recorder: React.FC = () => {
     let stream: MediaStream;
 
     try {
-      stream = await navigator.mediaDevices.getUserMedia(constraints as MediaStreamConstraints);
+      stream = await navigator.mediaDevices.getUserMedia(
+        constraints as MediaStreamConstraints,
+      );
 
       // Check if the stream actually has data in it
       if (stream.getVideoTracks().length === 0) {
@@ -678,7 +707,7 @@ const Recorder: React.FC = () => {
       recordingDevicePixelRatio: window.devicePixelRatio || 1,
     });
 
-    console.log('[Recording] Video settings saved:', {
+    console.log("[Recording] Video settings saved:", {
       actualWidth,
       actualHeight,
       tabWidth: window.innerWidth,
@@ -704,7 +733,7 @@ const Recorder: React.FC = () => {
     ) {
       audioInputGain.current = aCtx.current.createGain();
       audioInputSource.current = aCtx.current.createMediaStreamSource(
-        helperAudioStream.current
+        helperAudioStream.current,
       );
       audioInputSource.current
         .connect(audioInputGain.current)
@@ -718,10 +747,13 @@ const Recorder: React.FC = () => {
     }
 
     // Check if stream has an audio track
-    if (helperVideoStream.current && helperVideoStream.current.getAudioTracks().length > 0) {
+    if (
+      helperVideoStream.current &&
+      helperVideoStream.current.getAudioTracks().length > 0
+    ) {
       audioOutputGain.current = aCtx.current.createGain();
       audioOutputSource.current = aCtx.current.createMediaStreamSource(
-        helperVideoStream.current
+        helperVideoStream.current,
       );
       audioOutputSource.current
         .connect(audioOutputGain.current)
@@ -732,14 +764,16 @@ const Recorder: React.FC = () => {
 
     // Add the tracks to the stream
     if (helperVideoStream.current) {
-      liveStream.current.addTrack(helperVideoStream.current.getVideoTracks()[0]);
+      liveStream.current.addTrack(
+        helperVideoStream.current.getVideoTracks()[0],
+      );
       if (
         (helperAudioStream.current != null &&
           helperAudioStream.current.getAudioTracks().length > 0) ||
         helperVideoStream.current.getAudioTracks().length > 0
       ) {
         liveStream.current.addTrack(
-          destination.current.stream.getAudioTracks()[0]
+          destination.current.stream.getAudioTracks()[0],
         );
       }
     }
@@ -758,9 +792,19 @@ const Recorder: React.FC = () => {
 
     try {
       if (!isTab.current) {
-        let captureTypes = ["screen", "window", "tab", "audio"] as chrome.desktopCapture.DesktopCaptureSourceType[];
+        let captureTypes = [
+          "screen",
+          "window",
+          "tab",
+          "audio",
+        ] as chrome.desktopCapture.DesktopCaptureSourceType[];
         if (tabPreferred.current) {
-          captureTypes = ["tab", "screen", "window", "audio"] as chrome.desktopCapture.DesktopCaptureSourceType[];
+          captureTypes = [
+            "tab",
+            "screen",
+            "window",
+            "audio",
+          ] as chrome.desktopCapture.DesktopCaptureSourceType[];
         }
         chrome.desktopCapture.chooseDesktopMedia(
           captureTypes,
@@ -776,7 +820,7 @@ const Recorder: React.FC = () => {
             } else {
               startStream(data, streamId, options, permissions2);
             }
-          }
+          },
         );
       } else {
         startStream(data, tabID.current, null, permissions2);
@@ -784,7 +828,7 @@ const Recorder: React.FC = () => {
     } catch (err) {
       sendRecordingError(
         "Failed to start streaming: " + JSON.stringify(err),
-        true
+        true,
       );
     }
   }
@@ -807,10 +851,9 @@ const Recorder: React.FC = () => {
     (
       request: RecorderMessage,
       sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: unknown) => void
+      sendResponse: (response?: unknown) => void,
     ): void => {
       if (request.type === "loaded") {
-        backupRef.current = request.backup;
         // FLAG: I don't know why this was a false check before...
         if (!tabPreferred.current) {
           isTab.current = request.isTab;
@@ -843,7 +886,7 @@ const Recorder: React.FC = () => {
         dismissRecording();
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {

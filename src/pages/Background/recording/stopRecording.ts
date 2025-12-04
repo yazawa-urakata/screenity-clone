@@ -1,9 +1,7 @@
-import { focusTab, sendMessageTab } from "../tabManagement/";
 import { discardOffscreenDocuments } from "../offscreen/discardOffscreenDocuments";
-import { sendMessageRecord } from "./sendMessageRecord";
-import { sendChunks } from "./sendChunks";
 import { waitForContentScript } from "../utils/waitForContentScript";
-import { clearClips } from "../clip/clipHandlers";
+import { sendChunks } from "./sendChunks";
+import { sendMessageRecord } from "./sendMessageRecord";
 
 export const stopRecording = async () => {
   chrome.action.setIcon({ path: "assets/icon-34.png" });
@@ -14,7 +12,6 @@ export const stopRecording = async () => {
   ]);
 
   let duration = Date.now() - (recordingStartTime as number);
-  const maxDuration = 7 * 60 * 1000;
 
   if (recordingStartTime === 0) {
     duration = 0;
@@ -41,26 +38,24 @@ export const stopRecording = async () => {
   } else {
     // 常に fallback editor を開く（mp4変換を無効化）
     chrome.tabs.create({ url: "editorfallback.html", active: true }, (tab) => {
-      chrome.tabs.onUpdated.addListener(function _(
-        tabId,
-        changeInfo,
-        updatedTab
-      ) {
-        if (tabId === tab.id && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(_);
-          chrome.storage.local.set({ sandboxTab: tab.id });
-          waitForContentScript(tab.id)
-            .then(() => {
-              sendChunks();
-            })
-            .catch((err) => {
-              console.error(
-                "❌ Failed to wait for content script:",
-                err.message
-              );
-            });
-        }
-      });
+      chrome.tabs.onUpdated.addListener(
+        function _(tabId, changeInfo, updatedTab) {
+          if (tabId === tab.id && changeInfo.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(_);
+            chrome.storage.local.set({ sandboxTab: tab.id });
+            waitForContentScript(tab.id)
+              .then(() => {
+                sendChunks();
+              })
+              .catch((err) => {
+                console.error(
+                  "❌ Failed to wait for content script:",
+                  err.message,
+                );
+              });
+          }
+        },
+      );
     });
 
     chrome.runtime.sendMessage({ type: "turn-off-pip" });
@@ -90,19 +85,4 @@ export const handleStopRecordingTab = async (request) => {
   stopRecording();
 
   sendMessageRecord({ type: "stop-recording-tab" });
-};
-
-export const handleStopRecordingTabBackup = async (request: any) => {
-  chrome.storage.local.set({
-    recording: false,
-    restarting: false,
-    tabRecordedID: null,
-    memoryError: true,
-  });
-  sendMessageRecord({ type: "stop-recording-tab" });
-
-  const { activeTab } = await chrome.storage.local.get(["activeTab"]);
-
-  sendMessageTab(activeTab as number, { type: "stop-pending" });
-  focusTab(activeTab as number);
 };

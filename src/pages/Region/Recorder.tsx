@@ -1,12 +1,6 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useContext,
-} from "react";
-
 import localforage from "localforage";
+import type React from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -114,7 +108,6 @@ const Recorder: React.FC = () => {
   // Recording ref
   const recordingRef = useRef<boolean>();
   const regionRef = useRef<boolean>();
-  const backupRef = useRef<boolean>(false);
 
   const pending = useRef<BlobEventWithTimecode[]>([]);
   const draining = useRef<boolean>(false);
@@ -135,7 +128,8 @@ const Recorder: React.FC = () => {
     lastEstimateAt.current = now;
 
     try {
-      const { usage = 0, quota = 0 }: StorageEstimate = await navigator.storage.estimate();
+      const { usage = 0, quota = 0 }: StorageEstimate =
+        await navigator.storage.estimate();
       const remaining = quota - usage;
       return remaining > MIN_HEADROOM + (byteLength || 0);
     } catch {
@@ -143,7 +137,10 @@ const Recorder: React.FC = () => {
     }
   }
 
-  async function saveChunk(e: BlobEventWithTimecode, i: number): Promise<boolean> {
+  async function saveChunk(
+    e: BlobEventWithTimecode,
+    i: number,
+  ): Promise<boolean> {
     const ts = e.timecode ?? 0;
 
     if (
@@ -192,9 +189,6 @@ const Recorder: React.FC = () => {
     lastSize.current = e.data.size;
     savedCount.current += 1;
 
-    if (backupRef.current) {
-      chrome.runtime.sendMessage({ type: "write-file", index: i });
-    }
     return true;
   }
 
@@ -249,7 +243,7 @@ const Recorder: React.FC = () => {
       {
         type: "screenity-region-capture-loaded",
       },
-      "*"
+      "*",
     );
   }, []);
 
@@ -315,7 +309,9 @@ const Recorder: React.FC = () => {
     chunksStore.clear();
 
     try {
-      const { qualityValue }: QualityValue = await chrome.storage.local.get(["qualityValue"]) as QualityValue;
+      const { qualityValue }: QualityValue = (await chrome.storage.local.get([
+        "qualityValue",
+      ])) as QualityValue;
 
       let audioBitsPerSecond: number = 128000;
       let videoBitsPerSecond: number = 5000000;
@@ -352,8 +348,8 @@ const Recorder: React.FC = () => {
       ];
 
       // Check if the browser supports any of the mimeTypes, make sure to select the first one that is supported from the list
-      let mimeType: string | undefined = mimeTypes.find((mimeType) =>
-        MediaRecorder.isTypeSupported(mimeType)
+      const mimeType: string | undefined = mimeTypes.find((mimeType) =>
+        MediaRecorder.isTypeSupported(mimeType),
       );
 
       // If no mimeType is supported, throw an error
@@ -441,22 +437,24 @@ const Recorder: React.FC = () => {
 
     const checkMaxMemory = (): void => {
       try {
-        navigator.storage.estimate().then(({ usage = 0, quota = 0 }: StorageEstimate) => {
-          const remaining = quota - usage;
-          const minHeadroom = 25 * 1024 * 1024;
-          if (remaining < minHeadroom) {
-            chrome.storage.local.set({
-              recording: false,
-              restarting: false,
-              tabRecordedID: null,
-              memoryError: true,
-            });
-            chrome.runtime.sendMessage({ type: "stop-recording-tab" });
+        navigator.storage
+          .estimate()
+          .then(({ usage = 0, quota = 0 }: StorageEstimate) => {
+            const remaining = quota - usage;
+            const minHeadroom = 25 * 1024 * 1024;
+            if (remaining < minHeadroom) {
+              chrome.storage.local.set({
+                recording: false,
+                restarting: false,
+                tabRecordedID: null,
+                memoryError: true,
+              });
+              chrome.runtime.sendMessage({ type: "stop-recording-tab" });
 
-            // Reload this iframe
-            window.location.reload();
-          }
-        });
+              // Reload this iframe
+              window.location.reload();
+            }
+          });
       } catch (err) {
         chrome.runtime.sendMessage({
           type: "recording-error",
@@ -541,21 +539,21 @@ const Recorder: React.FC = () => {
     }
 
     if (liveStream.current !== null) {
-      liveStream.current.getTracks().forEach(function (track) {
+      liveStream.current.getTracks().forEach((track) => {
         track.stop();
       });
       liveStream.current = null;
     }
 
     if (helperVideoStream.current !== null) {
-      helperVideoStream.current.getTracks().forEach(function (track) {
+      helperVideoStream.current.getTracks().forEach((track) => {
         track.stop();
       });
       helperVideoStream.current = null;
     }
 
     if (helperAudioStream.current !== null) {
-      helperAudioStream.current.getTracks().forEach(function (track) {
+      helperAudioStream.current.getTracks().forEach((track) => {
         track.stop();
       });
       helperAudioStream.current = null;
@@ -572,21 +570,21 @@ const Recorder: React.FC = () => {
       recorder.current = null;
     }
     if (liveStream.current !== null) {
-      liveStream.current.getTracks().forEach(function (track) {
+      liveStream.current.getTracks().forEach((track) => {
         track.stop();
       });
       liveStream.current = null;
     }
 
     if (helperVideoStream.current !== null) {
-      helperVideoStream.current.getTracks().forEach(function (track) {
+      helperVideoStream.current.getTracks().forEach((track) => {
         track.stop();
       });
       helperVideoStream.current = null;
     }
 
     if (helperAudioStream.current !== null) {
-      helperAudioStream.current.getTracks().forEach(function (track) {
+      helperAudioStream.current.getTracks().forEach((track) => {
         track.stop();
       });
       helperAudioStream.current = null;
@@ -652,7 +650,9 @@ const Recorder: React.FC = () => {
   async function startStreaming(data: StreamingData): Promise<void> {
     try {
       // Get quality value
-      const { qualityValue }: QualityValue = await chrome.storage.local.get(["qualityValue"]) as QualityValue;
+      const { qualityValue }: QualityValue = (await chrome.storage.local.get([
+        "qualityValue",
+      ])) as QualityValue;
 
       let width: number = 1920;
       let height: number = 1080;
@@ -677,7 +677,9 @@ const Recorder: React.FC = () => {
         height = 240;
       }
 
-      const { fpsValue }: FpsValue = await chrome.storage.local.get(["fpsValue"]) as FpsValue;
+      const { fpsValue }: FpsValue = (await chrome.storage.local.get([
+        "fpsValue",
+      ])) as FpsValue;
       let fps: number = parseInt(fpsValue);
 
       // Check if fps is a number
@@ -720,7 +722,7 @@ const Recorder: React.FC = () => {
       ) {
         audioInputGain.current = aCtx.current.createGain();
         audioInputSource.current = aCtx.current.createMediaStreamSource(
-          helperAudioStream.current
+          helperAudioStream.current,
         );
         audioInputSource.current
           .connect(audioInputGain.current)
@@ -737,7 +739,7 @@ const Recorder: React.FC = () => {
       if (helperVideoStream.current.getAudioTracks().length > 0) {
         audioOutputGain.current = aCtx.current.createGain();
         audioOutputSource.current = aCtx.current.createMediaStreamSource(
-          helperVideoStream.current
+          helperVideoStream.current,
         );
         audioOutputSource.current
           .connect(audioOutputGain.current)
@@ -748,7 +750,7 @@ const Recorder: React.FC = () => {
 
       // Add the tracks to the stream
       liveStream.current.addTrack(
-        helperVideoStream.current.getVideoTracks()[0]
+        helperVideoStream.current.getVideoTracks()[0],
       );
 
       if (
@@ -757,13 +759,14 @@ const Recorder: React.FC = () => {
         helperVideoStream.current.getAudioTracks().length > 0
       ) {
         liveStream.current.addTrack(
-          destination.current.stream.getAudioTracks()[0]
+          destination.current.stream.getAudioTracks()[0],
         );
       }
 
       try {
         if (target.current) {
-          const track = liveStream.current.getVideoTracks()[0] as MediaTrackWithCrop;
+          const track =
+            liveStream.current.getVideoTracks()[0] as MediaTrackWithCrop;
           await track.cropTo(target.current);
         } else {
           // No target
@@ -802,16 +805,6 @@ const Recorder: React.FC = () => {
   }
 
   useEffect(() => {
-    chrome.storage.local.get(["backup"], (result: BackupValue) => {
-      if (result.backup) {
-        backupRef.current = true;
-      } else {
-        backupRef.current = false;
-      }
-    });
-  }, []);
-
-  useEffect(() => {
     window.addEventListener("beforeunload", (e: BeforeUnloadEvent) => {
       if (recordingRef.current && regionRef.current) {
         e.preventDefault();
@@ -836,9 +829,12 @@ const Recorder: React.FC = () => {
   };
 
   const onMessage = useCallback(
-    (request: ChromeMessage, sender: chrome.runtime.MessageSender, sendResponse: (response?: unknown) => void): void | boolean => {
+    (
+      request: ChromeMessage,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void,
+    ): void | boolean => {
       if (request.type === "loaded") {
-        backupRef.current = request.backup!;
         if (request.region) {
           chrome.runtime.sendMessage({ type: "get-streaming-data" });
         }
@@ -868,7 +864,7 @@ const Recorder: React.FC = () => {
         dismissRecording();
       }
     },
-    [regionRef.current, isFinishing.current, recorder.current]
+    [regionRef.current, isFinishing.current, recorder.current],
   );
 
   useEffect(() => {

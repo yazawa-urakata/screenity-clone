@@ -1,4 +1,4 @@
-import { sendMessageTab, getCurrentTab } from "../tabManagement";
+import { getCurrentTab, sendMessageTab } from "../tabManagement";
 
 // Main command listener
 export const onCommandListener = (): void => {
@@ -21,9 +21,11 @@ export const onCommandListener = (): void => {
         !activeTab.url?.includes("chrome.google.com/webstore") &&
         !activeTab.url?.includes("chromewebstore.google.com")
       ) {
-        sendMessageTab(activeTab.id as number, { type: "start-stream" }).catch((error) => {
-          console.log("Could not send start-stream command:", error);
-        });
+        sendMessageTab(activeTab.id as number, { type: "start-stream" }).catch(
+          (error) => {
+            console.log("Could not send start-stream command:", error);
+          },
+        );
       } else {
         chrome.tabs
           .create({
@@ -36,12 +38,17 @@ export const onCommandListener = (): void => {
             // Wait for the tab to load
             chrome.tabs.onUpdated.addListener(function listener(
               tabId: number,
-              changeInfo
+              changeInfo,
             ) {
               if (tabId === tab.id && changeInfo.status === "complete") {
                 setTimeout(() => {
-                  sendMessageTab(tab.id as number, { type: "start-stream" }).catch((error) => {
-                    console.log("Could not send start-stream to new tab:", error);
+                  sendMessageTab(tab.id as number, {
+                    type: "start-stream",
+                  }).catch((error) => {
+                    console.log(
+                      "Could not send start-stream to new tab:",
+                      error,
+                    );
                   });
                 }, 500);
                 chrome.tabs.onUpdated.removeListener(listener);
@@ -50,13 +57,17 @@ export const onCommandListener = (): void => {
           });
       }
     } else if (command === "cancel-recording") {
-      sendMessageTab(activeTab.id as number, { type: "cancel-recording" }).catch((error) => {
+      sendMessageTab(activeTab.id as number, {
+        type: "cancel-recording",
+      }).catch((error) => {
         console.log("Could not send cancel-recording command:", error);
       });
     } else if (command === "pause-recording") {
-      sendMessageTab(activeTab.id as number, { type: "pause-recording" }).catch((error) => {
-        console.log("Could not send pause-recording command:", error);
-      });
+      sendMessageTab(activeTab.id as number, { type: "pause-recording" }).catch(
+        (error) => {
+          console.log("Could not send pause-recording command:", error);
+        },
+      );
     }
   });
 };

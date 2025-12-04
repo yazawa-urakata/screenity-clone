@@ -1,12 +1,12 @@
-import { useState, useRef, useCallback } from "react";
-import { InstantUploader } from "./InstantUploader";
-import { getSupabaseAuthState, getWebAppUrl } from "../../utils/supabaseClient";
+import { useCallback, useRef, useState } from "react";
 import type {
   InstantUploadConfig,
+  InstantUploadError,
   InstantUploadProgress,
   InstantUploadState,
-  InstantUploadError,
 } from "../../types/instantUpload";
+import { getSupabaseAuthState, getWebAppUrl } from "../../utils/supabaseClient";
+import { InstantUploader } from "./InstantUploader";
 
 const DEFAULT_CONFIG: InstantUploadConfig = {
   minPartSize: 5 * 1024 * 1024,
@@ -46,23 +46,26 @@ export function useInstantUpload(config?: Partial<InstantUploadConfig>) {
         // recordingIdをvideoIdから生成（タイムスタンプベース）
         const recordingId = `${Date.now()}`;
 
-        const response = await fetch(`${apiBaseUrl}/api/s3/multipart/initiate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+        const response = await fetch(
+          `${apiBaseUrl}/api/s3/multipart/initiate`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              fileName: "video.webm",
+              fileType: "video/webm",
+              uploadPath: `recordings/${recordingId}`,
+            }),
           },
-          body: JSON.stringify({
-            fileName: "video.webm",
-            fileType: "video/webm",
-            uploadPath: `recordings/${recordingId}`,
-          }),
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(
-            `Failed to initiate upload: ${errorData.error || response.statusText}`
+            `Failed to initiate upload: ${errorData.error || response.statusText}`,
           );
         }
 
@@ -97,10 +100,13 @@ export function useInstantUpload(config?: Partial<InstantUploadConfig>) {
         throw err;
       }
     },
-    [mergedConfig]
+    [mergedConfig],
   );
 
-  const finalizeUpload = useCallback(async (): Promise<{ key: string; location: string } | void> => {
+  const finalizeUpload = useCallback(async (): Promise<{
+    key: string;
+    location: string;
+  } | void> => {
     if (!uploaderRef.current) return;
 
     setState("finalizing");

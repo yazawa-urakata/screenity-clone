@@ -2,7 +2,7 @@ import { sendMessageTab } from "../tabManagement";
 
 export const requestDownload = async (
   base64: string,
-  title: string
+  title: string,
 ): Promise<void> => {
   try {
     // Open a new tab with the download page
@@ -14,7 +14,7 @@ export const requestDownload = async (
     // Add a listener for when the tab finishes loading
     const listener = (
       tabId: number,
-      changeInfo: { status?: string; url?: string; }
+      changeInfo: { status?: string; url?: string },
     ) => {
       if (tabId === tab.id && changeInfo.status === "complete") {
         chrome.tabs.onUpdated.removeListener(listener);
@@ -45,7 +45,7 @@ export const downloadIndexedDB = async (): Promise<void> => {
     // Add a listener for when the tab finishes loading
     const listener = (
       tabId: number,
-      changeInfo: { status?: string; url?: string; }
+      changeInfo: { status?: string; url?: string },
     ) => {
       if (tabId === tab.id && changeInfo.status === "complete") {
         chrome.tabs.onUpdated.removeListener(listener);
@@ -59,6 +59,9 @@ export const downloadIndexedDB = async (): Promise<void> => {
 
     chrome.tabs.onUpdated.addListener(listener);
   } catch (error) {
-    console.error("Failed to initiate IndexedDB download:", (error as Error).message);
+    console.error(
+      "Failed to initiate IndexedDB download:",
+      (error as Error).message,
+    );
   }
 };

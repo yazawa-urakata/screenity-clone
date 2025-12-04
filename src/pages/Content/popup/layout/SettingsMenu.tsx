@@ -1,16 +1,13 @@
 // Work in progress - settings for the recording
 
-import React, { useState, useContext, useRef, useEffect } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-
-import { MoreIconPopup } from "../../toolbar/components/SVG";
-
-import TooltipWrap from "../components/TooltipWrap";
-
-import { CheckWhiteIcon, DropdownGroup } from "../../images/popup/images";
-
+import type React from "react";
+import { useContext, useEffect, useState } from "react";
 // Context
 import { contentStateContext } from "../../context/ContentState";
+import { CheckWhiteIcon, DropdownGroup } from "../../images/popup/images";
+import { MoreIconPopup } from "../../toolbar/components/SVG";
+import TooltipWrap from "../components/TooltipWrap";
 
 const CLOUD_FEATURES_ENABLED =
   process.env.SCREENITY_ENABLE_CLOUD_FEATURES === "true";
@@ -75,12 +72,13 @@ const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal
-        container={props.shadowRef.current?.shadowRoot.querySelector(
-          ".container"
-        ) as HTMLElement}
+        container={
+          props.shadowRef.current?.shadowRoot.querySelector(
+            ".container",
+          ) as HTMLElement
+        }
       >
         <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
-
           {!contentState.isSubscribed && !contentState.isLoggedIn && (
             <DropdownMenu.Sub
               open={openResize}
@@ -523,8 +521,8 @@ const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
                   }));
                   contentState.openToast(
                     chrome.i18n.getMessage("loggedOutToastTitle"),
-                    () => { },
-                    2000
+                    () => {},
+                    2000,
                   );
                 } else {
                   // Log in flow (open login page)
@@ -536,7 +534,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
               {contentState.isLoggedIn
                 ? chrome.i18n.getMessage("logoutButtonLabel") || "Log out"
                 : chrome.i18n.getMessage("loginButtonLabel") ||
-                "Log in or sign up"}
+                  "Log in or sign up"}
             </DropdownMenu.Item>
           )}
         </DropdownMenu.Content>

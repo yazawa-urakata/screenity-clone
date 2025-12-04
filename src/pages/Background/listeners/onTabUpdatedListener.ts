@@ -3,7 +3,7 @@ import { sendMessageTab } from "../tabManagement";
 export const handleTabUpdate = async (
   tabId: number,
   changeInfo,
-  tab: chrome.tabs.Tab
+  tab: chrome.tabs.Tab,
 ): Promise<void> => {
   try {
     if (changeInfo.status === "complete") {
@@ -39,14 +39,18 @@ export const handleTabUpdate = async (
         if (alarm) {
           const { alarmTime } = await chrome.storage.local.get(["alarmTime"]);
           const seconds = parseFloat(alarmTime as string);
-          const time = Math.floor((Date.now() - (recordingStartTime as number)) / 1000);
+          const time = Math.floor(
+            (Date.now() - (recordingStartTime as number)) / 1000,
+          );
           const remaining = seconds - time;
           sendMessageTab(tabId, {
             type: "time",
             time: remaining,
           });
         } else {
-          const time = Math.floor((Date.now() - (recordingStartTime as number)) / 1000);
+          const time = Math.floor(
+            (Date.now() - (recordingStartTime as number)) / 1000,
+          );
           sendMessageTab(tabId, { type: "time", time: time });
         }
       }

@@ -20,7 +20,7 @@ interface AuthStatusResult {
 export const checkAuthStatus = async (): Promise<AuthStatusResult> => {
   try {
     const response = await chrome.runtime.sendMessage({
-      type: 'SUPABASE_AUTH_CHECK',
+      type: "SUPABASE_AUTH_CHECK",
     });
 
     const isAuthenticated = response?.isAuthenticated || false;
@@ -34,7 +34,7 @@ export const checkAuthStatus = async (): Promise<AuthStatusResult> => {
       cached: false,
     };
   } catch (error) {
-    console.error('❌ Error checking Supabase auth status:', error);
+    console.error("❌ Error checking Supabase auth status:", error);
     return {
       authenticated: false,
       user: null,

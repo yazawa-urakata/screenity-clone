@@ -1,8 +1,12 @@
-import React, { FC, useContext, ChangeEvent, FocusEvent } from "react";
-
+import React, {
+  type ChangeEvent,
+  type FC,
+  type FocusEvent,
+  useContext,
+} from "react";
+import { ContentStateContextType } from "../../../../types/context";
 // Context
 import { contentStateContext } from "../../context/ContentState";
-import { ContentStateContextType } from "../../../../types/context";
 
 const RegionDimensions: FC = () => {
   const contextValue = useContext(contentStateContext);

@@ -10,7 +10,7 @@ export function startClickTracking(
   regionHeight: number = 0,
   regionX: number = 0,
   regionY: number = 0,
-  contentStateRef: ContentStateRef | null = null
+  contentStateRef: ContentStateRef | null = null,
 ): () => void {
   const handleClick = async (e: MouseEvent): Promise<void> => {
     // Skip if blur mode is active

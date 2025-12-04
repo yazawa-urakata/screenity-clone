@@ -1,4 +1,4 @@
-import React, { FC, CSSProperties } from "react";
+import React, { type CSSProperties, type FC } from "react";
 import { ReactSVG } from "react-svg";
 
 const URL =

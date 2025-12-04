@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import type React from "react";
+import { useEffect } from "react";
 
 interface DeviceInfo {
   deviceId: string;
@@ -30,7 +31,7 @@ const Recorder: React.FC = () => {
       {
         type: "screenity-permissions-loaded",
       },
-      "*"
+      "*",
     );
   }, []);
 
@@ -45,7 +46,7 @@ const Recorder: React.FC = () => {
     return () => {
       navigator.mediaDevices.removeEventListener(
         "devicechange",
-        handleDeviceChange
+        handleDeviceChange,
       );
     };
   }, []);
@@ -72,7 +73,7 @@ const Recorder: React.FC = () => {
             success: false,
             error: "Permission not granted",
           } as PermissionsMessage,
-          "*"
+          "*",
         );
       }
     } catch (err) {
@@ -80,7 +81,9 @@ const Recorder: React.FC = () => {
     }
   };
 
-  const enumerateDevices = async (micGranted: boolean = true): Promise<void> => {
+  const enumerateDevices = async (
+    micGranted: boolean = true,
+  ): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: micGranted,
@@ -127,11 +130,11 @@ const Recorder: React.FC = () => {
           audiooutput: audiooutput,
           microphonePermission: micGranted,
         } as PermissionsMessage,
-        "*"
+        "*",
       );
 
       // End the stream
-      stream.getTracks().forEach(function (track) {
+      stream.getTracks().forEach((track) => {
         track.stop();
       });
     } catch (err) {
@@ -142,7 +145,7 @@ const Recorder: React.FC = () => {
           success: false,
           error: (err as Error).name,
         } as PermissionsMessage,
-        "*"
+        "*",
       );
       //sendResponse({ success: false, error: err.name });
     }

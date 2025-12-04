@@ -1,12 +1,12 @@
-import React, { useContext } from "react";
-
-import RecordingType from "./RecordingType";
-import {
-  CloseWhiteIcon,
-} from "../../images/popup/images";
-
+import type React from "react";
+import { useContext } from "react";
 // Context
-import { contentStateContext, ContentStateType } from "../../context/ContentState";
+import {
+  type ContentStateType,
+  contentStateContext,
+} from "../../context/ContentState";
+import { CloseWhiteIcon } from "../../images/popup/images";
+import RecordingType from "./RecordingType";
 
 interface RecordingTabProps {
   shadowRef: React.RefObject<HTMLDivElement & { shadowRoot: ShadowRoot }>;
@@ -52,7 +52,7 @@ const RecordingTab: React.FC<RecordingTabProps> = (props) => {
                 // show toast
                 contentState.openToast?.(
                   chrome.i18n.getMessage("projectRecordingCancelledToast"),
-                  3000
+                  3000,
                 );
               }}
             >

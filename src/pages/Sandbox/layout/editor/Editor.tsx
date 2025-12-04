@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
-import EditorNav from "./EditorNav";
+import type React from "react";
+import { useContext, useEffect, useState } from "react";
 import VideoPlayer from "../../components/editor/VideoPlayer";
-import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
-
 import HelpButton from "../../components/player/HelpButton";
+import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
+import EditorNav from "./EditorNav";
 
 interface EditorProps {
   ffmpeg: any;

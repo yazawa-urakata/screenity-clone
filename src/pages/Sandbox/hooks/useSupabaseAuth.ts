@@ -6,7 +6,7 @@
  * これにより、Content Scriptとの整合性を保ち、アクセス制御を統一できます。
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { SupabaseAuthState } from "../types/s3Upload";
 
 interface UseSupabaseAuthReturn {
@@ -41,7 +41,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
     // Chrome Storageの変更を監視
     const storageListener = (
       changes: { [key: string]: chrome.storage.StorageChange },
-      namespace: string
+      namespace: string,
     ) => {
       // session storage の認証関連の変更を検知
       if (namespace === "session") {
@@ -73,7 +73,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
     try {
       // Background Script経由で認証状態を取得
       const response = await chrome.runtime.sendMessage({
-        type: 'SUPABASE_AUTH_CHECK',
+        type: "SUPABASE_AUTH_CHECK",
       });
 
       if (response) {
@@ -86,7 +86,7 @@ export function useSupabaseAuth(): UseSupabaseAuthReturn {
         });
       }
     } catch (error) {
-      console.error('⚠️ Failed to load auth state:', error);
+      console.error("⚠️ Failed to load auth state:", error);
       setAuthState({
         isAuthenticated: false,
         accessToken: null,

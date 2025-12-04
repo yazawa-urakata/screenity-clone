@@ -1,16 +1,16 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import type React from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 // Styles
 import styles from "../../styles/player/_Title.module.scss";
+
 const URL = "/assets/";
 
 // Icon
 import { ReactSVG } from "react-svg";
-
-import ShareModal from "./ShareModal";
-
 // Context
 import { ContentStateContext } from "../../context/ContentState";
+import ShareModal from "./ShareModal";
 
 const Title: React.FC = () => {
   const [showShare, setShowShare] = useState<boolean>(false);
@@ -26,7 +26,9 @@ const Title: React.FC = () => {
   // Show the video title, as a heading by default (multiline), on click show a text input to edit the title
   const [showTitle, setShowTitle] = useState<boolean>(true);
   const [title, setTitle] = useState<string>(contentState.title || "");
-  const [displayTitle, setDisplayTitle] = useState<string>(contentState.title || "");
+  const [displayTitle, setDisplayTitle] = useState<string>(
+    contentState.title || "",
+  );
 
   useEffect(() => {
     const currentTitle = contentState.title || "";

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 interface AnnouncementProps {
   setOnboarding: (value: boolean) => void;
@@ -6,7 +7,7 @@ interface AnnouncementProps {
 
 const Announcement: React.FC<AnnouncementProps> = (props) => {
   const [URL, setURL] = useState(
-    "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what%E2%80%99s-changed-in-the-new-version-of-screenity/bDtvcwAtw9PPesQeNH4zjE"
+    "https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/what%E2%80%99s-changed-in-the-new-version-of-screenity/bDtvcwAtw9PPesQeNH4zjE",
   );
 
   useEffect(() => {
@@ -17,7 +18,7 @@ const Announcement: React.FC<AnnouncementProps> = (props) => {
         "https://translate.google.com/translate?sl=en&tl=" +
           locale +
           "&u=" +
-          URL
+          URL,
       );
     }
   }, []);

@@ -1,13 +1,13 @@
 import { createTab } from "./createTab";
-import { getCurrentTab } from "./getCurrentTab";
-import { sendMessageTab } from "./sendMessageTab";
-import { removeTab } from "./removeTab";
 import { focusTab } from "./focusTab";
+import { getCurrentTab } from "./getCurrentTab";
+import { removeTab } from "./removeTab";
 import {
   resetActiveTab,
   resetActiveTabRestart,
   restartActiveTab,
 } from "./resetActiveTab";
+import { sendMessageTab } from "./sendMessageTab";
 import { setSurface } from "./setSurface";
 
 export {

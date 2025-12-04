@@ -5,24 +5,28 @@ export const isPinned = async (): Promise<boolean> => {
   } catch (error) {
     console.error(
       "Failed to check if the extension is pinned:",
-      (error as Error).message
+      (error as Error).message,
     );
     return false;
   }
 };
 
-export const getPlatformInfo = async (): Promise<chrome.runtime.PlatformInfo | null> => {
-  try {
-    return await chrome.runtime.getPlatformInfo();
-  } catch (error) {
-    console.error("Failed to retrieve platform info:", (error as Error).message);
-    return null;
-  }
-};
+export const getPlatformInfo =
+  async (): Promise<chrome.runtime.PlatformInfo | null> => {
+    try {
+      return await chrome.runtime.getPlatformInfo();
+    } catch (error) {
+      console.error(
+        "Failed to retrieve platform info:",
+        (error as Error).message,
+      );
+      return null;
+    }
+  };
 
 export const resizeWindow = async (
   width: number,
-  height: number
+  height: number,
 ): Promise<void> => {
   if (width === 0 || height === 0) {
     return;

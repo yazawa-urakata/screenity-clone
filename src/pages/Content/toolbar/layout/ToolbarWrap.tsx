@@ -1,24 +1,29 @@
-import React, {
-  useLayoutEffect,
-  useEffect,
-  useContext,
-  useState,
-  useRef,
-} from "react";
 import * as Toolbar from "@radix-ui/react-toolbar";
+import type React from "react";
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { Rnd, DraggableData } from "react-rnd";
-
-// Components
-import ToolTrigger from "../components/ToolTrigger";
-import Toast from "../components/Toast";
-
+import { type DraggableData, Rnd } from "react-rnd";
+import { MAX_CLIPS } from "../../../../utils/clipUtils";
 // Context
 import { contentStateContext } from "../../context/ContentState";
-
 // Icons
-import { GrabIcon, StopIcon, ClipIcon, ClipStopIcon, CheckIcon, CloseIcon } from "../components/SVG";
-import { MAX_CLIPS } from '../../../../utils/clipUtils';
+import {
+  CheckIcon,
+  ClipIcon,
+  ClipStopIcon,
+  CloseIcon,
+  GrabIcon,
+  StopIcon,
+} from "../components/SVG";
+import Toast from "../components/Toast";
+// Components
+import ToolTrigger from "../components/ToolTrigger";
 
 const ToolbarWrap: React.FC = () => {
   const contextValue = useContext(contentStateContext);
@@ -42,7 +47,7 @@ const ToolbarWrap: React.FC = () => {
       const seconds = clampedT % 60;
 
       // Determine the timestamp format based on the total duration (t)
-      let newTimestamp =
+      const newTimestamp =
         hours > 0
           ? `${hours.toString().padStart(2, "0")}:${minutes
               .toString()
@@ -90,7 +95,10 @@ const ToolbarWrap: React.FC = () => {
     return () => window.removeEventListener("resize", setToolbarPosition);
   }, []);
 
-  const handleDragStart = (e: MouseEvent | TouchEvent, d: DraggableData): void => {
+  const handleDragStart = (
+    e: MouseEvent | TouchEvent,
+    d: DraggableData,
+  ): void => {
     setDragging("ToolbarDragging");
   };
 
@@ -119,7 +127,10 @@ const ToolbarWrap: React.FC = () => {
     }
   };
 
-  const handleDrop = (e: MouseEvent | TouchEvent | null, d: DraggableData): void => {
+  const handleDrop = (
+    e: MouseEvent | TouchEvent | null,
+    d: DraggableData,
+  ): void => {
     if (!ToolbarRef.current || !DragRef.current) return;
 
     setShake("");
@@ -174,10 +185,10 @@ const ToolbarWrap: React.FC = () => {
 
     // Is it on the left or right, also top or bottom
 
-    let left = xpos < window.innerWidth / 2 ? true : false;
-    let right = xpos < window.innerWidth / 2 ? false : true;
-    let top = ypos < window.innerHeight / 2 ? true : false;
-    let bottom = ypos < window.innerHeight / 2 ? false : true;
+    const left = xpos < window.innerWidth / 2 ? true : false;
+    const right = xpos < window.innerWidth / 2 ? false : true;
+    const top = ypos < window.innerHeight / 2 ? true : false;
+    const bottom = ypos < window.innerHeight / 2 ? false : true;
     let offsetX = xpos;
     let offsetY = ypos;
 
@@ -229,7 +240,15 @@ const ToolbarWrap: React.FC = () => {
 
     DragRef.current.updatePosition({ x: x, y: y });
 
-    handleDrop(null, { x: x, y: y, deltaX: 0, deltaY: 0, lastX: x, lastY: y, node: document.createElement('div') });
+    handleDrop(null, {
+      x: x,
+      y: y,
+      deltaX: 0,
+      deltaY: 0,
+      lastX: x,
+      lastY: y,
+      node: document.createElement("div"),
+    });
   }, []);
 
   return (
@@ -260,12 +279,7 @@ const ToolbarWrap: React.FC = () => {
         onDragStop={handleDrop}
         ref={DragRef}
       >
-        <Toolbar.Root
-          className={
-            "ToolbarRoot" + " " + side
-          }
-          ref={ToolbarRef}
-        >
+        <Toolbar.Root className={"ToolbarRoot" + " " + side} ref={ToolbarRef}>
           <ToolTrigger grab type="button" content="">
             <GrabIcon />
           </ToolTrigger>

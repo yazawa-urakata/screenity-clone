@@ -1,5 +1,5 @@
-import React, { FC, ReactNode, MouseEvent } from "react";
 import * as Toolbar from "@radix-ui/react-toolbar";
+import React, { type FC, type MouseEvent, type ReactNode } from "react";
 
 // Components
 import TooltipWrap from "./TooltipWrap";
