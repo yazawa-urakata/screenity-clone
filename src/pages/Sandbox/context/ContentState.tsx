@@ -702,23 +702,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
           originalBlob: blob,
         }));
       }
-    } else if (event.data.type === "download-mp4") {
-      const base64 = event.data.base64 as string;
-      const data = base64ToUint8Array(base64);
-      const blob =
-        data instanceof Blob
-          ? data
-          : new Blob([data.buffer as ArrayBuffer], {
-              type: "video/mp4",
-            });
-      const url = URL.createObjectURL(blob);
-      requestDownload(url, ".mp4");
-      setContentState((prevContentState) => ({
-        ...prevContentState,
-        saved: true,
-        isFfmpegRunning: false,
-        downloading: false,
-      }));
     } else if (event.data.type === "new-frame") {
       const url = URL.createObjectURL(event.data.frame);
       setContentState((prevContentState) => ({
@@ -954,137 +937,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     return true;
   };
 
-  const requestDownload = async (url: string, ext: string): Promise<void> => {
-    const title =
-      contentStateRef.current.title!.replace(/[/\\:?~<>|*]/g, " ").trim() + ext;
-
-    const revoke = () => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch {}
-    };
-
-    // Brave fallback
-    if ((navigator.brave && (await navigator.brave.isBrave())) || false) {
-      const resp = await fetch(url);
-      const blob = await resp.blob();
-      await new Promise<void>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          chrome.runtime.sendMessage({
-            type: "request-download",
-            base64: reader.result,
-            title,
-          });
-          revoke();
-          resolve();
-        };
-        reader.readAsDataURL(blob);
-      });
-      return;
-    }
-
-    const downloadId = await new Promise<number>((resolve, reject) => {
-      chrome.downloads.download(
-        { url, filename: title, saveAs: true },
-        (id) => {
-          if (chrome.runtime.lastError || !id) {
-            reject(chrome.runtime.lastError || new Error("Download failed"));
-          } else {
-            resolve(id);
-          }
-        },
-      );
-    });
-
-    await new Promise<void>((resolve) => {
-      const handler = async (delta: chrome.downloads.DownloadDelta) => {
-        if (delta.id !== downloadId || !delta.state) return;
-
-        const done = () => {
-          chrome.downloads.onChanged.removeListener(handler);
-          revoke();
-          resolve();
-        };
-
-        if (
-          delta.state.current === "interrupted" &&
-          delta.error?.current !== "USER_CANCELED"
-        ) {
-          try {
-            const resp = await fetch(url);
-            const blob = await resp.blob();
-            await new Promise<void>((res) => {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                chrome.runtime.sendMessage({
-                  type: "request-download",
-                  base64: reader.result,
-                  title,
-                });
-                res();
-              };
-              reader.readAsDataURL(blob);
-            });
-          } finally {
-            done();
-          }
-        } else if (
-          delta.state.current === "complete" ||
-          delta.state.current === "interrupted"
-        ) {
-          done();
-        }
-      };
-
-      chrome.downloads.onChanged.addListener(handler);
-    });
-  };
-
-  const download = async (): Promise<void> => {
-    if (contentState.isFfmpegRunning || contentState.downloading) {
-      return;
-    }
-
-    setContentState((prevState) => ({
-      ...prevState,
-      downloading: true,
-      isFfmpegRunning: true,
-    }));
-
-    const url = URL.createObjectURL(contentState.blob!);
-    requestDownload(url, ".mp4");
-
-    setContentState((prevState) => ({
-      ...prevState,
-      downloading: false,
-      isFfmpegRunning: false,
-      saved: true,
-    }));
-  };
-
-  const downloadWEBM = async (): Promise<void> => {
-    if (contentState.isFfmpegRunning || contentState.downloadingWEBM) {
-      return;
-    }
-
-    setContentState((prevState) => ({
-      ...prevState,
-      downloadingWEBM: true,
-      isFfmpegRunning: true,
-    }));
-
-    const url = URL.createObjectURL(contentState.webm!);
-    requestDownload(url, ".webm");
-
-    setContentState((prevState) => ({
-      ...prevState,
-      downloadingWEBM: false,
-      isFfmpegRunning: false,
-      saved: true,
-    }));
-  };
-
   const loadFFmpeg = async (): Promise<void> => {
     sendMessage({ type: "load-ffmpeg" });
   };
@@ -1095,11 +947,9 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
   contentState.addToHistory = addToHistory;
   contentState.handleTrim = handleTrim;
   contentState.handleMute = handleMute;
-  contentState.download = download;
   contentState.handleCrop = handleCrop;
   contentState.handleReencode = handleReencode;
   contentState.getFrame = getImage;
-  contentState.downloadWEBM = downloadWEBM;
   contentState.addAudio = addAudio;
   contentState.loadFFmpeg = loadFFmpeg;
 

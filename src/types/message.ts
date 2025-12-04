@@ -84,11 +84,6 @@ export type MessageType =
   | "ffmpeg-error"
   | "updated-blob"
   | "new-frame"
-  // ダウンロード関連
-  | "request-download"
-  | "indexed-db-download"
-  | "download-video"
-  | "download-indexed-db"
   // Google Drive関連
   | "save-to-drive"
   | "save-to-drive-fallback"
@@ -222,19 +217,6 @@ export interface StreamingDataMessage extends BaseMessage {
 
 export interface PipMessage extends BaseMessage {
   type: "pip-started" | "pip-ended" | "toggle-pip";
-}
-
-// ダウンロード関連メッセージ
-export interface RequestDownloadMessage extends BaseMessage {
-  type: "request-download";
-  base64: string;
-  title: string;
-}
-
-export interface DownloadVideoMessage extends BaseMessage {
-  type: "download-video";
-  base64: string;
-  title: string;
 }
 
 // バックアップ関連メッセージ

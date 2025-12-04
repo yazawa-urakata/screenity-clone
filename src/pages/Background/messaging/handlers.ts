@@ -50,7 +50,6 @@ import {
   isPinned,
   resizeWindow,
 } from "../utils/browserHelpers";
-import { downloadIndexedDB, requestDownload } from "../utils/downloadHelpers";
 
 const API_BASE = process.env.SCREENITY_API_BASE_URL;
 const CLOUD_FEATURES_ENABLED =
@@ -225,7 +224,6 @@ export const setupHandlers = (): void => {
   registerMessage("focus-this-tab", (message, sender) =>
     focusTab(sender.tab?.id as number),
   );
-  registerMessage("indexed-db-download", () => downloadIndexedDB());
   registerMessage("get-platform-info", async () => await getPlatformInfo());
   registerMessage("restore-recording", () => restoreRecording());
   registerMessage(
@@ -248,10 +246,6 @@ export const setupHandlers = (): void => {
     },
   );
   registerMessage("is-pinned", async () => await isPinned());
-  registerMessage("request-download", (message) => {
-    const msg = message as unknown as Record<string, unknown>;
-    return requestDownload(msg.base64 as string, msg.title as string);
-  });
   registerMessage("resize-window", (message) => {
     const msg = message as unknown as Record<string, unknown>;
     return resizeWindow(msg.width as number, msg.height as number);

@@ -2,8 +2,6 @@ import type React from "react";
 import { useContext, useEffect, useState } from "react";
 import { ContentStateContext } from "../../context/ContentState";
 import ClipsPanel from "../editor/ClipsPanel";
-// Components
-import Title from "./Title";
 
 type SimpleResultPanelProps = {};
 
