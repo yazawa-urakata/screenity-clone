@@ -1,17 +1,9 @@
 // Import styles raw to add into the ShadowDOM
 import styles from "!raw-loader!./styles/app.css";
-import React, {
-  type CSSProperties,
-  useContext,
-  useEffect,
-  useRef,
-} from "react";
+import React, { type CSSProperties, useEffect, useRef } from "react";
 // Using ShadowDOM
 import root from "react-shadow";
-import {
-  type ContentStateType,
-  contentStateContext,
-} from "./context/ContentState";
+import { type ContentStateType, useContentState } from "./context/ContentState";
 import Countdown from "./countdown/Countdown";
 import { startClickTracking } from "./cursor/trackClicks";
 import Modal from "./modal/Modal";
@@ -32,9 +24,9 @@ import Warning from "./warning/Warning";
  */
 
 const Wrapper: React.FC = () => {
-  const contextValue = useContext(contentStateContext);
-  if (!contextValue) return null;
-  const [contentState, setContentState] = contextValue;
+  // Use custom hook for type-safe context access (never undefined)
+  // This pattern satisfies React hooks rules and eliminates the need for undefined checks
+  const [contentState, setContentState] = useContentState();
 
   const shadowRef = useRef<HTMLDivElement | null>(null);
   const parentRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +38,8 @@ const Wrapper: React.FC = () => {
     contentStateRef.current = contentState;
   }, [contentState]);
 
+  // Set parentRef in state once after mount
+  // setContentState is now stable (wrapped with useCallback in ContentState.tsx)
   useEffect(() => {
     if (!parentRef.current) return;
 
@@ -53,24 +47,31 @@ const Wrapper: React.FC = () => {
       ...prevContentState,
       parentRef: parentRef.current,
     }));
-  }, [parentRef.current]);
+  }, [setContentState]);
 
+  // Set shadowRef in state once after mount
+  // setContentState is now stable (wrapped with useCallback in ContentState.tsx)
   useEffect(() => {
     if (!shadowRef.current) return;
     setContentState((prevContentState) => ({
       ...prevContentState,
       shadowRef: shadowRef.current,
     }));
-  }, [shadowRef.current]);
+  }, [setContentState]);
 
+  // Set regionCaptureRef in state once after mount
+  // setContentState is now stable (wrapped with useCallback in ContentState.tsx)
   useEffect(() => {
     if (!regionCaptureRef.current) return;
     setContentState((prevContentState) => ({
       ...prevContentState,
       regionCaptureRef: regionCaptureRef.current,
     }));
-  }, [regionCaptureRef.current]);
+  }, [setContentState]);
 
+  // Check permissions when extension is shown and permissions are loaded
+  // Early return prevents infinite loops when permissionsChecked becomes true
+  // setContentState is now stable (wrapped with useCallback in ContentState.tsx)
   useEffect(() => {
     if (contentState.permissionsChecked) return;
     if (!permissionsRef.current) return;
@@ -89,9 +90,10 @@ const Wrapper: React.FC = () => {
       permissionsChecked: true,
     }));
   }, [
-    permissionsRef.current,
+    contentState.permissionsChecked,
     contentState.showExtension,
     contentState.permissionsLoaded,
+    setContentState,
   ]);
 
   useEffect(() => {
@@ -130,9 +132,9 @@ const Wrapper: React.FC = () => {
     background:
       window.location.href.indexOf(chrome.runtime.getURL("setup.html")) ===
         -1 &&
-      window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
+        window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
         -1 &&
-      !contentState.pendingRecording
+        !contentState.pendingRecording
         ? "rgba(0,0,0,0.15)"
         : "rgba(0,0,0,0)",
     top: 0,
@@ -142,9 +144,9 @@ const Wrapper: React.FC = () => {
   const handleOverlayClick = (): void => {
     if (
       window.location.href.indexOf(chrome.runtime.getURL("setup.html")) ===
-        -1 &&
+      -1 &&
       window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
-        -1 &&
+      -1 &&
       !contentState.pendingRecording &&
       !contentState.customRegion
     ) {
@@ -171,6 +173,7 @@ const Wrapper: React.FC = () => {
     <div ref={parentRef}>
       {contentState.showExtension && (
         <iframe
+          title="Permissions handler"
           style={{
             display: "none",
             visibility: "hidden",
@@ -182,6 +185,7 @@ const Wrapper: React.FC = () => {
       )}
       {contentState.hasOpenedBefore && (
         <iframe
+          title="Region capture handler"
           style={{
             display: "none",
             visibility: "hidden",
@@ -198,7 +202,19 @@ const Wrapper: React.FC = () => {
           {!contentState.recording &&
             !contentState.drawingMode &&
             !contentState.blurMode && (
-              <div style={overlayStyle} onClick={handleOverlayClick}></div>
+              <button
+                type="button"
+                style={{
+                  ...overlayStyle,
+                  border: "none",
+                  padding: 0,
+                  font: "inherit",
+                  cursor: "pointer",
+                  outline: "inherit",
+                }}
+                onClick={handleOverlayClick}
+                aria-label="Close extension popup"
+              />
             )}
           <CursorModes />
           <root.div

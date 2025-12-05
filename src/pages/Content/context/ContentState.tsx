@@ -3,6 +3,7 @@ import React, {
   type FC,
   type ReactNode,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -210,6 +211,25 @@ type ContextValue = [
 export const contentStateContext = createContext<ContextValue | undefined>(
   undefined,
 );
+
+/**
+ * Custom hook to safely access ContentState context.
+ * Throws an error if used outside of ContentState provider.
+ * This pattern eliminates the need for undefined checks and satisfies React hooks rules.
+ *
+ * @throws {Error} When used outside ContentState provider
+ * @returns {ContextValue} The context value (never undefined)
+ */
+export const useContentState = (): ContextValue => {
+  const context = useContext(contentStateContext);
+  if (!context) {
+    throw new Error(
+      "useContentState must be used within ContentState provider. " +
+        "Ensure the component is wrapped with <ContentState>.",
+    );
+  }
+  return context;
+};
 
 interface ContentStateRef {
   current: ContentStateType | null;
@@ -1513,7 +1533,10 @@ const ContentState: FC<ContentStateProps> = (props) => {
   });
   contentStateRef.current = contentState;
 
-  setContentState = (updater): void => {
+  // Wrap setContentState with useCallback to ensure stable reference across renders
+  // This prevents infinite loops in useEffect hooks that depend on setContentState
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  setContentState = useCallback((updater): void => {
     if (typeof updater === "function") {
       setContentStateInternal((prevState) => {
         const newState = { ...prevState, ...updater(prevState) };
@@ -1524,7 +1547,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       setContentStateInternal(updater);
       contentStateRef.current = updater;
     }
-  };
+  }, []); // Empty deps: setContentStateInternal is stable (React guarantee), contentStateRef is a ref
 
   // Check Chrome version
   useEffect(() => {

@@ -14,6 +14,7 @@
     "lint": "eslint src/**/*.js --fix",
     "knip": "knip",
     "biome:check": "biome check .",
+    "biome:check:file": "biome check",
     "biome:format": "biome format . --write",
     "biome:lint": "biome lint ."
   },
