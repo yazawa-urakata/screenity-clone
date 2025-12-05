@@ -97,17 +97,27 @@ export const handleRecordingComplete = async () => {
   }
 };
 
-export const handleRecordingError = async (
-  request: RecordingErrorMessage,
-) => {
+export const handleRecordingError = async (request: RecordingErrorMessage) => {
   const { activeTab } = await chrome.storage.local.get(["activeTab"]);
 
-  sendMessageRecord({ type: "recording-error" }).then(() => {
-    sendMessageTab(activeTab as number, { type: "stop-pending" });
-    focusTab(activeTab as number);
-    if (request.error === "stream-error") {
-      sendMessageTab(activeTab as number, { type: "stream-error" });
-    }
+  // 即座に activeTab に stop-pending を送信（.then() を待たない）
+  sendMessageTab(activeTab as number, { type: "stop-pending" }).catch((err) => {
+    console.error("[RecordingError] Failed to send stop-pending:", err);
+  });
+
+  focusTab(activeTab as number);
+
+  if (request.error === "stream-error") {
+    sendMessageTab(activeTab as number, { type: "stream-error" }).catch(
+      (err) => {
+        console.error("[RecordingError] Failed to send stream-error:", err);
+      },
+    );
+  }
+
+  // recorder.html にもメッセージを送信（非同期）
+  sendMessageRecord({ type: "recording-error" }).catch((err) => {
+    console.error("[RecordingError] Failed to send to recorder:", err);
   });
 
   const { recordingTab } = await chrome.storage.local.get(["recordingTab"]);

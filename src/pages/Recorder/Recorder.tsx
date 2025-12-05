@@ -34,10 +34,6 @@ interface StreamingData {
   micActive: boolean;
 }
 
-interface DesktopCaptureOptions {
-  canRequestAudioTrack?: boolean;
-}
-
 type RecorderMessage =
   | { type: "loaded"; backup: boolean; isTab: boolean; tabID: number }
   | { type: "streaming-data"; data: string }
@@ -88,10 +84,8 @@ const Recorder: React.FC = () => {
     state: uploadState,
     progress: uploadProgress,
     error: uploadError,
-    isEnabled: isUploadEnabled,
     initializeUpload,
     finalizeUpload,
-    cancelUpload,
   } = useInstantUpload();
 
   const pending = useRef<BlobEvent[]>([]);
@@ -103,74 +97,79 @@ const Recorder: React.FC = () => {
   const lastEstimateAt = useRef<number>(0);
   const ESTIMATE_INTERVAL_MS = 5000;
   const MIN_HEADROOM = 25 * 1024 * 1024;
-  const MAX_PENDING_BYTES = 8 * 1024 * 1024;
   const pendingBytes = useRef<number>(0);
 
-  async function canFitChunk(byteLength?: number): Promise<boolean> {
-    const now = performance.now();
-    if (now - lastEstimateAt.current < ESTIMATE_INTERVAL_MS) {
-      return !lowStorageAbort.current;
-    }
-    lastEstimateAt.current = now;
+  const canFitChunk = useCallback(
+    async (byteLength?: number): Promise<boolean> => {
+      const now = performance.now();
+      if (now - lastEstimateAt.current < ESTIMATE_INTERVAL_MS) {
+        return !lowStorageAbort.current;
+      }
+      lastEstimateAt.current = now;
 
-    try {
-      const { usage = 0, quota = 0 } = await navigator.storage.estimate();
-      const remaining = quota - usage;
-      return remaining > MIN_HEADROOM + (byteLength || 0);
-    } catch {
-      return !lowStorageAbort.current;
-    }
-  }
+      try {
+        const { usage = 0, quota = 0 } = await navigator.storage.estimate();
+        const remaining = quota - usage;
+        return remaining > MIN_HEADROOM + (byteLength || 0);
+      } catch {
+        return !lowStorageAbort.current;
+      }
+    },
+    [],
+  );
 
-  async function saveChunk(e: BlobEvent, i: number): Promise<boolean> {
-    const ts = e.timecode ?? 0;
+  const saveChunk = useCallback(
+    async (e: BlobEvent, i: number): Promise<boolean> => {
+      const ts = e.timecode ?? 0;
 
-    if (
-      savedCount.current > 0 &&
-      ts === lastTimecode.current &&
-      e.data.size === lastSize.current
-    ) {
-      return false;
-    }
+      if (
+        savedCount.current > 0 &&
+        ts === lastTimecode.current &&
+        e.data.size === lastSize.current
+      ) {
+        return false;
+      }
 
-    if (!(await canFitChunk(e.data.size))) {
-      lowStorageAbort.current = true;
-      chrome.storage.local.set({
-        recording: false,
-        restarting: false,
-        tabRecordedID: null,
-        memoryError: true,
-      });
-      chrome.runtime.sendMessage({ type: "stop-recording-tab" });
-      return false;
-    }
+      if (!(await canFitChunk(e.data.size))) {
+        lowStorageAbort.current = true;
+        chrome.storage.local.set({
+          recording: false,
+          restarting: false,
+          tabRecordedID: null,
+          memoryError: true,
+        });
+        chrome.runtime.sendMessage({ type: "stop-recording-tab" });
+        return false;
+      }
 
-    try {
-      await chunksStore.setItem<ChunkData>(`chunk_${i}`, {
-        index: i,
-        chunk: e.data,
-        timestamp: ts,
-      });
-    } catch (err) {
-      lowStorageAbort.current = true;
-      chrome.storage.local.set({
-        recording: false,
-        restarting: false,
-        tabRecordedID: null,
-        memoryError: true,
-      });
-      chrome.runtime.sendMessage({ type: "stop-recording-tab" });
-      return false;
-    }
+      try {
+        await chunksStore.setItem<ChunkData>(`chunk_${i}`, {
+          index: i,
+          chunk: e.data,
+          timestamp: ts,
+        });
+      } catch {
+        lowStorageAbort.current = true;
+        chrome.storage.local.set({
+          recording: false,
+          restarting: false,
+          tabRecordedID: null,
+          memoryError: true,
+        });
+        chrome.runtime.sendMessage({ type: "stop-recording-tab" });
+        return false;
+      }
 
-    lastTimecode.current = ts;
-    lastSize.current = e.data.size;
-    savedCount.current += 1;
+      lastTimecode.current = ts;
+      lastSize.current = e.data.size;
+      savedCount.current += 1;
 
-    return true;
-  }
+      return true;
+    },
+    [canFitChunk],
+  );
 
-  async function drainQueue(): Promise<void> {
+  const drainQueue = useCallback(async (): Promise<void> => {
     if (draining.current) return;
     draining.current = true;
 
@@ -208,15 +207,15 @@ const Recorder: React.FC = () => {
     } finally {
       draining.current = false;
     }
-  }
+  }, [canFitChunk, saveChunk]);
 
-  async function waitForDrain(): Promise<void> {
+  const waitForDrain = useCallback(async (): Promise<void> => {
     while (draining.current || pending.current.length) {
       await new Promise((r) => setTimeout(r, 10));
     }
-  }
+  }, []);
 
-  async function startRecording(): Promise<void> {
+  const startRecording = useCallback(async (): Promise<void> => {
     // Check that a recording is not already in progress
     if (recorder.current !== null) return;
 
@@ -244,14 +243,56 @@ const Recorder: React.FC = () => {
 
     const videoId = `recording-${Date.now()}`;
 
+    // 前回の録画のアップロード状態をクリア
+    // editorfallback.html が古い状態を表示するのを防ぐ
+    await chrome.storage.local.remove([
+      "instantUploadStatus",
+      "instantUploadCompleteTime",
+      "instantUploadError",
+    ]);
+
+    // Phase 2: initiate失敗時は録画を開始しない
     try {
       await initializeUpload(videoId);
       console.log("✅ Real-time upload initialized");
     } catch (err) {
-      console.warn(
-        "⚠️ Failed to initialize real-time upload, falling back to normal recording:",
-        err,
-      );
+      console.error("❌ Failed to initialize real-time upload:", err);
+
+      // Phase 5: より詳細なユーザー通知
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      // エラーの種類に応じたガイダンス
+      let guidanceMessage = "ネットワーク接続を確認してください。";
+      if (errorMessage.includes("Not authenticated")) {
+        guidanceMessage = "ログインし直してから再度お試しください。";
+      } else if (errorMessage.includes("401") || errorMessage.includes("403")) {
+        guidanceMessage = "認証が必要です。ログインし直してください。";
+      } else if (
+        errorMessage.includes("500") ||
+        errorMessage.includes("502") ||
+        errorMessage.includes("503")
+      ) {
+        guidanceMessage =
+          "サーバーが一時的に利用できません。しばらく待ってから再度お試しください。";
+      }
+
+      chrome.runtime.sendMessage({
+        type: "show-toast",
+        title: "アップロードの準備に失敗しました",
+        message: `${guidanceMessage} エラー: ${errorMessage}`,
+        duration: 8000,
+      });
+
+      // 録画状態をクリア（Content Script のタイマーを止める）
+      chrome.storage.local.set({
+        recording: false,
+        restarting: false,
+        tabRecordedID: null,
+      });
+
+      // 録画を開始しない
+      sendRecordingError(`Upload initialization failed: ${errorMessage}`);
+      return;
     }
 
     try {
@@ -261,7 +302,7 @@ const Recorder: React.FC = () => {
         qualityValue as string,
       );
 
-      recorder.current = createMediaRecorder(liveStream.current!, {
+      recorder.current = createMediaRecorder(liveStream.current, {
         audioBitsPerSecond,
         videoBitsPerSecond,
       });
@@ -273,6 +314,7 @@ const Recorder: React.FC = () => {
     chrome.storage.local.set({
       recording: true,
       restarting: false,
+      recordingStartTime: Date.now(), // Phase 2: 録画開始時刻を保存
     });
 
     isRestarting.current = false;
@@ -281,7 +323,7 @@ const Recorder: React.FC = () => {
     try {
       recorder.current.start(1000);
     } catch (err) {
-      sendRecordingError("Failed to start recording: " + JSON.stringify(err));
+      sendRecordingError(`Failed to start recording: ${JSON.stringify(err)}`);
       return;
     }
 
@@ -312,11 +354,11 @@ const Recorder: React.FC = () => {
             "[Recorder] 📦 録画停止 - clips.jsonアップロード処理を開始",
             {
               result,
-              hasKey: result && result.key,
+              hasKey: result?.key,
             },
           );
 
-          if (result && result.key) {
+          if (result?.key) {
             try {
               // クリップリストを取得
               console.log("[Recorder] 🔍 Chrome Storageからclipsを取得中...");
@@ -383,10 +425,7 @@ const Recorder: React.FC = () => {
                 }
               } else {
                 console.warn(
-                  "[Recorder] ⚠️ Chrome Storageにclipsが保存されていません",
-                );
-                console.warn(
-                  "[Recorder] クリップ録画を終了していない可能性があります",
+                  "[Recorder] Chrome Storageにclipsが保存されていません",
                 );
               }
             } catch (clipError) {
@@ -409,6 +448,14 @@ const Recorder: React.FC = () => {
         } catch (err) {
           console.error("❌ Failed to finalize upload from onstop:", err);
 
+          // ユーザーにToast通知を表示
+          chrome.runtime.sendMessage({
+            type: "show-toast",
+            title: "動画のアップロードに失敗しました",
+            message: `録画は完了しましたが、サーバーへのアップロードに失敗しました。ネットワーク接続を確認してください。`,
+            duration: 10000, // 10秒間表示
+          });
+
           // アップロード失敗状態を Chrome Storage に保存
           await chrome.storage.local.set({
             instantUploadStatus: "error",
@@ -422,28 +469,6 @@ const Recorder: React.FC = () => {
         sentLast.current = true;
         isFinishing.current = false;
         chrome.runtime.sendMessage({ type: "video-ready" });
-      }
-    };
-
-    const checkMaxMemory = (): void => {
-      try {
-        navigator.storage.estimate().then(({ usage = 0, quota = 0 }) => {
-          const remaining = quota - usage;
-          const minHeadroom = 25 * 1024 * 1024;
-          if (remaining < minHeadroom) {
-            chrome.storage.local.set({
-              recording: false,
-              restarting: false,
-              tabRecordedID: null,
-              memoryError: true,
-            });
-            sendStopRecording();
-          }
-        });
-      } catch (err) {
-        sendRecordingError(
-          "Failed to check available memory: " + JSON.stringify(err),
-        );
       }
     };
 
@@ -518,9 +543,15 @@ const Recorder: React.FC = () => {
         };
       }
     }
-  }
+  }, [
+    initializeUpload,
+    finalizeUpload,
+    drainQueue,
+    waitForDrain,
+    uploaderRef.current,
+  ]);
 
-  async function stopRecording(): Promise<void> {
+  const stopRecording = useCallback(async (): Promise<void> => {
     isFinishing.current = true;
     if (recorder.current) {
       try {
@@ -536,302 +567,309 @@ const Recorder: React.FC = () => {
     }
 
     if (liveStream.current) {
-      liveStream.current.getTracks().forEach((t) => t.stop());
+      liveStream.current.getTracks().forEach((t) => {
+        t.stop();
+      });
       liveStream.current = null;
     }
 
     if (helperVideoStream.current) {
-      helperVideoStream.current.getTracks().forEach((t) => t.stop());
+      helperVideoStream.current.getTracks().forEach((t) => {
+        t.stop();
+      });
       helperVideoStream.current = null;
     }
 
     if (helperAudioStream.current) {
-      helperAudioStream.current.getTracks().forEach((t) => t.stop());
+      helperAudioStream.current.getTracks().forEach((t) => {
+        t.stop();
+      });
       helperAudioStream.current = null;
     }
-  }
+  }, []);
 
-  const dismissRecording = async (): Promise<void> => {
+  const dismissRecording = useCallback(async (): Promise<void> => {
     isRestarting.current = true;
     if (recorder.current !== null) {
       recorder.current.stop();
       recorder.current = null;
     }
     window.close();
-  };
+  }, []);
 
-  const restartRecording = async (): Promise<void> => {
+  const restartRecording = useCallback(async (): Promise<void> => {
     isRestarting.current = true;
     if (recorder.current !== null) {
       recorder.current.stop();
     }
     recorder.current = null;
     chrome.runtime.sendMessage({ type: "reset-active-tab-restart" });
-  };
+  }, []);
 
-  async function startAudioStream(id: string): Promise<MediaStream | null> {
-    const audioStreamOptions: MediaStreamConstraints = {
-      audio: {
-        deviceId: {
-          exact: id,
+  const startAudioStream = useCallback(
+    async (id: string): Promise<MediaStream | null> => {
+      const audioStreamOptions: MediaStreamConstraints = {
+        audio: {
+          deviceId: {
+            exact: id,
+          },
         },
-      },
-    };
+      };
 
-    const result = await navigator.mediaDevices
-      .getUserMedia(audioStreamOptions)
-      .then((stream) => {
-        return stream;
-      })
-      .catch((err) => {
-        // Try again without the device ID
-        const audioStreamOptions: MediaStreamConstraints = {
-          audio: true,
-        };
+      const result = await navigator.mediaDevices
+        .getUserMedia(audioStreamOptions)
+        .then((stream) => {
+          return stream;
+        })
+        .catch(async () => {
+          // Try again without the device ID
+          const audioStreamOptions: MediaStreamConstraints = {
+            audio: true,
+          };
 
-        return navigator.mediaDevices
-          .getUserMedia(audioStreamOptions)
-          .then((stream) => {
+          try {
+            const stream =
+              await navigator.mediaDevices.getUserMedia(audioStreamOptions);
             return stream;
-          })
-          .catch((err) => {
+          } catch {
             return null;
-          });
-      });
+          }
+        });
 
-    return result;
-  }
+      return result;
+    },
+    [],
+  );
 
   // Set audio input volume
-  function setAudioInputVolume(volume: number): void {
+  const setAudioInputVolume = useCallback((volume: number): void => {
     if (audioInputGain.current) {
       audioInputGain.current.gain.value = volume;
     }
-  }
+  }, []);
 
   // Set audio output volume
-  function setAudioOutputVolume(volume: number): void {
+  const setAudioOutputVolume = useCallback((volume: number): void => {
     if (audioOutputGain.current) {
       audioOutputGain.current.gain.value = volume;
     }
-  }
+  }, []);
 
-  const setMic = async (result: { active: boolean }): Promise<void> => {
-    if (helperAudioStream.current != null) {
-      if (result.active) {
-        setAudioInputVolume(1);
+  const setMic = useCallback(
+    async (result: { active: boolean }): Promise<void> => {
+      if (helperAudioStream.current != null) {
+        if (result.active) {
+          setAudioInputVolume(1);
+        } else {
+          setAudioInputVolume(0);
+        }
       } else {
-        setAudioInputVolume(0);
+        // No microphone available
       }
-    } else {
-      // No microphone available
-    }
-  };
+    },
+    [setAudioInputVolume],
+  );
 
-  async function startStream(
-    data: StreamingData,
-    id: string | null,
-    options: DesktopCaptureOptions | null,
-    permissions2: PermissionStatus,
-  ): Promise<void> {
-    // Get quality value
-    const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
+  const startStream = useCallback(
+    async (data: StreamingData, id: string | null): Promise<void> => {
+      // Get quality value
+      const { qualityValue } = await chrome.storage.local.get(["qualityValue"]);
 
-    const { width, height } = getResolutionForQuality(qualityValue as string);
+      const { width, height } = getResolutionForQuality(qualityValue as string);
 
-    const { fpsValue } = await chrome.storage.local.get(["fpsValue"]);
-    let fps = parseInt(fpsValue as string);
+      const { fpsValue } = await chrome.storage.local.get(["fpsValue"]);
+      let fps = parseInt(fpsValue as string, 10);
 
-    // Check if fps is a number
-    if (isNaN(fps)) {
-      fps = 30;
-    }
+      // Check if fps is a number
+      if (Number.isNaN(fps)) {
+        fps = 30;
+      }
 
-    // Save the helper streams
-    const constraints = {
-      audio: {
-        mandatory: {
-          chromeMediaSource: isTab.current ? "tab" : "desktop",
-          chromeMediaSourceId: id,
+      // Save the helper streams
+      const constraints = {
+        audio: {
+          mandatory: {
+            chromeMediaSource: isTab.current ? "tab" : "desktop",
+            chromeMediaSourceId: id,
+          },
         },
-      },
-      video: {
-        mandatory: {
-          chromeMediaSource: isTab.current ? "tab" : "desktop",
-          chromeMediaSourceId: id,
-          maxWidth: width,
-          maxHeight: height,
-          maxFrameRate: fps,
+        video: {
+          mandatory: {
+            chromeMediaSource: isTab.current ? "tab" : "desktop",
+            chromeMediaSourceId: id,
+            maxWidth: width,
+            maxHeight: height,
+            maxFrameRate: fps,
+          },
         },
-      },
-    };
+      };
 
-    let stream: MediaStream;
+      let stream: MediaStream;
 
-    try {
-      stream = await navigator.mediaDevices.getUserMedia(
-        constraints as MediaStreamConstraints,
-      );
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(
+          constraints as MediaStreamConstraints,
+        );
 
-      // Check if the stream actually has data in it
-      if (stream.getVideoTracks().length === 0) {
-        sendRecordingError("No video tracks available");
+        // Check if the stream actually has data in it
+        if (stream.getVideoTracks().length === 0) {
+          sendRecordingError("No video tracks available");
+          return;
+        }
+      } catch (err) {
+        sendRecordingError(`Failed to get user media: ${JSON.stringify(err)}`);
         return;
       }
-    } catch (err) {
-      sendRecordingError("Failed to get user media: " + JSON.stringify(err));
-      return;
-    }
 
-    if (isTab.current) {
-      // Continue to play the captured audio to the user.
-      const output = new AudioContext();
-      const source = output.createMediaStreamSource(stream);
-      source.connect(output.destination);
-    }
+      if (isTab.current) {
+        // Continue to play the captured audio to the user.
+        const output = new AudioContext();
+        const source = output.createMediaStreamSource(stream);
+        source.connect(output.destination);
+      }
 
-    helperVideoStream.current = stream;
+      helperVideoStream.current = stream;
 
-    // Get actual recording resolution from video track settings
-    const videoTrack = stream.getVideoTracks()[0];
-    const settings = videoTrack.getSettings();
-    const actualWidth = settings.width || width;
-    const actualHeight = settings.height || height;
+      // Get actual recording resolution from video track settings
+      const videoTrack = stream.getVideoTracks()[0];
+      const settings = videoTrack.getSettings();
+      const actualWidth = settings.width || width;
+      const actualHeight = settings.height || height;
 
-    // Save recording metadata to Chrome Storage for clip coordinate scaling
-    chrome.storage.local.set({
-      recordingVideoWidth: actualWidth,
-      recordingVideoHeight: actualHeight,
-      recordingTabWidth: window.innerWidth,
-      recordingTabHeight: window.innerHeight,
-      recordingDevicePixelRatio: window.devicePixelRatio || 1,
-    });
+      // Save recording metadata to Chrome Storage for clip coordinate scaling
+      chrome.storage.local.set({
+        recordingVideoWidth: actualWidth,
+        recordingVideoHeight: actualHeight,
+        recordingTabWidth: window.innerWidth,
+        recordingTabHeight: window.innerHeight,
+        recordingDevicePixelRatio: window.devicePixelRatio || 1,
+      });
 
-    console.log("[Recording] Video settings saved:", {
-      actualWidth,
-      actualHeight,
-      tabWidth: window.innerWidth,
-      tabHeight: window.innerHeight,
-      devicePixelRatio: window.devicePixelRatio || 1,
-    });
+      console.log("[Recording] Video settings saved:", {
+        actualWidth,
+        actualHeight,
+        tabWidth: window.innerWidth,
+        tabHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio || 1,
+      });
 
-    const surface = settings.displaySurface;
-    chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
+      const surface = settings.displaySurface;
+      chrome.runtime.sendMessage({ type: "set-surface", surface: surface });
 
-    // Create an audio context, destination, and stream
-    aCtx.current = new AudioContext();
-    destination.current = aCtx.current.createMediaStreamDestination();
-    liveStream.current = new MediaStream();
+      // Create an audio context, destination, and stream
+      aCtx.current = new AudioContext();
+      destination.current = aCtx.current.createMediaStreamDestination();
+      liveStream.current = new MediaStream();
 
-    const micstream = await startAudioStream(data.defaultAudioInput);
-    helperAudioStream.current = micstream;
+      const micstream = await startAudioStream(data.defaultAudioInput);
+      helperAudioStream.current = micstream;
 
-    // Check if micstream has an audio track
-    if (
-      helperAudioStream.current != null &&
-      helperAudioStream.current.getAudioTracks().length > 0
-    ) {
-      audioInputGain.current = aCtx.current.createGain();
-      audioInputSource.current = aCtx.current.createMediaStreamSource(
-        helperAudioStream.current,
-      );
-      audioInputSource.current
-        .connect(audioInputGain.current)
-        .connect(destination.current);
-    } else {
-      // No microphone available
-    }
-
-    if (helperAudioStream.current != null && !data.micActive) {
-      setAudioInputVolume(0);
-    }
-
-    // Check if stream has an audio track
-    if (
-      helperVideoStream.current &&
-      helperVideoStream.current.getAudioTracks().length > 0
-    ) {
-      audioOutputGain.current = aCtx.current.createGain();
-      audioOutputSource.current = aCtx.current.createMediaStreamSource(
-        helperVideoStream.current,
-      );
-      audioOutputSource.current
-        .connect(audioOutputGain.current)
-        .connect(destination.current);
-    } else {
-      // No system audio available
-    }
-
-    // Add the tracks to the stream
-    if (helperVideoStream.current) {
-      liveStream.current.addTrack(
-        helperVideoStream.current.getVideoTracks()[0],
-      );
+      // Check if micstream has an audio track
       if (
-        (helperAudioStream.current != null &&
-          helperAudioStream.current.getAudioTracks().length > 0) ||
+        helperAudioStream.current != null &&
+        helperAudioStream.current.getAudioTracks().length > 0
+      ) {
+        audioInputGain.current = aCtx.current.createGain();
+        audioInputSource.current = aCtx.current.createMediaStreamSource(
+          helperAudioStream.current,
+        );
+        audioInputSource.current
+          .connect(audioInputGain.current)
+          .connect(destination.current);
+      } else {
+        // No microphone available
+      }
+
+      if (helperAudioStream.current != null && !data.micActive) {
+        setAudioInputVolume(0);
+      }
+
+      // Check if stream has an audio track
+      if (
+        helperVideoStream.current &&
         helperVideoStream.current.getAudioTracks().length > 0
       ) {
-        liveStream.current.addTrack(
-          destination.current.stream.getAudioTracks()[0],
+        audioOutputGain.current = aCtx.current.createGain();
+        audioOutputSource.current = aCtx.current.createMediaStreamSource(
+          helperVideoStream.current,
         );
+        audioOutputSource.current
+          .connect(audioOutputGain.current)
+          .connect(destination.current);
+      } else {
+        // No system audio available
       }
-    }
 
-    // Send message to go back to the previously active tab
-    setStarted(true);
+      // Add the tracks to the stream
+      if (helperVideoStream.current) {
+        liveStream.current.addTrack(
+          helperVideoStream.current.getVideoTracks()[0],
+        );
+        if (
+          (helperAudioStream.current != null &&
+            helperAudioStream.current.getAudioTracks().length > 0) ||
+          helperVideoStream.current.getAudioTracks().length > 0
+        ) {
+          liveStream.current.addTrack(
+            destination.current.stream.getAudioTracks()[0],
+          );
+        }
+      }
 
-    chrome.runtime.sendMessage({ type: "reset-active-tab" });
-  }
+      // Send message to go back to the previously active tab
+      setStarted(true);
 
-  async function startStreaming(data: StreamingData): Promise<void> {
-    // Check user permissions for microphone
-    const permissions2 = await navigator.permissions.query({
-      name: "microphone" as PermissionName,
-    });
+      chrome.runtime.sendMessage({ type: "reset-active-tab" });
+    },
+    [startAudioStream, setAudioInputVolume],
+  );
 
-    try {
-      if (!isTab.current) {
-        let captureTypes = [
-          "screen",
-          "window",
-          "tab",
-          "audio",
-        ] as chrome.desktopCapture.DesktopCaptureSourceType[];
-        if (tabPreferred.current) {
-          captureTypes = [
-            "tab",
+  const startStreaming = useCallback(
+    async (data: StreamingData): Promise<void> => {
+      try {
+        if (!isTab.current) {
+          let captureTypes = [
             "screen",
             "window",
+            "tab",
             "audio",
           ] as chrome.desktopCapture.DesktopCaptureSourceType[];
+          if (tabPreferred.current) {
+            captureTypes = [
+              "tab",
+              "screen",
+              "window",
+              "audio",
+            ] as chrome.desktopCapture.DesktopCaptureSourceType[];
+          }
+          chrome.desktopCapture.chooseDesktopMedia(
+            captureTypes,
+            null,
+            (streamId: string) => {
+              if (
+                streamId === undefined ||
+                streamId === null ||
+                streamId === ""
+              ) {
+                sendRecordingError("User cancelled the modal", true);
+                return;
+              } else {
+                startStream(data, streamId);
+              }
+            },
+          );
+        } else {
+          startStream(data, tabID.current);
         }
-        chrome.desktopCapture.chooseDesktopMedia(
-          captureTypes,
-          null,
-          (streamId: string, options: DesktopCaptureOptions) => {
-            if (
-              streamId === undefined ||
-              streamId === null ||
-              streamId === ""
-            ) {
-              sendRecordingError("User cancelled the modal", true);
-              return;
-            } else {
-              startStream(data, streamId, options, permissions2);
-            }
-          },
+      } catch (err) {
+        sendRecordingError(
+          `Failed to start streaming: ${JSON.stringify(err)}`,
+          true,
         );
-      } else {
-        startStream(data, tabID.current, null, permissions2);
       }
-    } catch (err) {
-      sendRecordingError(
-        "Failed to start streaming: " + JSON.stringify(err),
-        true,
-      );
-    }
-  }
+    },
+    [startStream],
+  );
 
   // Check if trying to record from Playground
   useEffect(() => {
@@ -840,18 +878,18 @@ const Recorder: React.FC = () => {
     });
   }, []);
 
-  const getStreamID = async (id: number): Promise<void> => {
+  const getStreamID = useCallback(async (id: number): Promise<void> => {
     const streamId = await chrome.tabCapture.getMediaStreamId({
       targetTabId: id,
     });
     tabID.current = streamId;
-  };
+  }, []);
 
   const onMessage = useCallback(
     (
       request: RecorderMessage,
-      sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: unknown) => void,
+      _sender: chrome.runtime.MessageSender,
+      _sendResponse: (response?: unknown) => void,
     ): void => {
       if (request.type === "loaded") {
         // FLAG: I don't know why this was a false check before...
@@ -886,7 +924,16 @@ const Recorder: React.FC = () => {
         dismissRecording();
       }
     },
-    [],
+    [
+      getStreamID,
+      startStreaming,
+      startRecording,
+      restartRecording,
+      stopRecording,
+      setMic,
+      setAudioOutputVolume,
+      dismissRecording,
+    ],
   );
 
   useEffect(() => {
@@ -897,6 +944,85 @@ const Recorder: React.FC = () => {
       chrome.runtime.onMessage.removeListener(onMessage);
     };
   }, [onMessage]);
+
+  // beforeunload handler for recorder tab close protection (E8)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // 録画中かつ終了処理中でない場合のみ実行
+      if (recorder.current && !isFinishing.current) {
+        // 1. ブラウザの確認ダイアログを表示
+        e.preventDefault();
+        e.returnValue = ""; // Chrome の警告文言
+
+        console.warn("[Recorder] Tab is being closed during recording");
+
+        try {
+          // 2. MediaRecorder の停止（同期的に実行可能）
+          if (recorder.current) {
+            recorder.current.requestData(); // 最後のチャンクを取得
+            recorder.current.stop();
+          }
+
+          // 3. 全メディアストリームの停止
+          liveStream.current?.getTracks().forEach((t) => {
+            t.stop();
+          });
+          helperVideoStream.current?.getTracks().forEach((t) => {
+            t.stop();
+          });
+          helperAudioStream.current?.getTracks().forEach((t) => {
+            t.stop();
+          });
+
+          // 4. InstantUpload の abort（ベストエフォート）
+          if (uploaderRef.current) {
+            const apiBaseUrl = getWebAppUrl();
+            const uploadData = {
+              uploadId: uploaderRef.current.uploadId,
+              key: uploaderRef.current.key,
+            };
+
+            // navigator.sendBeacon() を使用（非同期処理が完了しない制約を回避）
+            // 注: 認証トークンは送信できないため、Background Service Worker に abort を任せる
+            const abortEndpoint = `${apiBaseUrl}/api/s3/multipart/abort`;
+            const blob = new Blob([JSON.stringify(uploadData)], {
+              type: "application/json",
+            });
+
+            // ⚠️ sendBeacon は成功を保証しない（ベストエフォート）
+            const sent = navigator.sendBeacon(abortEndpoint, blob);
+            console.log(`[Recorder] Beacon abort sent: ${sent}`);
+
+            // Background Service Worker にも通知（こちらが主要な abort 経路）
+            chrome.runtime.sendMessage({
+              type: "recorder-tab-closing",
+              uploadId: uploadData.uploadId,
+              key: uploadData.key,
+            });
+          }
+
+          // 5. Chrome Storage に状態を保存（同期API）
+          chrome.storage.local.set({
+            recording: false,
+            instantUploadStatus: "aborted",
+            abortReason: "tab_closed",
+            tabClosedAt: Date.now(),
+          });
+
+          console.log("[Recorder] Cleanup completed in beforeunload");
+        } catch (error) {
+          console.error("[Recorder] beforeunload cleanup failed:", error);
+        }
+      }
+    };
+
+    // beforeunload イベントリスナーを登録
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [uploaderRef.current]); // ref オブジェクトは不変なので依存配列は空で良い
 
   return (
     <RecorderUI

@@ -17,6 +17,7 @@ import { startClickTracking } from "./cursor/trackClicks";
 import Modal from "./modal/Modal";
 import PopupContainer from "./popup/PopupContainer";
 import Region from "./region/Region";
+import Toast from "./toolbar/components/Toast";
 import Toolbar from "./toolbar/Toolbar";
 import BlurTool from "./utils/BlurTool";
 import CursorModes from "./utils/CursorModes";
@@ -50,7 +51,7 @@ const Wrapper: React.FC = () => {
 
     setContentState((prevContentState) => ({
       ...prevContentState,
-      parentRef: parentRef.current!,
+      parentRef: parentRef.current,
     }));
   }, [parentRef.current]);
 
@@ -58,7 +59,7 @@ const Wrapper: React.FC = () => {
     if (!shadowRef.current) return;
     setContentState((prevContentState) => ({
       ...prevContentState,
-      shadowRef: shadowRef.current!,
+      shadowRef: shadowRef.current,
     }));
   }, [shadowRef.current]);
 
@@ -66,7 +67,7 @@ const Wrapper: React.FC = () => {
     if (!regionCaptureRef.current) return;
     setContentState((prevContentState) => ({
       ...prevContentState,
-      regionCaptureRef: regionCaptureRef.current!,
+      regionCaptureRef: regionCaptureRef.current,
     }));
   }, [regionCaptureRef.current]);
 
@@ -236,6 +237,21 @@ const Wrapper: React.FC = () => {
       ) : (
         <div></div>
       )}
+      {/* Toast を常にレンダリング（エラー通知などのため） */}
+      <root.div
+        className="toast-container"
+        id="screenity-toast-container"
+        style={{
+          position: "fixed",
+          zIndex: 9999999999,
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ pointerEvents: "auto" }}>
+          <Toast />
+        </div>
+        <style type="text/css">{styles}</style>
+      </root.div>
     </div>
   );
 };

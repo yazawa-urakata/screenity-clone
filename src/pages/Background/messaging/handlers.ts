@@ -824,4 +824,34 @@ export const setupHandlers = (): void => {
       return { success: true };
     },
   );
+
+  // show-toast メッセージハンドラー
+  // Recorder.tsx や他のコンポーネントから送信された toast 通知を
+  // activeTab の Content Script に転送する
+  registerMessage("show-toast", async (message) => {
+    console.log("[Background] show-toast received:", message);
+
+    const msg = message as unknown as {
+      title?: string;
+      message?: string;
+      duration?: number;
+    };
+
+    const { activeTab } = await chrome.storage.local.get(["activeTab"]);
+    console.log("[Background] activeTab:", activeTab);
+
+    if (activeTab) {
+      console.log("[Background] Sending toast to activeTab:", activeTab);
+      sendMessageTab(activeTab as number, {
+        type: "show-toast",
+        title: msg.title,
+        message: msg.message,
+        duration: msg.duration || 5000,
+      }).catch((err) => {
+        console.error("[show-toast] Failed to send toast to active tab:", err);
+      });
+    } else {
+      console.warn("[show-toast] No activeTab found in storage");
+    }
+  });
 };

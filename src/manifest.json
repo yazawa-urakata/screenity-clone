@@ -93,7 +93,8 @@
     "tabs",
     "tabCapture",
     "scripting",
-    "system.display"
+    "system.display",
+    "alarms"
   ],
   "storage": {
     "managed_schema": "schema.json"
@@ -101,10 +102,5 @@
   "externally_connectable": {
     "matches": ["https://app.screenity.io/*"]
   },
-  "optional_permissions": [
-    "offscreen",
-    "desktopCapture",
-    "alarms",
-    "clipboardWrite"
-  ]
+  "optional_permissions": ["offscreen", "desktopCapture", "clipboardWrite"]
 }

@@ -18,6 +18,14 @@ const Countdown: React.FC = () => {
   const [isRotating, setIsRotating] = useState(false);
 
   const timers = useRef<Timer[]>([]);
+  const contentStateRef = useRef(contentState);
+  const setContentStateRef = useRef(setContentState);
+
+  // Update refs when values change
+  useEffect(() => {
+    contentStateRef.current = contentState;
+    setContentStateRef.current = setContentState;
+  }, [contentState, setContentState]);
 
   // Cleanup function to clear all timers
   const cleanupTimers = (): void => {
@@ -46,7 +54,7 @@ const Countdown: React.FC = () => {
   useEffect(() => {
     if (contentState.countdownActive && count > 1) {
       const intervalId = setInterval(() => {
-        if (!contentState.countdownCancelled) {
+        if (!contentStateRef.current.countdownCancelled) {
           setCount((prev) => prev - 1);
         }
       }, 1000);
@@ -59,9 +67,12 @@ const Countdown: React.FC = () => {
       };
     } else if (contentState.countdownActive && count === 1) {
       const timeoutId = setTimeout(() => {
-        if (!contentState.countdownCancelled && contentState.countdownActive) {
-          contentState.startRecordingAfterCountdown();
-          setContentState((prev) => ({
+        if (
+          !contentStateRef.current.countdownCancelled &&
+          contentStateRef.current.countdownActive
+        ) {
+          contentStateRef.current.startRecordingAfterCountdown();
+          setContentStateRef.current((prev) => ({
             ...prev,
             isCountdownVisible: false,
             countdownActive: false,
@@ -76,24 +87,24 @@ const Countdown: React.FC = () => {
         timers.current = timers.current.filter((t) => t.id !== timeoutId);
       };
     }
-  }, [contentState.countdownActive, count, setContentState, contentState]);
+  }, [contentState.countdownActive, count]);
 
   // Start animation when countdown becomes visible
   useEffect(() => {
     if (contentState.isCountdownVisible) {
-      contentState.resetCountdown(); // Reset cancelled state
+      contentStateRef.current.resetCountdown(); // Reset cancelled state
       setCount(COUNTDOWN_TIME);
       setIsTransforming(true);
 
       const rotateId = setTimeout(() => {
-        if (!contentState.countdownCancelled) {
+        if (!contentStateRef.current.countdownCancelled) {
           setIsRotating(true);
         }
       }, 10);
 
       const transformId = setTimeout(
         () => {
-          if (!contentState.countdownCancelled) {
+          if (!contentStateRef.current.countdownCancelled) {
             setIsTransforming(false);
           }
         },
@@ -116,20 +127,29 @@ const Countdown: React.FC = () => {
   }, [contentState.isCountdownVisible]);
 
   // Cleanup on unmount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: unmount時のクリーンアップのみ
   useEffect(() => {
     return cleanupTimers;
   }, []);
 
   return (
-    <div
+    <button
+      type="button"
       className={`countdown ${
         contentState.countdownActive ? "recording-countdown" : ""
       }`}
       onClick={handleCancel}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCancel();
+        }
+      }}
     >
       {contentState.isCountdownVisible && (
         <div>
           <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+            <title>カウントダウンアニメーション</title>
             <defs>
               <filter id="goo">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="10" />
@@ -171,7 +191,7 @@ const Countdown: React.FC = () => {
           <div className="countdown-overlay"></div>
         </div>
       )}
-    </div>
+    </button>
   );
 };
 

@@ -40,29 +40,29 @@ export interface ContentStateType {
   dismissRecording: () => void;
   startStreaming: () => Promise<void>;
   openModal:
-  | ((
-    title: string,
-    description: string,
-    action: string | null,
-    cancel: string | null,
-    actionCallback: () => void,
-    cancelCallback: () => void,
-    image?: string | null | false,
-    learn?: string | false,
-    learnURL?: string | (() => void) | false,
-    showX?: boolean,
-    middle?: boolean,
-    noShowAgainLabel?: string,
-    noShowAgainCallback?: () => void,
-  ) => void)
-  | null;
+    | ((
+        title: string,
+        description: string,
+        action: string | null,
+        cancel: string | null,
+        actionCallback: () => void,
+        cancelCallback: () => void,
+        image?: string | null | false,
+        learn?: string | false,
+        learnURL?: string | (() => void) | false,
+        showX?: boolean,
+        middle?: boolean,
+        noShowAgainLabel?: string,
+        noShowAgainCallback?: () => void,
+      ) => void)
+    | null;
   openToast:
-  | ((
-    title: string,
-    action?: (() => void) | number,
-    durationMs?: number,
-  ) => void)
-  | null;
+    | ((
+        title: string,
+        action?: (() => void) | number,
+        durationMs?: number,
+      ) => void)
+    | null;
   recordingToScene?: boolean;
   recordingProjectTitle?: string;
   timeWarning: boolean;
@@ -134,13 +134,13 @@ export interface ContentStateType {
   quality: string;
   systemAudio: boolean;
   openWarning:
-  | ((
-    title: string,
-    description: string,
-    icon: string,
-    duration: number,
-  ) => void)
-  | false;
+    | ((
+        title: string,
+        description: string,
+        icon: string,
+        duration: number,
+      ) => void)
+    | false;
   hasOpenedBefore: boolean;
   qualityValue: string;
   fpsValue: string;
@@ -220,19 +220,11 @@ export let setContentState: (
   updater:
     | ((prev: ContentStateType) => Partial<ContentStateType>)
     | ContentStateType,
-) => void = () => { };
-export let setTimer: React.Dispatch<React.SetStateAction<number>> = () => { };
+) => void = () => {};
+export let setTimer: React.Dispatch<React.SetStateAction<number>> = () => {};
 
 interface ContentStateProps {
   children: ReactNode;
-}
-
-interface AuthStatusResult {
-  authenticated: boolean;
-  user: { name?: string; email?: string } | null;
-  subscribed: boolean;
-  hasSubscribedBefore: boolean;
-  proSubscription: { deletionAt?: string; endsAt?: string } | null;
 }
 
 interface StorageQuotaResponse {
@@ -271,20 +263,20 @@ const ContentState: FC<ContentStateProps> = (props) => {
    * 初期化時とログイン/ログアウト時に呼び出される
    * 認証チェックは常に実行される（CLOUD_FEATURES_ENABLEDに依存しない）
    */
-  const verifyUser = async (): Promise<void> => {
+  const verifyUser = useCallback(async (): Promise<void> => {
     try {
       const result = await checkAuthStatus();
 
-      setContentState(
-        (prev) =>
-          ({
-            ...prev,
-            isLoggedIn: result.authenticated,
-            screenityUser: result.user,
-            isSubscribed: result.subscribed,
-            proSubscription: result.proSubscription,
-          }) as any,
-      );
+      setContentState((prev) => ({
+        ...prev,
+        isLoggedIn: result.authenticated,
+        screenityUser: result.user as { name?: string; email?: string } | null,
+        isSubscribed: result.subscribed,
+        proSubscription: result.proSubscription as {
+          deletionAt?: string;
+          endsAt?: string;
+        } | null,
+      }));
 
       if (result.authenticated) {
         console.log("✅ Supabase authentication verified:", result.user);
@@ -302,18 +294,15 @@ const ContentState: FC<ContentStateProps> = (props) => {
     } catch (error) {
       console.error("❌ Failed to verify Supabase auth:", error);
       // 認証失敗時はログアウト状態として扱う
-      setContentState(
-        (prev) =>
-          ({
-            ...prev,
-            isLoggedIn: false,
-            screenityUser: null,
-            isSubscribed: false,
-            proSubscription: null,
-          }) as any,
-      );
+      setContentState((prev) => ({
+        ...prev,
+        isLoggedIn: false,
+        screenityUser: null,
+        isSubscribed: false,
+        proSubscription: null,
+      }));
     }
-  };
+  }, []);
 
   useEffect(() => {
     verifyUser();
@@ -329,20 +318,20 @@ const ContentState: FC<ContentStateProps> = (props) => {
         }));
       },
     );
-  }, []);
+  }, [verifyUser]);
 
   useEffect(() => {
     const locale = chrome.i18n.getMessage("@@ui_locale");
     if (!locale.includes("en")) {
       setURL(
         "https://translate.google.com/translate?sl=en&tl=" +
-        locale +
-        "&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1",
+          locale +
+          "&u=https://help.screenity.io/getting-started/77KizPC8MHVGfpKpqdux9D/why-does-screenity-ask-for-permissions/9AAE8zJ6iiUtCAtjn4SUT1",
       );
       setURL2(
         "https://translate.google.com/translate?sl=en&tl=" +
-        locale +
-        "&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9",
+          locale +
+          "&u=https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/how-to-grant-screenity-permission-to-record-your-camera-and-microphone/x6U69TnrbMjy5CQ96Er2E9",
       );
     }
   }, []);
@@ -474,7 +463,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (!dismiss && currentState.openToast) {
         currentState.openToast(
           chrome.i18n.getMessage("pausedRecordingToast"),
-          () => { },
+          () => {},
         );
       }
     }, 100);
@@ -525,7 +514,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (contentStateRef.current?.openToast) {
         contentStateRef.current.openToast(
           "先に録画を開始してください",
-          () => { },
+          () => {},
         );
       }
       return;
@@ -537,7 +526,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       if (contentStateRef.current.openToast) {
         contentStateRef.current.openToast(
           `最大${MAX_CLIPS}個までクリップを記録できます`,
-          () => { },
+          () => {},
         );
       }
       return;
@@ -607,10 +596,10 @@ const ContentState: FC<ContentStateProps> = (props) => {
 
       // 現在のRegion座標をclipCropとして保存
       const clipCrop = {
-        x: contentStateRef.current!.regionX,
-        y: contentStateRef.current!.regionY,
-        width: contentStateRef.current!.regionWidth,
-        height: contentStateRef.current!.regionHeight,
+        x: contentStateRef.current.regionX,
+        y: contentStateRef.current.regionY,
+        width: contentStateRef.current.regionWidth,
+        height: contentStateRef.current.regionHeight,
       };
 
       // クリップ録画モードに移行
@@ -836,7 +825,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
               }
 
               // 応答の内容を確認
-              if (response && response.success) {
+              if (response?.success) {
                 console.log(
                   "[ClipRecording] ✅ クリップメタデータが正常にChrome Storageに保存されました",
                   {
@@ -1003,7 +992,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           () => {
             window.open(process.env.SCREENITY_APP_BASE, "_blank");
           },
-          () => { },
+          () => {},
         );
       } else if (
         !success &&
@@ -1041,7 +1030,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           async () => {
             window.location.reload(); // or retry logic
           },
-          () => { },
+          () => {},
         );
       }
 
@@ -1072,7 +1061,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           await checkChromeCapturePermissionsSW();
           startStreaming(); // Retry streaming
         },
-        () => { },
+        () => {},
         null,
         chrome.i18n.getMessage("learnMoreDot"),
         URL,
@@ -1097,7 +1086,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     ) {
       if (typeof currentState.openModal === "function") {
         let clear: string | null = null;
-        let clearAction = (): void => { };
+        let clearAction = (): void => {};
         const locale = chrome.i18n.getMessage("@@ui_locale");
         let helpURL =
           "https://help.screenity.io/troubleshooting/9Jy5RGjNrBB42hqUdREQ7W/what-does-%E2%80%9Cmemory-limit-reached%E2%80%9D-mean-when-recording/8WkwHbt3puuXunYqQnyPcb";
@@ -1125,7 +1114,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
           clear,
           chrome.i18n.getMessage("permissionsModalDismiss"),
           clearAction,
-          () => { },
+          () => {},
           null,
           chrome.i18n.getMessage("learnMoreDot"),
           helpURL,
@@ -1176,7 +1165,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
         () => {
           chrome.runtime.sendMessage({
             type: "desktop-capture",
-            region: currentState.customRegion ? true : false,
+            region: !!currentState.customRegion,
             customRegion: currentState.customRegion,
             offscreenRecording: currentState.offscreenRecording,
           });
@@ -1212,7 +1201,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     } else {
       chrome.runtime.sendMessage({
         type: "desktop-capture",
-        region: currentState.customRegion ? true : false,
+        region: !!currentState.customRegion,
         customRegion: currentState.customRegion,
         offscreenRecording: currentState.offscreenRecording,
       });
@@ -1278,60 +1267,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     microphonePermission?: boolean;
   }
 
-  const handleDevicePermissions = (data: DevicePermissionsData): void => {
-    const currentState = contentStateRef.current;
-    if (!currentState) return;
-
-    if (data && data !== undefined && data.success) {
-      // I need to convert to a regular array of objects
-      const audioInput = data.audioinput || [];
-      const microphonePermission = data.microphonePermission || false;
-
-      setContentState((prevContentState) => ({
-        ...prevContentState,
-        audioInput: audioInput,
-        microphonePermission: microphonePermission,
-      }));
-
-      // Check if first time setting devices
-      if (!currentState.setDevices && audioInput.length > 0) {
-        setContentState((prevContentState) => ({
-          ...prevContentState,
-          defaultAudioInput: audioInput[0].deviceId,
-          micActive: true,
-          setDevices: true,
-        }));
-        chrome.storage.local.set({
-          defaultAudioInput: audioInput[0].deviceId,
-          micActive: true,
-          setDevices: true,
-        });
-      }
-    } else {
-      setContentState((prevContentState) => ({
-        ...prevContentState,
-        microphonePermission: false,
-      }));
-      if (currentState.askForPermissions && currentState.openModal) {
-        currentState.openModal(
-          chrome.i18n.getMessage("permissionsModalTitle"),
-          chrome.i18n.getMessage("permissionsModalDescription"),
-          chrome.i18n.getMessage("permissionsModalDismiss"),
-          chrome.i18n.getMessage("permissionsModalNoShowAgain"),
-          () => { },
-          () => {
-            noMorePermissions();
-          },
-          chrome.runtime.getURL("assets/helper/permissions.webp"),
-          chrome.i18n.getMessage("learnMoreDot"),
-          URL2,
-          true,
-          false,
-        );
-      }
-    }
-  };
-
   const noMorePermissions = useCallback((): void => {
     setContentState((prevContentState) => ({
       ...prevContentState,
@@ -1339,6 +1274,63 @@ const ContentState: FC<ContentStateProps> = (props) => {
     }));
     chrome.storage.local.set({ askForPermissions: false });
   }, []);
+
+  const handleDevicePermissions = useCallback(
+    (data: DevicePermissionsData): void => {
+      const currentState = contentStateRef.current;
+      if (!currentState) return;
+
+      if (data?.success) {
+        // I need to convert to a regular array of objects
+        const audioInput = data.audioinput || [];
+        const microphonePermission = data.microphonePermission || false;
+
+        setContentState((prevContentState) => ({
+          ...prevContentState,
+          audioInput: audioInput,
+          microphonePermission: microphonePermission,
+        }));
+
+        // Check if first time setting devices
+        if (!currentState.setDevices && audioInput.length > 0) {
+          setContentState((prevContentState) => ({
+            ...prevContentState,
+            defaultAudioInput: audioInput[0].deviceId,
+            micActive: true,
+            setDevices: true,
+          }));
+          chrome.storage.local.set({
+            defaultAudioInput: audioInput[0].deviceId,
+            micActive: true,
+            setDevices: true,
+          });
+        }
+      } else {
+        setContentState((prevContentState) => ({
+          ...prevContentState,
+          microphonePermission: false,
+        }));
+        if (currentState.askForPermissions && currentState.openModal) {
+          currentState.openModal(
+            chrome.i18n.getMessage("permissionsModalTitle"),
+            chrome.i18n.getMessage("permissionsModalDescription"),
+            chrome.i18n.getMessage("permissionsModalDismiss"),
+            chrome.i18n.getMessage("permissionsModalNoShowAgain"),
+            () => {},
+            () => {
+              noMorePermissions();
+            },
+            chrome.runtime.getURL("assets/helper/permissions.webp"),
+            chrome.i18n.getMessage("learnMoreDot"),
+            URL2,
+            true,
+            false,
+          );
+        }
+      }
+    },
+    [URL2, noMorePermissions],
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent): void => {
@@ -1357,7 +1349,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [URL2]);
+  }, [handleDevicePermissions]);
 
   const playBeepSound = (): void => {
     const audio = new Audio(chrome.runtime.getURL("/assets/sounds/beep2.mp3"));
@@ -1534,36 +1526,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     }
   };
 
-  useEffect(() => {
-    if (!CLOUD_FEATURES_ENABLED) return;
-    if (!contentState.isLoggedIn || !contentState.isSubscribed) return;
-
-    chrome.storage.local.get(
-      ["firstTimePro"],
-      (res: { firstTimePro?: boolean }) => {
-        if (
-          res.firstTimePro &&
-          typeof contentStateRef.current?.openModal === "function"
-        ) {
-          setTimeout(() => {
-            if (contentStateRef.current?.openModal) {
-              contentStateRef.current.openModal(
-                chrome.i18n.getMessage("welcomeToProTitleModal"),
-                chrome.i18n.getMessage("welcomeToProDescriptionModal"),
-                chrome.i18n.getMessage("welcomeToProActionModal"),
-                null,
-                () => {
-                  chrome.storage.local.set({ firstTimePro: false });
-                },
-                () => { },
-              );
-            }
-          }, 300);
-        }
-      },
-    );
-  }, [contentState?.isLoggedIn, contentState?.isSubscribed]);
-
   // Check Chrome version
   useEffect(() => {
     const version = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -1597,15 +1559,15 @@ const ContentState: FC<ContentStateProps> = (props) => {
   }, [contentState.openWarning, contentState.recording]);
 
   useEffect(() => {
-    if (!contentState) return;
-    if (typeof contentState.openModal === "function") {
+    if (!contentStateRef.current) return;
+    if (typeof contentStateRef.current.openModal === "function") {
       setContentState((prevContentState) => ({
         ...prevContentState,
         tryRestartRecording: tryRestartRecording,
         tryDismissRecording: tryDismissRecording,
       }));
     }
-  }, [contentState.openModal, tryRestartRecording, tryDismissRecording]);
+  }, [tryRestartRecording, tryDismissRecording]);
 
   // Count up every second
   useEffect(() => {
@@ -1618,20 +1580,17 @@ const ContentState: FC<ContentStateProps> = (props) => {
     } else if (
       contentState.alarm &&
       !contentState.paused &&
-      contentState.recording &&
-      contentState.timer > 0
+      contentState.recording
     ) {
       const interval = setInterval(() => {
-        setTimer((timer) => timer - 1);
+        // contentStateRef経由で最新のtimerをチェック（依存配列に含めると無限ループになる）
+        if (contentStateRef.current.timer > 0) {
+          setTimer((timer) => timer - 1);
+        }
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [
-    contentState.recording,
-    contentState.paused,
-    contentState.alarm,
-    contentState.timer,
-  ]);
+  }, [contentState.recording, contentState.paused, contentState.alarm]);
 
   useEffect(() => {
     if (!contentState.customRegion) {
@@ -1679,7 +1638,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       (result: { recordingStartTime?: number }) => {
         if (result.recordingStartTime && contentStateRef.current?.recording) {
           const recordingStartTime = result.recordingStartTime;
-          const currentTime = new Date().getTime();
+          const currentTime = Date.now();
           const timeElapsed = currentTime - recordingStartTime;
           const timeElapsedSeconds = Math.floor(timeElapsed / 1000);
           if (contentState.alarm) {
@@ -1778,12 +1737,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
     return () => {
       observer.disconnect();
     };
-  }, [
-    contentState.parentRef,
-    contentState.shadowRef,
-    contentState.bigTab,
-    contentState.recordingType,
-  ]);
+  }, [contentState.shadowRef]);
 
   useEffect(() => {
     if (!contentState.hideUI) {
@@ -1876,6 +1830,65 @@ const ContentState: FC<ContentStateProps> = (props) => {
     };
   }, [contentState.clipRecording, contentState.clipStartTime]);
   // deps: clipRecording または clipStartTime が変化したら再実行
+
+  // E8対策: recorder.html タブクローズ時の中断通知
+  useEffect(() => {
+    const handleMessage = (message: {
+      type: string;
+      reason?: string;
+      title?: string;
+      message?: string;
+      duration?: number;
+    }) => {
+      if (message.type === "recording-aborted") {
+        console.error("[Content] Recording aborted:", message.reason);
+
+        // UI 状態をリセット
+        setContentState((prev) => ({
+          ...prev,
+          recording: false,
+          paused: false,
+        }));
+        setTimer(0);
+
+        // ユーザーへの通知（Chrome Storage経由）
+        chrome.storage.local.set({
+          showAbortedNotification: true,
+          abortReason: message.reason || "unknown",
+        });
+      }
+
+      // Phase 5: show-toast メッセージの処理
+      if (message.type === "show-toast") {
+        console.log("[Content] show-toast received:", message);
+        const toastMessage =
+          message.title && message.message
+            ? `${message.title}: ${message.message}`
+            : message.message || message.title || "通知";
+
+        console.log(
+          "[Content] openToast available:",
+          !!contentStateRef.current?.openToast,
+        );
+        if (contentStateRef.current?.openToast) {
+          console.log("[Content] Calling openToast with:", toastMessage);
+          contentStateRef.current.openToast(
+            toastMessage,
+            () => {},
+            message.duration || 5000,
+          );
+        } else {
+          console.error("[Content] openToast is not available");
+        }
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+
+    return () => {
+      chrome.runtime.onMessage.removeListener(handleMessage);
+    };
+  }, []);
 
   return (
     // this is the provider providing state

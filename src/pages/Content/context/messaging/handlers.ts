@@ -222,7 +222,7 @@ export const setupHandlers = (): void => {
           !contentStateRef.current.showExtension &&
           !contentStateRef.current.recording
         ) {
-          updateFromStorage(true, sender.id ? parseInt(sender.id) : null);
+          updateFromStorage(true, sender.id ? parseInt(sender.id, 10) : null);
         }
       } else {
         setContentState((prev) => ({
@@ -230,7 +230,7 @@ export const setupHandlers = (): void => {
           showExtension: true,
           recording: true,
         }));
-        updateFromStorage(false, sender.id ? parseInt(sender.id) : null);
+        updateFromStorage(false, sender.id ? parseInt(sender.id, 10) : null);
       }
     },
   );
@@ -238,9 +238,13 @@ export const setupHandlers = (): void => {
   registerMessage("stop-pending", () => {
     setContentState((prev) => ({
       ...prev,
+      recording: false,
       pendingRecording: false,
       preparingRecording: false,
+      showExtension: false,
+      showPopup: true,
     }));
+    setTimer(0);
   });
 
   registerMessage("reopen-popup-multi", (message: BaseMessage) => {
@@ -250,7 +254,7 @@ export const setupHandlers = (): void => {
       showExtension: true,
       showPopup: true,
     }));
-    updateFromStorage(false, parseInt(msg.senderId));
+    updateFromStorage(false, parseInt(msg.senderId, 10));
 
     setTimeout(() => {
       if (contentStateRef.current.openToast) {
@@ -280,7 +284,7 @@ export const setupHandlers = (): void => {
       activeSceneId: msg.activeSceneId,
     }));
 
-    updateFromStorage(false, parseInt(msg.senderId));
+    updateFromStorage(false, parseInt(msg.senderId, 10));
 
     setTimeout(() => {
       contentStateRef.current.openToast(
@@ -432,7 +436,7 @@ export const setupHandlers = (): void => {
         }));
       }
 
-      updateFromStorage(true, sender.id ? parseInt(sender.id) : null);
+      updateFromStorage(true, sender.id ? parseInt(sender.id, 10) : null);
     },
   );
   registerMessage("update-project-ready", (message: BaseMessage) => {
@@ -453,7 +457,7 @@ export const setupHandlers = (): void => {
   });
   registerMessage("clear-project-recording", (message: BaseMessage) => {
     const msg = message as unknown as { senderId: string };
-    updateFromStorage(false, parseInt(msg.senderId));
+    updateFromStorage(false, parseInt(msg.senderId, 10));
   });
   registerMessage("preparing-recording", () => {
     setContentState((prev) => ({

@@ -1,5 +1,5 @@
 import * as ToastEl from "@radix-ui/react-toast";
-import React, {
+import {
   type FC,
   useCallback,
   useContext,
@@ -16,24 +16,22 @@ import {
 
 const Toast: FC = () => {
   const contextValue = useContext(contentStateContext);
-  if (!contextValue) return null;
-  const [contentState, setContentState] = contextValue;
 
   const [open, setOpen] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
   const [trigger, setTrigger] = useState<() => void>(() => () => {});
-  const triggerRef = useRef<() => void>(trigger);
-  const openRef = useRef<boolean>(open);
-  const contentStateRef = useRef<ContentStateType>(contentState);
   const [toastDuration, setToastDuration] = useState<number>(2000);
 
-  useEffect(() => {
-    contentStateRef.current = contentState;
-  }, [contentState]);
+  const triggerRef = useRef<() => void>(trigger);
+  const openRef = useRef<boolean>(open);
+  const contentStateRef = useRef<ContentStateType | null>(null);
+  const setContentStateRef = useRef<
+    ((value: React.SetStateAction<ContentStateType>) => void) | null
+  >(null);
 
   const openToast = useCallback(
     (title: string, action: () => void, durationMs: number = 2000): void => {
-      if (contentStateRef.current.hideUI) return;
+      // エラー通知などの重要なメッセージは hideUI に関わらず表示する
       setTitle(title);
       setOpen(true);
       setTrigger(() => action);
@@ -43,13 +41,24 @@ const Toast: FC = () => {
   );
 
   useEffect(() => {
-    setContentState((prevContentState) => ({
+    if (!contextValue) return;
+    const [contentState, setContentState] = contextValue;
+
+    contentStateRef.current = contentState;
+    setContentStateRef.current = setContentState;
+  }, [contextValue?.[0], contextValue?.[1]]);
+
+  useEffect(() => {
+    if (!setContentStateRef.current) return;
+
+    setContentStateRef.current((prevContentState) => ({
       ...prevContentState,
       openToast: openToast,
     }));
 
     return () => {
-      setContentState((prevContentState) => ({
+      if (!setContentStateRef.current) return;
+      setContentStateRef.current((prevContentState) => ({
         ...prevContentState,
         openToast: undefined,
       }));
@@ -67,6 +76,9 @@ const Toast: FC = () => {
       triggerRef.current = () => {};
     };
   }, [trigger]);
+
+  // contextValue の存在チェック - すべてのフック呼び出し後に行う
+  if (!contextValue) return null;
 
   return (
     <ToastEl.Provider swipeDirection="down" duration={toastDuration}>
@@ -91,6 +103,7 @@ const Toast: FC = () => {
           }}
         >
           <button
+            type="button"
             className="Button"
             onClick={(e) => {
               e.stopPropagation();

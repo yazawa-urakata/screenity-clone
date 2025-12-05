@@ -3,14 +3,16 @@ import type {
   InstantUploadProgress,
   UploadedPart,
 } from "../../types/instantUpload";
+import { DEFAULT_RETRY_CONFIG, exponentialBackoff } from "./retryUtils";
+import { addUploadedPart, saveUploadState } from "./uploadStateManager";
 
 const MIN_PART_SIZE_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MIME_TYPE = "video/webm";
 
 export class InstantUploader {
   private readonly videoId: string;
-  private readonly uploadId: string;
-  private readonly key: string;
+  public readonly uploadId: string;
+  public readonly key: string;
   private readonly apiBaseUrl: string;
   private readonly authToken: string;
   private readonly mimeType: string;
@@ -26,6 +28,8 @@ export class InstantUploader {
   private uploadPromise: Promise<void> = Promise.resolve();
   private finished: boolean = false;
   private lastProgressUpdate: number = 0;
+  private failedParts: Map<number, { part: Blob; attempts: number }> =
+    new Map();
 
   constructor(options: {
     videoId: string;
@@ -100,48 +104,149 @@ export class InstantUploader {
       `[InstantUploader] Uploading part ${partNumber}, size: ${(part.size / 1024 / 1024).toFixed(2)}MB`,
     );
 
-    const response = await fetch(
-      `${this.apiBaseUrl}/api/s3/multipart/part-url`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.authToken}`,
+    try {
+      // part-url取得（リトライ付き）
+      const uploadUrl = await exponentialBackoff(
+        async () => {
+          const response = await fetch(
+            `${this.apiBaseUrl}/api/s3/multipart/part-url`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.authToken}`,
+              },
+              body: JSON.stringify({
+                uploadId: this.uploadId,
+                key: this.key,
+                partNumber: partNumber,
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            type ErrorWithStatus = Error & { status?: number };
+            const error: ErrorWithStatus = new Error(
+              `Failed to get presigned URL: ${errorData.error || response.statusText}`,
+            );
+            error.status = response.status;
+            throw error;
+          }
+
+          const { uploadUrl } = await response.json();
+          return uploadUrl;
         },
-        body: JSON.stringify({
-          uploadId: this.uploadId,
-          key: this.key,
-          partNumber: partNumber,
-        }),
-      },
-    );
+        DEFAULT_RETRY_CONFIG.partUrl,
+        `part-url for part ${partNumber}`,
+      );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorType =
-        response.status >= 500 ? "Server error" : "Client error";
-      const errorMessage = `Failed to get presigned URL (${errorType} ${response.status}): ${errorData.error || response.statusText}`;
-      console.error(`[InstantUploader] ${errorMessage}`, {
+      // S3へのアップロード（リトライ付き）
+      const etag = await this.uploadBlobWithProgressRetry({
+        url: uploadUrl,
         partNumber,
-        errorData,
+        part,
       });
-      throw new Error(errorMessage);
+
+      this.parts.push({
+        partNumber,
+        etag,
+        size: part.size,
+        uploadedAt: Date.now(),
+      });
+      this.uploadedBytes += part.size;
+
+      // Chrome Storageに保存
+      await addUploadedPart({
+        partNumber,
+        etag,
+        size: part.size,
+        uploadedAt: Date.now(),
+      });
+
+      console.log(
+        `[InstantUploader] ✅ Part ${partNumber} uploaded successfully, ETag: ${etag.substring(0, 8)}...`,
+      );
+      this.emitProgress();
+
+      // 失敗キューから削除
+      this.failedParts.delete(partNumber);
+    } catch (error) {
+      console.error(
+        `[InstantUploader] ❌ Failed to upload part ${partNumber} after retries:`,
+        error,
+      );
+
+      // 失敗したパートをキューに追加
+      const attempts = this.failedParts.get(partNumber)?.attempts || 0;
+      this.failedParts.set(partNumber, { part, attempts: attempts + 1 });
+
+      // ★重要: エラーをthrowしない（uploadPromiseチェーンを切らない）
+      // 録画終了時に再試行する
     }
+  }
 
-    const { uploadUrl } = await response.json();
+  /**
+   * S3へのアップロード（リトライ付き）
+   */
+  private async uploadBlobWithProgressRetry({
+    url,
+    partNumber,
+    part,
+  }: {
+    url: string;
+    partNumber: number;
+    part: Blob;
+  }): Promise<string> {
+    return await exponentialBackoff(
+      async () => {
+        try {
+          return await this.uploadBlobWithProgress({ url, partNumber, part });
+        } catch (error) {
+          // 403エラー（署名URL期限切れ）の場合、part-urlを再取得
+          if (error instanceof Error && error.message.includes("403")) {
+            console.warn(
+              `[InstantUploader] Part ${partNumber} - Presigned URL expired, getting new URL...`,
+            );
 
-    const etag = await this.uploadBlobWithProgress({
-      url: uploadUrl,
-      partNumber,
-      part,
-    });
+            const response = await fetch(
+              `${this.apiBaseUrl}/api/s3/multipart/part-url`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${this.authToken}`,
+                },
+                body: JSON.stringify({
+                  uploadId: this.uploadId,
+                  key: this.key,
+                  partNumber: partNumber,
+                }),
+              },
+            );
 
-    this.parts.push({ partNumber, etag, size: part.size });
-    this.uploadedBytes += part.size;
-    console.log(
-      `[InstantUploader] ✅ Part ${partNumber} uploaded successfully, ETag: ${etag.substring(0, 8)}...`,
+            if (!response.ok) {
+              throw new Error(
+                `Failed to refresh presigned URL: ${response.statusText}`,
+              );
+            }
+
+            const { uploadUrl: newUrl } = await response.json();
+
+            // 新しいURLで再試行
+            return await this.uploadBlobWithProgress({
+              url: newUrl,
+              partNumber,
+              part,
+            });
+          }
+
+          throw error;
+        }
+      },
+      DEFAULT_RETRY_CONFIG.s3Put,
+      `S3 PUT for part ${partNumber}`,
     );
-    this.emitProgress();
   }
 
   private uploadBlobWithProgress({
@@ -236,7 +341,9 @@ export class InstantUploader {
     });
   }
 
-  public async finalize(): Promise<{ key: string; location: string } | void> {
+  public async finalize(): Promise<
+    { key: string; location: string } | undefined
+  > {
     if (this.finished) return;
 
     // Flush any remaining buffered data as the final part
@@ -250,6 +357,24 @@ export class InstantUploader {
     // Wait for all uploads (including the final part) to complete
     await this.uploadPromise;
 
+    // ★追加: 失敗したパートを再試行
+    if (this.failedParts.size > 0) {
+      console.warn(
+        `[InstantUploader] ${this.failedParts.size} parts failed during recording, retrying...`,
+      );
+      await this.retryFailedParts();
+    }
+
+    // ★追加: 再試行後も失敗したパートがある場合はエラー
+    if (this.failedParts.size > 0) {
+      console.error(
+        `[InstantUploader] ${this.failedParts.size} parts still failed after retry`,
+      );
+      throw new Error(
+        `Failed to upload ${this.failedParts.size} parts. Please try again.`,
+      );
+    }
+
     if (this.parts.length === 0) {
       console.warn("[InstantUploader] No parts uploaded, skipping completion");
       this.finished = true;
@@ -260,40 +385,44 @@ export class InstantUploader {
       `[InstantUploader] Completing multipart upload with ${this.parts.length} parts`,
     );
 
-    const response = await fetch(
-      `${this.apiBaseUrl}/api/s3/multipart/complete`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.authToken}`,
-        },
-        body: JSON.stringify({
-          uploadId: this.uploadId,
-          key: this.key,
-          parts: this.parts.map((p) => ({
-            PartNumber: p.partNumber,
-            ETag: p.etag,
-          })),
-        }),
+    // complete実行（リトライ付き）
+    const result = await exponentialBackoff(
+      async () => {
+        const response = await fetch(
+          `${this.apiBaseUrl}/api/s3/multipart/complete`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.authToken}`,
+            },
+            body: JSON.stringify({
+              uploadId: this.uploadId,
+              key: this.key,
+              parts: this.parts.map((p) => ({
+                PartNumber: p.partNumber,
+                ETag: p.etag,
+              })),
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          type ErrorWithStatus = Error & { status?: number };
+          const error: ErrorWithStatus = new Error(
+            `Failed to complete multipart upload: ${errorData.error || response.statusText}`,
+          );
+          error.status = response.status;
+          throw error;
+        }
+
+        return await response.json();
       },
+      DEFAULT_RETRY_CONFIG.complete,
+      "complete multipart upload",
     );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorType =
-        response.status >= 500 ? "Server error" : "Client error";
-      const errorMessage = `Failed to complete multipart upload (${errorType} ${response.status}): ${errorData.error || response.statusText}`;
-      console.error(`[InstantUploader] ${errorMessage}`, {
-        videoId: this.videoId,
-        uploadId: this.uploadId,
-        partsCount: this.parts.length,
-        errorData,
-      });
-      throw new Error(errorMessage);
-    }
-
-    const result = await response.json();
     this.finished = true;
 
     console.log(
@@ -314,6 +443,16 @@ export class InstantUploader {
       currentPart: this.parts.length,
       totalParts: this.parts.length,
       isComplete: true,
+    });
+
+    // Chrome Storageの状態を更新
+    await saveUploadState({
+      status: "completed",
+      result: {
+        location: result.location,
+        key: result.key,
+        etag: result.etag,
+      },
     });
 
     return {
@@ -346,5 +485,42 @@ export class InstantUploader {
     }
 
     await this.uploadPromise.catch(() => {});
+  }
+
+  /**
+   * 失敗したパートを再試行
+   */
+  public async retryFailedParts(): Promise<void> {
+    if (this.failedParts.size === 0) {
+      console.log("[InstantUploader] No failed parts to retry");
+      return;
+    }
+
+    console.log(
+      `[InstantUploader] Retrying ${this.failedParts.size} failed parts...`,
+    );
+
+    const failedPartsArray = Array.from(this.failedParts.entries());
+
+    for (const [partNumber, { part, attempts }] of failedPartsArray) {
+      if (attempts >= 10) {
+        console.error(
+          `[InstantUploader] Part ${partNumber} exceeded max retry attempts (10)`,
+        );
+        continue;
+      }
+
+      console.log(
+        `[InstantUploader] Retrying part ${partNumber} (attempt ${attempts + 1})...`,
+      );
+      await this.uploadPart(partNumber, part);
+    }
+  }
+
+  /**
+   * 失敗したパートの数を取得
+   */
+  public getFailedPartsCount(): number {
+    return this.failedParts.size;
   }
 }

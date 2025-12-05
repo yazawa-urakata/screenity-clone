@@ -1,6 +1,7 @@
 import * as Toolbar from "@radix-ui/react-toolbar";
 import type React from "react";
 import {
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -21,14 +22,11 @@ import {
   GrabIcon,
   StopIcon,
 } from "../components/SVG";
-import Toast from "../components/Toast";
 // Components
 import ToolTrigger from "../components/ToolTrigger";
 
 const ToolbarWrap: React.FC = () => {
   const contextValue = useContext(contentStateContext);
-  if (!contextValue) return null;
-  const [contentState, setContentState, t, setT] = contextValue;
 
   const DragRef = useRef<Rnd | null>(null);
   const ToolbarRef = useRef<HTMLDivElement | null>(null);
@@ -40,7 +38,10 @@ const ToolbarWrap: React.FC = () => {
   const timeRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!isNaN(t)) {
+    if (!contextValue) return;
+    const [, , t] = contextValue;
+
+    if (!Number.isNaN(t)) {
       const clampedT = Math.max(0, t); // prevent negative values
       const hours = Math.floor(clampedT / 3600);
       const minutes = Math.floor((clampedT % 3600) / 60);
@@ -67,10 +68,143 @@ const ToolbarWrap: React.FC = () => {
 
       setTimestamp(newTimestamp);
     }
-  }, [t]);
+  }, [contextValue?.[2]]);
+
+  const handleDragStart = useCallback(
+    (_e: MouseEvent | TouchEvent, _d: DraggableData): void => {
+      setDragging("ToolbarDragging");
+    },
+    [],
+  );
+
+  const handleDrag = useCallback(
+    (_e: MouseEvent | TouchEvent, d: DraggableData): void => {
+      if (!ToolbarRef.current) return;
+
+      // Width and height
+      const width = ToolbarRef.current.getBoundingClientRect().width;
+      const height = ToolbarRef.current.getBoundingClientRect().height;
+
+      if (d.y < 130) {
+        setSide("ToolbarBottom");
+      } else {
+        setSide("ToolbarTop");
+      }
+
+      if (
+        d.x < -25 ||
+        d.x + width > window.innerWidth ||
+        d.y < 60 ||
+        d.y + height - 80 > window.innerHeight
+      ) {
+        setShake("ToolbarShake");
+      } else {
+        setShake("");
+      }
+    },
+    [],
+  );
+
+  const handleDrop = useCallback(
+    (_e: MouseEvent | TouchEvent | null, d: DraggableData): void => {
+      if (!contextValue || !ToolbarRef.current || !DragRef.current) return;
+      const [, setContentState] = contextValue;
+
+      setShake("");
+      setDragging("");
+      let xpos = d.x;
+      let ypos = d.y;
+
+      // Width and height
+      const width = ToolbarRef.current.getBoundingClientRect().width;
+      const height = ToolbarRef.current.getBoundingClientRect().height;
+
+      // Check if toolbar is off screen
+      if (d.x < -10) {
+        setElastic("ToolbarElastic");
+        xpos = -10;
+      } else if (d.x + width + 30 > window.innerWidth) {
+        setElastic("ToolbarElastic");
+        xpos = window.innerWidth - width - 30;
+      }
+
+      if (d.y < 130) {
+        setSide("ToolbarBottom");
+      } else {
+        setSide("ToolbarTop");
+      }
+
+      if (d.y < 80) {
+        setElastic("ToolbarElastic");
+        ypos = 80;
+      } else if (d.y + height - 60 > window.innerHeight) {
+        setElastic("ToolbarElastic");
+        ypos = window.innerHeight - height + 60;
+      }
+      DragRef.current.updatePosition({ x: xpos, y: ypos });
+
+      setTimeout(() => {
+        setElastic("");
+      }, 250);
+
+      setContentState((prevContentState) => ({
+        ...prevContentState,
+        toolbarPosition: {
+          ...prevContentState.toolbarPosition,
+          offsetX: xpos,
+          offsetY: ypos,
+          left: xpos < window.innerWidth / 2,
+          right: !(xpos < window.innerWidth / 2),
+          top: ypos < window.innerHeight / 2,
+          bottom: !(ypos < window.innerHeight / 2),
+        },
+      }));
+
+      // Is it on the left or right, also top or bottom
+
+      const left = xpos < window.innerWidth / 2;
+      const right = !(xpos < window.innerWidth / 2);
+      const top = ypos < window.innerHeight / 2;
+      const bottom = !(ypos < window.innerHeight / 2);
+      let offsetX = xpos;
+      let offsetY = ypos;
+
+      if (right) {
+        offsetX = window.innerWidth - xpos;
+      }
+      if (bottom) {
+        offsetY = window.innerHeight - ypos;
+      }
+
+      setContentState((prevContentState) => ({
+        ...prevContentState,
+        toolbarPosition: {
+          ...prevContentState.toolbarPosition,
+          offsetX: offsetX,
+          offsetY: offsetY,
+          left: left,
+          right: right,
+          top: top,
+          bottom: bottom,
+        },
+      }));
+
+      chrome.storage.local.set({
+        toolbarPosition: {
+          offsetX: offsetX,
+          offsetY: offsetY,
+          left: left,
+          right: right,
+          top: top,
+          bottom: bottom,
+        },
+      });
+    },
+    [contextValue],
+  );
 
   useLayoutEffect(() => {
-    function setToolbarPosition(e?: Event): void {
+    function setToolbarPosition(): void {
       if (!DragRef.current || !ToolbarRef.current) return;
 
       let xpos = DragRef.current.getDraggablePosition().x;
@@ -95,137 +229,10 @@ const ToolbarWrap: React.FC = () => {
     return () => window.removeEventListener("resize", setToolbarPosition);
   }, []);
 
-  const handleDragStart = (
-    e: MouseEvent | TouchEvent,
-    d: DraggableData,
-  ): void => {
-    setDragging("ToolbarDragging");
-  };
-
-  const handleDrag = (e: MouseEvent | TouchEvent, d: DraggableData): void => {
-    if (!ToolbarRef.current) return;
-
-    // Width and height
-    const width = ToolbarRef.current.getBoundingClientRect().width;
-    const height = ToolbarRef.current.getBoundingClientRect().height;
-
-    if (d.y < 130) {
-      setSide("ToolbarBottom");
-    } else {
-      setSide("ToolbarTop");
-    }
-
-    if (
-      d.x < -25 ||
-      d.x + width > window.innerWidth ||
-      d.y < 60 ||
-      d.y + height - 80 > window.innerHeight
-    ) {
-      setShake("ToolbarShake");
-    } else {
-      setShake("");
-    }
-  };
-
-  const handleDrop = (
-    e: MouseEvent | TouchEvent | null,
-    d: DraggableData,
-  ): void => {
-    if (!ToolbarRef.current || !DragRef.current) return;
-
-    setShake("");
-    setDragging("");
-    let xpos = d.x;
-    let ypos = d.y;
-
-    // Width and height
-    const width = ToolbarRef.current.getBoundingClientRect().width;
-    const height = ToolbarRef.current.getBoundingClientRect().height;
-
-    // Check if toolbar is off screen
-    if (d.x < -10) {
-      setElastic("ToolbarElastic");
-      xpos = -10;
-    } else if (d.x + width + 30 > window.innerWidth) {
-      setElastic("ToolbarElastic");
-      xpos = window.innerWidth - width - 30;
-    }
-
-    if (d.y < 130) {
-      setSide("ToolbarBottom");
-    } else {
-      setSide("ToolbarTop");
-    }
-
-    if (d.y < 80) {
-      setElastic("ToolbarElastic");
-      ypos = 80;
-    } else if (d.y + height - 60 > window.innerHeight) {
-      setElastic("ToolbarElastic");
-      ypos = window.innerHeight - height + 60;
-    }
-    DragRef.current.updatePosition({ x: xpos, y: ypos });
-
-    setTimeout(() => {
-      setElastic("");
-    }, 250);
-
-    setContentState((prevContentState) => ({
-      ...prevContentState,
-      toolbarPosition: {
-        ...prevContentState.toolbarPosition,
-        offsetX: xpos,
-        offsetY: ypos,
-        left: xpos < window.innerWidth / 2 ? true : false,
-        right: xpos < window.innerWidth / 2 ? false : true,
-        top: ypos < window.innerHeight / 2 ? true : false,
-        bottom: ypos < window.innerHeight / 2 ? false : true,
-      },
-    }));
-
-    // Is it on the left or right, also top or bottom
-
-    const left = xpos < window.innerWidth / 2 ? true : false;
-    const right = xpos < window.innerWidth / 2 ? false : true;
-    const top = ypos < window.innerHeight / 2 ? true : false;
-    const bottom = ypos < window.innerHeight / 2 ? false : true;
-    let offsetX = xpos;
-    let offsetY = ypos;
-
-    if (right) {
-      offsetX = window.innerWidth - xpos;
-    }
-    if (bottom) {
-      offsetY = window.innerHeight - ypos;
-    }
-
-    setContentState((prevContentState) => ({
-      ...prevContentState,
-      toolbarPosition: {
-        ...prevContentState.toolbarPosition,
-        offsetX: offsetX,
-        offsetY: offsetY,
-        left: left,
-        right: right,
-        top: top,
-        bottom: bottom,
-      },
-    }));
-
-    chrome.storage.local.set({
-      toolbarPosition: {
-        offsetX: offsetX,
-        offsetY: offsetY,
-        left: left,
-        right: right,
-        top: top,
-        bottom: bottom,
-      },
-    });
-  };
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Mount時のみ実行（初期位置設定）
   useEffect(() => {
-    if (!DragRef.current) return;
+    if (!contextValue || !DragRef.current) return;
+    const [contentState] = contextValue;
 
     let x = contentState.toolbarPosition.offsetX;
     let y = contentState.toolbarPosition.offsetY;
@@ -251,9 +258,13 @@ const ToolbarWrap: React.FC = () => {
     });
   }, []);
 
+  // contextValue の存在チェック - すべてのフック呼び出し後に行う
+  if (!contextValue) return null;
+  const [contentState] = contextValue;
+
   return (
     <div>
-      <Toast />
+      {/* Toast は Wrapper.tsx で常時レンダリングされているため削除 */}
       <div
         className={
           contentState.paused && contentState.recording
@@ -261,7 +272,7 @@ const ToolbarWrap: React.FC = () => {
             : "ToolbarPaused hidden"
         }
       ></div>
-      <div className={"ToolbarBounds" + " " + shake}></div>
+      <div className={`ToolbarBounds ${shake}`}></div>
       <Rnd
         default={{
           x: 200,
@@ -269,9 +280,7 @@ const ToolbarWrap: React.FC = () => {
           width: "auto",
           height: "auto",
         }}
-        className={
-          "react-draggable" + " " + elastic + " " + shake + " " + dragging
-        }
+        className={`react-draggable ${elastic} ${shake} ${dragging}`}
         dragHandleClassName="grab"
         enableResizing={false}
         onDragStart={handleDragStart}
@@ -279,7 +288,7 @@ const ToolbarWrap: React.FC = () => {
         onDragStop={handleDrop}
         ref={DragRef}
       >
-        <Toolbar.Root className={"ToolbarRoot" + " " + side} ref={ToolbarRef}>
+        <Toolbar.Root className={`ToolbarRoot ${side}`} ref={ToolbarRef}>
           <ToolTrigger grab type="button" content="">
             <GrabIcon />
           </ToolTrigger>
