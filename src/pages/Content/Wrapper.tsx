@@ -132,9 +132,9 @@ const Wrapper: React.FC = () => {
     background:
       window.location.href.indexOf(chrome.runtime.getURL("setup.html")) ===
         -1 &&
-        window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
+      window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
         -1 &&
-        !contentState.pendingRecording
+      !contentState.pendingRecording
         ? "rgba(0,0,0,0.15)"
         : "rgba(0,0,0,0)",
     top: 0,
@@ -144,9 +144,9 @@ const Wrapper: React.FC = () => {
   const handleOverlayClick = (): void => {
     if (
       window.location.href.indexOf(chrome.runtime.getURL("setup.html")) ===
-      -1 &&
+        -1 &&
       window.location.href.indexOf(chrome.runtime.getURL("playground.html")) ===
-      -1 &&
+        -1 &&
       !contentState.pendingRecording &&
       !contentState.customRegion
     ) {
