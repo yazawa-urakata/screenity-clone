@@ -1,5 +1,5 @@
 import type React from "react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import VideoPlayer from "../../components/editor/VideoPlayer";
 import HelpButton from "../../components/player/HelpButton";
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context

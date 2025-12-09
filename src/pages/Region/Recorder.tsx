@@ -1,6 +1,6 @@
 import localforage from "localforage";
 import type React from "react";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 localforage.config({
   driver: localforage.INDEXEDDB,
@@ -117,7 +117,6 @@ const Recorder: React.FC = () => {
   const lastEstimateAt = useRef<number>(0);
   const ESTIMATE_INTERVAL_MS: number = 5000;
   const MIN_HEADROOM: number = 25 * 1024 * 1024;
-  const MAX_PENDING_BYTES: number = 8 * 1024 * 1024;
   const pendingBytes = useRef<number>(0);
 
   async function canFitChunk(byteLength?: number): Promise<boolean> {
@@ -204,7 +203,7 @@ const Recorder: React.FC = () => {
           break;
         }
 
-        const e = pending.current.shift()!;
+        const e = pending.current.shift();
         pendingBytes.current -= e.data.size;
 
         if (!(await canFitChunk(e.data.size))) {
@@ -251,7 +250,7 @@ const Recorder: React.FC = () => {
   useEffect(() => {
     const onMessage = (event: MessageEvent<PostMessageData>): void => {
       if (event.data.type === "crop-target") {
-        target.current = event.data.target!;
+        target.current = event.data.target;
         regionRef.current = true;
       } else if (event.data.type === "restart-recording") {
         restartRecording();
@@ -283,7 +282,7 @@ const Recorder: React.FC = () => {
     pendingBytes.current = 0;
     // Check if the stream actually has data in it
     try {
-      if (helperVideoStream.current!.getVideoTracks().length === 0) {
+      if (helperVideoStream.current.getVideoTracks().length === 0) {
         chrome.runtime.sendMessage({
           type: "recording-error",
           error: "stream-error",
@@ -365,7 +364,7 @@ const Recorder: React.FC = () => {
         return;
       }
 
-      recorder.current = new MediaRecorder(liveStream.current!, {
+      recorder.current = new MediaRecorder(liveStream.current, {
         mimeType: mimeType,
         audioBitsPerSecond: audioBitsPerSecond,
         videoBitsPerSecond: videoBitsPerSecond,
@@ -435,38 +434,6 @@ const Recorder: React.FC = () => {
       }
     };
 
-    const checkMaxMemory = (): void => {
-      try {
-        navigator.storage
-          .estimate()
-          .then(({ usage = 0, quota = 0 }: StorageEstimate) => {
-            const remaining = quota - usage;
-            const minHeadroom = 25 * 1024 * 1024;
-            if (remaining < minHeadroom) {
-              chrome.storage.local.set({
-                recording: false,
-                restarting: false,
-                tabRecordedID: null,
-                memoryError: true,
-              });
-              chrome.runtime.sendMessage({ type: "stop-recording-tab" });
-
-              // Reload this iframe
-              window.location.reload();
-            }
-          });
-      } catch (err) {
-        chrome.runtime.sendMessage({
-          type: "recording-error",
-          error: "stream-error",
-          why: JSON.stringify(err),
-        });
-
-        // Reload this iframe
-        window.location.reload();
-      }
-    };
-
     recorder.current.ondataavailable = (e: BlobEvent): void => {
       if (!e || !e.data || !e.data.size) {
         if (recorder.current && recorder.current.state === "inactive") {
@@ -504,7 +471,7 @@ const Recorder: React.FC = () => {
       lastSize.current = 0;
     };
 
-    liveStream.current!.getVideoTracks()[0].onended = (): void => {
+    liveStream.current.getVideoTracks()[0].onended = (): void => {
       regionRef.current = false;
       chrome.storage.local.set({
         recording: false,
@@ -514,7 +481,7 @@ const Recorder: React.FC = () => {
       chrome.runtime.sendMessage({ type: "stop-recording-tab" });
     };
 
-    helperVideoStream.current!.getVideoTracks()[0].onended = (): void => {
+    helperVideoStream.current.getVideoTracks()[0].onended = (): void => {
       regionRef.current = false;
       chrome.storage.local.set({
         recording: false,
@@ -639,12 +606,12 @@ const Recorder: React.FC = () => {
   }
   // Set audio input volume
   function setAudioInputVolume(volume: number): void {
-    audioInputGain.current!.gain.value = volume;
+    audioInputGain.current.gain.value = volume;
   }
 
   // Set audio output volume
   function setAudioOutputVolume(volume: number): void {
-    audioOutputGain.current!.gain.value = volume;
+    audioOutputGain.current.gain.value = volume;
   }
 
   async function startStreaming(data: StreamingData): Promise<void> {
@@ -680,10 +647,10 @@ const Recorder: React.FC = () => {
       const { fpsValue }: FpsValue = (await chrome.storage.local.get([
         "fpsValue",
       ])) as FpsValue;
-      let fps: number = parseInt(fpsValue);
+      let fps: number = parseInt(fpsValue, 10);
 
       // Check if fps is a number
-      if (isNaN(fps)) {
+      if (Number.isNaN(fps)) {
         fps = 30;
       }
 
@@ -841,7 +808,7 @@ const Recorder: React.FC = () => {
       }
       if (request.type === "streaming-data") {
         if (regionRef.current) {
-          startStreaming(JSON.parse(request.data!));
+          startStreaming(JSON.parse(request.data));
         }
       } else if (request.type === "start-recording-tab") {
         if (regionRef.current) {
@@ -853,7 +820,7 @@ const Recorder: React.FC = () => {
       } else if (request.type === "set-mic-active-tab") {
         setMic(request);
       } else if (request.type === "set-audio-output-volume") {
-        setAudioOutputVolume(request.volume!);
+        setAudioOutputVolume(request.volume);
       } else if (request.type === "pause-recording-tab") {
         if (!recorder.current) return;
         recorder.current.pause();

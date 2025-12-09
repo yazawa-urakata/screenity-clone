@@ -28,6 +28,7 @@ const Setup: React.FC = () => {
       <img
         src={chrome.runtime.getURL("assets/logo-text.svg")}
         className="setupLogo"
+        alt="Screenity Logo"
       />
       <div className="setupBackgroundSVG"></div>
       <style>

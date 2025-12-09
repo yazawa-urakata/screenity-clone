@@ -1,15 +1,8 @@
 import type React from "react";
 import { useContext, useEffect, useRef } from "react";
 // Icons
-import { ReactSVG } from "react-svg";
 import { ContentStateContext } from "../../context/ContentState"; // Import the ContentState context
 import styles from "../../styles/player/_Nav.module.scss";
-
-const URL = "/assets/";
-
-const StarIcon = URL + "editor/icons/help-nav.svg";
-const HeartIcon = URL + "editor/icons/heart.svg";
-const UnlockIcon = URL + "editor/icons/unlock.svg";
 
 const PlayerNav: React.FC = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
@@ -22,7 +15,8 @@ const PlayerNav: React.FC = () => {
   return (
     <div className={styles.nav}>
       <div className={styles.navWrap}>
-        <div
+        <button
+          type="button"
           onClick={() => {
             chrome.runtime.sendMessage({ type: "open-home" });
           }}
@@ -30,7 +24,7 @@ const PlayerNav: React.FC = () => {
           className={styles.navLeft}
         >
           logo
-        </div>
+        </button>
       </div>
     </div>
   );

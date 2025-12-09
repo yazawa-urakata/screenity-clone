@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 // Import all the utils
 import cropVideo from "./utils/cropVideo";
@@ -130,6 +130,7 @@ const Sandbox = () => {
       <iframe
         ref={iframeRef}
         src="sandbox.html"
+        title="Recording result panel"
         allowFullScreen={true}
         style={{
           width: "100%",
