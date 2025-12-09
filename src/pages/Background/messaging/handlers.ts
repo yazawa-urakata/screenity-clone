@@ -71,7 +71,7 @@ interface ClickEvent {
   timestamp: number | null;
 }
 
-export const copyToClipboard = (text: string): void => {
+const copyToClipboard = (text: string): void => {
   if (!text) return;
   chrome.tabs.query(
     { active: true, currentWindow: true },

@@ -12,7 +12,6 @@ import { Rnd } from "react-rnd";
 import { contentStateContext } from "../context/ContentState";
 import { CloseIconPopup } from "../toolbar/components/SVG";
 // Layouts
-import InactiveSubscription from "./layout/InactiveSubscription";
 import LoggedOut from "./layout/LoggedOut";
 import LoginPrompt from "./layout/LoginPrompt";
 /* Component import */
@@ -174,21 +173,21 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
         ...prevContentState.popupPosition,
         offsetX: xpos,
         offsetY: ypos,
-        left: xpos < window.innerWidth / 2 ? true : false,
-        right: xpos < window.innerWidth / 2 ? false : true,
-        top: ypos < window.innerHeight / 2 ? true : false,
-        bottom: ypos < window.innerHeight / 2 ? false : true,
+        left: xpos < window.innerWidth / 2,
+        right: !(xpos < window.innerWidth / 2),
+        top: ypos < window.innerHeight / 2,
+        bottom: !(ypos < window.innerHeight / 2),
       },
     }));
 
     // Is it on the left or right, also top or bottom
-    const left = xpos < window.innerWidth / 2 ? true : false;
-    const right = xpos < window.innerWidth / 2 ? false : true;
-    const top = ypos < window.innerHeight / 2 ? true : false;
-    const bottom = ypos < window.innerHeight / 2 ? false : true;
+    const left = xpos < window.innerWidth / 2;
+    const right = !(xpos < window.innerWidth / 2);
+    const top = ypos < window.innerHeight / 2;
+    const bottom = !(ypos < window.innerHeight / 2);
     let offsetX = xpos;
     let offsetY = ypos;
-    const fixed = d.x + 9 > window.innerWidth ? true : false;
+    const fixed = d.x + 9 > window.innerWidth;
 
     if (right) {
       offsetX = window.innerWidth - xpos;
@@ -263,7 +262,7 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
         height: "100vh",
       }}
     >
-      <div className={"ToolbarBounds" + " " + shake}></div>
+      <div className={`ToolbarBounds ${shake}`}></div>
       <Rnd
         default={{
           x: contentState.popupPosition.offsetX,
@@ -271,9 +270,7 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
           width: "auto",
           height: "auto",
         }}
-        className={
-          "react-draggable" + " " + elastic + " " + shake + " " + dragging
-        }
+        className={`react-draggable ${elastic} ${shake} ${dragging}`}
         enableResizing={false}
         dragHandleClassName="drag-area"
         onDragStart={handleDragStart}
@@ -309,45 +306,8 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
           </div>
           <div className="popup-nav"></div>
           <div className="popup-content">
-            {/* ケース1: ログイン済み + サブスクリプション無効 */}
-            {contentState.isSubscribed === false &&
-            contentState.isLoggedIn === true ? (
-              <InactiveSubscription
-                subscription={contentState.proSubscription}
-                hasSubscribedBefore={contentState.hasSubscribedBefore}
-                onManageClick={() => {
-                  const type = contentState.hasSubscribedBefore
-                    ? "handle-reactivate"
-                    : "handle-upgrade";
-                  chrome.runtime.sendMessage({ type });
-                }}
-                onDowngradeClick={async () => {
-                  // Supabaseログアウト
-                  await chrome.runtime.sendMessage({
-                    type: "SUPABASE_CLEAR_AUTH",
-                  });
-
-                  setContentState((prev: any) => ({
-                    ...prev,
-                    isLoggedIn: false,
-                    isSubscribed: false,
-                    screenityUser: null,
-                    proSubscription: null,
-                    wasLoggedIn: true,
-                  }));
-
-                  // ストレージにも保存
-                  chrome.storage.local.set({ wasLoggedIn: true });
-
-                  contentState.openToast(
-                    chrome.i18n.getMessage("loggedOutToastTitle"),
-                    () => {},
-                    2000,
-                  );
-                }}
-              />
-            ) : onboarding || showProSplash ? (
-              /* ケース2: オンボーディング中 */
+            {onboarding || showProSplash ? (
+              /* ケース1: オンボーディング中 */
               <Welcome
                 setOnboarding={setOnboarding}
                 setContentState={setContentState}
@@ -362,7 +322,7 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                 }}
               />
             ) : !contentState.isLoggedIn && contentState.wasLoggedIn ? (
-              /* ケース3: 過去にログインしていたがログアウトした */
+              /* ケース2: 過去にログインしていたがログアウトした */
               <LoggedOut
                 onManageClick={() => {
                   // Supabaseログインページを開く
@@ -382,7 +342,7 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
             ) : !contentState.isLoggedIn &&
               !contentState.wasLoggedIn &&
               !contentState.skipLogin ? (
-              /* ケース4: 初回ユーザー（未ログイン） */
+              /* ケース3: 初回ユーザー（未ログイン） */
               <LoginPrompt
                 onLoginClick={() => {
                   // Supabaseログインページを開く
@@ -392,7 +352,7 @@ const PopupContainer: React.FC<PopupContainerProps> = (props) => {
                 }}
               />
             ) : (
-              /* ケース5: その他（ログイン済み、またはskipLogin: true） */
+              /* ケース4: その他（ログイン済み、またはskipLogin: true） */
               <RecordingTab shadowRef={props.shadowRef} />
             )}
           </div>

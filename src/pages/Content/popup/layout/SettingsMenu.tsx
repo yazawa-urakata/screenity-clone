@@ -79,7 +79,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
         }
       >
         <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
-          {!contentState.isSubscribed && !contentState.isLoggedIn && (
+          {!contentState.isLoggedIn && (
             <DropdownMenu.Sub
               open={openResize}
               onOpenChange={(open) => {
@@ -233,7 +233,7 @@ const SettingsMenu: React.FC<SettingsMenuProps> = (props) => {
             </DropdownMenu.Sub>
           )}
 
-          {!contentState.isSubscribed && !contentState.isLoggedIn && (
+          {!contentState.isLoggedIn && (
             <DropdownMenu.Sub
               open={openQuality}
               onOpenChange={(open) => {

@@ -23,7 +23,6 @@ export const updateFromStorage = (
       "alarmTime",
       "pendingRecording",
       "askForPermissions",
-      "cursorMode",
       "askMicrophone",
       "offscreenRecording",
       "setDevices",
@@ -50,7 +49,6 @@ export const updateFromStorage = (
       "wasLoggedIn",
       "instantMode",
       "hasSeenInstantModeModal",
-      "hasSubscribedBefore",
       "clips",
       "clipSelecting",
       "clipRecording",
@@ -129,10 +127,6 @@ export const updateFromStorage = (
             result.askForPermissions !== null
               ? (result.askForPermissions as any)
               : prevContentState.askForPermissions,
-          cursorMode:
-            result.cursorMode !== undefined && result.cursorMode !== null
-              ? (result.cursorMode as any)
-              : prevContentState.cursorMode,
           askMicrophone:
             result.askMicrophone !== undefined && result.askMicrophone !== null
               ? (result.askMicrophone as any)
@@ -204,7 +198,6 @@ export const updateFromStorage = (
           instantMode: result.instantMode || false,
           hasSeenInstantModeModal: result.hasSeenInstantModeModal || false,
           onboarding: result.onboarding || false,
-          hasSubscribedBefore: result.hasSubscribedBefore || false,
           showProSplash: result.showProSplash || false,
           clips: result.clips || [],
           clipSelecting:

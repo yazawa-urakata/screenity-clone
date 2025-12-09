@@ -16,12 +16,6 @@ export interface ContentStateContextType {
   isLoggedIn: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   screenityUser: any; // TODO: User型を定義
-  isSubscribed: boolean;
-  setIsSubscribed: (isSubscribed: boolean) => void;
-  hasSubscribedBefore: boolean;
-  setHasSubscribedBefore: (hasSubscribedBefore: boolean) => void;
-  proSubscription: boolean;
-  setProSubscription: (proSubscription: boolean) => void;
 
   // 録画設定
   offscreenRecording: boolean;

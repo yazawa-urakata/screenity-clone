@@ -11,30 +11,9 @@ export interface SupabaseUser {
   updated_at?: string;
 }
 
-export interface SupabaseSession {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  expires_at: number;
-  token_type: "Bearer";
-  user: SupabaseUser;
-}
-
 export interface SupabaseSessionResponse {
   access_token: string;
   expires_in: number;
   expires_at: number;
   user: SupabaseUser;
-}
-
-export interface SupabaseAuthState {
-  isAuthenticated: boolean;
-  user: SupabaseUser | null;
-  accessToken: string | null;
-  expiresAt: number | null;
-}
-
-export interface SupabaseAuthError {
-  error: string;
-  message?: string;
 }

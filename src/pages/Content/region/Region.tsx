@@ -1,5 +1,5 @@
 import type React from "react";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
 import type { DraggableData, Position, ResizableDelta } from "react-rnd";
 import { Rnd } from "react-rnd";
 
@@ -258,20 +258,6 @@ const ResizableBox: React.FC = () => {
           ? "region-recording"
           : ""
       }
-      onClick={(e: React.MouseEvent) => {
-        // showExtension false, as long as not clicking on the region
-        if (
-          (e.target as HTMLElement).className.indexOf("resize-handle") === -1 &&
-          (e.target as HTMLElement).className.indexOf("react-draggable") ===
-            -1 &&
-          (e.target as HTMLElement).className.indexOf("region-rect") === -1
-        ) {
-          // setContentState((prevContentState) => ({
-          //   ...prevContentState,
-          //   showExtension: false,
-          // }));
-        }
-      }}
       ref={parentRef}
     >
       <div

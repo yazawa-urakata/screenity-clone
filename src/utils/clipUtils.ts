@@ -92,16 +92,6 @@ export function validateClip(
 }
 
 /**
- * クリップの長さを秒単位で取得する
- *
- * @param clip クリップメタデータ
- * @returns 長さ（秒）
- */
-export function getClipDurationSeconds(clip: ClipMetadata): number {
-  return Math.floor(clip.duration / 1000);
-}
-
-/**
  * ミリ秒を "MM:SS" 形式にフォーマットする
  *
  * @param milliseconds ミリ秒

@@ -1,5 +1,5 @@
 import * as Toolbar from "@radix-ui/react-toolbar";
-import React, { type FC, type MouseEvent, type ReactNode } from "react";
+import type { FC, MouseEvent, ReactNode } from "react";
 
 // Components
 import TooltipWrap from "./TooltipWrap";
@@ -19,13 +19,13 @@ interface ToolTriggerProps {
 const ToolTrigger: FC<ToolTriggerProps> = (props) => {
   const grab = props.grab ? " grab" : "";
   const resume = props.resume ? " resume" : "";
-  const customClass = props.className ? " " + props.className : "";
+  const customClass = props.className ? ` ${props.className}` : "";
 
   return (
     <TooltipWrap content={props.content}>
       {props.type === "button" ? (
         <Toolbar.Button
-          className={"ToolbarButton" + grab + resume + customClass}
+          className={`ToolbarButton${grab}${resume}${customClass}`}
           onClick={props.onClick}
           disabled={props.disabled}
         >

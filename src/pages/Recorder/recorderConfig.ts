@@ -46,7 +46,7 @@ interface VideoResolution {
   height: number;
 }
 
-export const VIDEO_QUALITIES: Record<QualityValue, VideoResolution> = {
+const VIDEO_QUALITIES: Record<QualityValue, VideoResolution> = {
   "4k": { width: 4096, height: 2160 },
   "1080p": { width: 1920, height: 1080 },
   "720p": { width: 1280, height: 720 },

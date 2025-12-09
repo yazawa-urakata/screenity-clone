@@ -431,59 +431,6 @@ export interface SetClipCropMessage extends BaseMessage {
   };
 }
 
-// メッセージの型ガード（よく使用されるもののみ）
-export function isStartRecordingMessage(
-  message: BaseMessage,
-): message is StartRecordingMessage {
-  return message.type === "start-recording";
-}
-
-export function isStopRecordingTabMessage(
-  message: BaseMessage,
-): message is StopRecordingTabMessage {
-  return message.type === "stop-recording-tab";
-}
-
-export function isVideoReadyMessage(
-  message: BaseMessage,
-): message is VideoReadyMessage {
-  return message.type === "video-ready";
-}
-
-export function isRecordingErrorMessage(
-  message: BaseMessage,
-): message is RecordingErrorMessage {
-  return message.type === "recording-error";
-}
-
-export function isPingMessage(message: BaseMessage): message is PingMessage {
-  return message.type === "ping";
-}
-
-export function isStartClipRecordingMessage(
-  message: BaseMessage,
-): message is StartClipRecordingMessage {
-  return message.type === "start-clip-recording";
-}
-
-export function isSaveClipMessage(
-  message: BaseMessage,
-): message is SaveClipMessage {
-  return message.type === "save-clip";
-}
-
-export function isClipSavedMessage(
-  message: BaseMessage,
-): message is ClipSavedMessage {
-  return message.type === "clip-saved";
-}
-
-export function isClipErrorMessage(
-  message: BaseMessage,
-): message is ClipErrorMessage {
-  return message.type === "clip-error";
-}
-
 // Supabase認証関連メッセージ
 export interface SupabaseSessionSyncedMessage extends BaseMessage {
   type: "SUPABASE_SESSION_SYNCED";

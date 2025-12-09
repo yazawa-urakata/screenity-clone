@@ -27,7 +27,6 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
   );
 
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 
   useEffect(() => {
     const locale = chrome.i18n.getMessage("@@ui_locale");
@@ -46,19 +45,19 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
     const minutes = Math.floor(contentState.alarmTime / 60);
     let seconds: string | number = contentState.alarmTime - minutes * 60;
     if (seconds < 10) {
-      seconds = "0" + seconds;
+      seconds = `0${seconds}`;
     }
-    setTime(minutes + ":" + seconds);
-  }, []);
+    setTime(`${minutes}:${seconds}`);
+  }, [contentState.alarmTime]);
 
   useEffect(() => {
     // Convert seconds to mm:ss
     const minutes = Math.floor(contentState.alarmTime / 60);
     let seconds: string | number = contentState.alarmTime - minutes * 60;
     if (seconds < 10) {
-      seconds = "0" + seconds;
+      seconds = `0${seconds}`;
     }
-    setTime(minutes + ":" + seconds);
+    setTime(`${minutes}:${seconds}`);
   }, [contentState.alarmTime]);
 
   // Start recording
@@ -73,7 +72,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
         pendingRecording: false,
       }));
     }
-  }, [contentState.recording]);
+  }, [contentState.recording, setContentState]);
 
   return (
     <div>
@@ -99,6 +98,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
       )}
       {!contentState.microphonePermission && (
         <button
+          type="button"
           className="permission-button"
           onClick={() => {
             if (typeof contentState.openModal === "function") {
@@ -122,7 +122,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
             }
           }}
         >
-          <img src={MicOffBlue} />
+          <img src={MicOffBlue} alt="" />
           <span>{chrome.i18n.getMessage("allowMicrophoneAccessButton")}</span>
         </button>
       )}
@@ -180,7 +180,7 @@ const RecordingType: React.FC<RecordingTypeProps> = (props) => {
           </>
         )}
       <button
-        role="button"
+        type="button"
         className="main-button recording-button"
         ref={buttonRef}
         tabIndex={0}

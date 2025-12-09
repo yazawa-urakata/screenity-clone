@@ -1,29 +1,8 @@
 import * as S from "@radix-ui/react-switch";
-import React, { type FC, useContext, useRef } from "react";
+import { type FC, useContext, useRef } from "react";
 
 // Context
 import { contentStateContext } from "../../context/ContentState";
-
-interface BaseSwitchProps {
-  value: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}
-
-export const BaseSwitch: FC<BaseSwitchProps> = ({
-  value,
-  checked,
-  onChange,
-}) => (
-  <S.Root
-    className="SwitchRoot"
-    id={value}
-    checked={checked}
-    onCheckedChange={onChange}
-  >
-    <S.Thumb className="SwitchThumb" />
-  </S.Root>
-);
 
 interface SwitchProps {
   name: string;

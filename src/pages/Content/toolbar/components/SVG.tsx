@@ -1,8 +1,7 @@
-import React, { type CSSProperties, type FC } from "react";
+import type { CSSProperties, FC } from "react";
 import { ReactSVG } from "react-svg";
 
-const URL =
-  "chrome-extension://" + chrome.i18n.getMessage("@@extension_id") + "/assets/";
+const URL = `chrome-extension://${chrome.i18n.getMessage("@@extension_id")}/assets/`;
 
 interface SVGIconProps {
   width?: string | number;
@@ -186,36 +185,6 @@ const Stroke3Icon: FC<SVGIconProps> = (props) => {
         width: "100%",
         height: "100%",
       }}
-    />
-  );
-};
-
-const TargetCursorIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "tool-icons/target-cursor-icon.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
-
-const HighlightCursorIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "tool-icons/highlight-cursor-icon.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
-
-const HideCursorIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "tool-icons/hide-cursor-icon.svg"}
-      width={props.width}
-      height={props.height}
     />
   );
 };
@@ -449,15 +418,6 @@ const TimeIcon: FC<SVGIconProps> = (props) => {
     />
   );
 };
-const SpotlightCursorIcon: FC<SVGIconProps> = (props) => {
-  return (
-    <ReactSVG
-      src={URL + "tool-icons/spotlight-cursor-icon.svg"}
-      width={props.width}
-      height={props.height}
-    />
-  );
-};
 
 const CloseIconPopup: FC<SVGIconProps> = (props) => {
   return (
@@ -569,6 +529,7 @@ const CheckIcon: FC<SVGIconProps> = (props) => {
       fill="currentColor"
       className={props.className}
       style={props.style}
+      aria-hidden="true"
     >
       <path d="M7.5 13.5L3.5 9.5L4.91 8.09L7.5 10.67L15.09 3.09L16.5 4.5L7.5 13.5Z" />
     </svg>
@@ -585,6 +546,7 @@ const CloseIcon: FC<SVGIconProps> = (props) => {
       fill="currentColor"
       className={props.className}
       style={props.style}
+      aria-hidden="true"
     >
       <path d="M15.5 5.91L14.09 4.5L10 8.59L5.91 4.5L4.5 5.91L8.59 10L4.5 14.09L5.91 15.5L10 11.41L14.09 15.5L15.5 14.09L11.41 10L15.5 5.91Z" />
     </svg>
@@ -617,9 +579,6 @@ export {
   Stroke1Icon,
   Stroke2Icon,
   Stroke3Icon,
-  TargetCursorIcon,
-  HighlightCursorIcon,
-  HideCursorIcon,
   TextIcon,
   ArrowIcon,
   EraserIcon,
@@ -643,7 +602,6 @@ export {
   BlurIcon,
   AlertIcon,
   TimeIcon,
-  SpotlightCursorIcon,
   CloseIconPopup,
   GrabIconPopup,
   OnboardingArrow,

@@ -1,4 +1,4 @@
-import React, {
+import {
   useContext,
   useEffect,
   useLayoutEffect,
@@ -127,8 +127,8 @@ const BlurTool = () => {
               hoveredElementRef.current.getBoundingClientRect().left +
               window.scrollX +
               "px",
-            width: hoveredElementRef.current.offsetWidth + "px",
-            height: hoveredElementRef.current.offsetHeight + "px",
+            width: `${hoveredElementRef.current.offsetWidth}px`,
+            height: `${hoveredElementRef.current.offsetHeight}px`,
           }}
         ></div>
       )}

@@ -113,7 +113,6 @@ export interface ContentStateType {
   microphonePermission: boolean;
   askMicrophone: boolean;
   recordingShortcut: string;
-  cursorMode: string;
   shape: string;
   shapeFill: boolean;
   offscreenRecording: boolean;
@@ -157,11 +156,8 @@ export interface ContentStateType {
   instantMode: boolean;
   onboarding: boolean;
   showProSplash: boolean;
-  hasSubscribedBefore: boolean;
   isLoggedIn: boolean;
   screenityUser: { name?: string; email?: string } | null;
-  isSubscribed: boolean;
-  proSubscription: { deletionAt?: string; endsAt?: string } | null;
   regionCaptureRef?: {
     contentWindow: {
       postMessage: (message: unknown, targetOrigin: string) => void;
@@ -291,11 +287,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
         ...prev,
         isLoggedIn: result.authenticated,
         screenityUser: result.user as { name?: string; email?: string } | null,
-        isSubscribed: result.subscribed,
-        proSubscription: result.proSubscription as {
-          deletionAt?: string;
-          endsAt?: string;
-        } | null,
       }));
 
       if (result.authenticated) {
@@ -318,8 +309,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
         ...prev,
         isLoggedIn: false,
         screenityUser: null,
-        isSubscribed: false,
-        proSubscription: null,
       }));
     }
   }, []);
@@ -926,8 +915,8 @@ const ContentState: FC<ContentStateProps> = (props) => {
         "offscreen",
       ];
 
-      // Only request clipboardWrite if the user is logged in and subscribed
-      if (currentState?.isLoggedIn && currentState?.isSubscribed) {
+      // Only request clipboardWrite if the user is logged in
+      if (currentState?.isLoggedIn) {
         permissions.push("clipboardWrite");
       }
 
@@ -964,14 +953,13 @@ const ContentState: FC<ContentStateProps> = (props) => {
       const currentState = contentStateRef.current;
       if (!currentState) return false;
 
-      const { isLoggedIn, isSubscribed } = currentState;
+      const { isLoggedIn } = currentState;
 
       return new Promise((resolve) => {
         chrome.runtime.sendMessage(
           {
             type: "check-capture-permissions",
             isLoggedIn,
-            isSubscribed,
           },
           (response: { status: string }) => {
             resolve(response.status === "ok");
@@ -992,11 +980,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
 
     let permission = false;
 
-    if (
-      currentState?.isLoggedIn &&
-      currentState?.isSubscribed &&
-      CLOUD_FEATURES_ENABLED
-    ) {
+    if (currentState?.isLoggedIn && CLOUD_FEATURES_ENABLED) {
       const storageResponse = (await chrome.runtime.sendMessage({
         type: "check-storage-quota",
       })) as StorageQuotaResponse;
@@ -1019,22 +1003,13 @@ const ContentState: FC<ContentStateProps> = (props) => {
         currentState.openModal &&
         currentState.setContentState
       ) {
-        const isSubError = error === "Subscription inactive";
         const isAuthError = error === "Not authenticated";
 
-        // Update content state if subscription is inactive
-        if (isSubError) {
+        if (isAuthError) {
           currentState.setContentState((prev) => ({
             ...prev,
-            isSubscribed: false,
-          }));
-        } else if (isAuthError) {
-          currentState.setContentState((prev) => ({
-            ...prev,
-            isSubscribed: false,
             isLoggedIn: false,
             screenityUser: null,
-            proSubscription: null,
           }));
         }
 
@@ -1099,11 +1074,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
       type: "available-memory",
     })) as MemoryDataResponse;
 
-    if (
-      data.quota < 524288000 &&
-      !currentState.isLoggedIn &&
-      !currentState.isSubscribed
-    ) {
+    if (data.quota < 524288000 && !currentState.isLoggedIn) {
       if (typeof currentState.openModal === "function") {
         let clear: string | null = null;
         let clearAction = (): void => {};
@@ -1445,7 +1416,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     microphonePermission: true,
     askMicrophone: true,
     recordingShortcut: "⌥⇧D",
-    cursorMode: "none",
     shape: "rectangle",
     shapeFill: false,
     offscreenRecording: false,
@@ -1482,11 +1452,8 @@ const ContentState: FC<ContentStateProps> = (props) => {
     instantMode: false,
     onboarding: false,
     showProSplash: false,
-    hasSubscribedBefore: false,
     isLoggedIn: false,
     screenityUser: null,
-    isSubscribed: false,
-    proSubscription: null,
     startRecordingAfterCountdown: () => {
       playBeepSound();
       setTimeout(() => {

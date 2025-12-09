@@ -12,7 +12,6 @@ import Region from "./region/Region";
 import Toast from "./toolbar/components/Toast";
 import Toolbar from "./toolbar/Toolbar";
 import BlurTool from "./utils/BlurTool";
-import CursorModes from "./utils/CursorModes";
 import Warning from "./warning/Warning";
 
 /*
@@ -216,7 +215,6 @@ const Wrapper: React.FC = () => {
                 aria-label="Close extension popup"
               />
             )}
-          <CursorModes />
           <root.div
             className="root-container"
             id="screenity-root-container"
@@ -236,10 +234,6 @@ const Wrapper: React.FC = () => {
               {/* RecordingLoader を削除: 即座に結果画面を表示するため不要 */}
               <Countdown />
               {!contentState.onboarding &&
-                !(
-                  contentState.isSubscribed === false &&
-                  contentState.isLoggedIn === true
-                ) &&
                 !(!contentState.isLoggedIn && contentState.wasLoggedIn) && (
                   <Toolbar />
                 )}

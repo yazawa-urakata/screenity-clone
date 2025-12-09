@@ -1,5 +1,5 @@
 import * as Tooltip from "@radix-ui/react-tooltip";
-import React, {
+import {
   type CSSProperties,
   type FC,
   type ReactNode,

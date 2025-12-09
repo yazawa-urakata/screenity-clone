@@ -338,8 +338,6 @@ export const setupHandlers = (): void => {
         ...prev,
         isLoggedIn: result.authenticated,
         screenityUser: result.user,
-        isSubscribed: result.subscribed,
-        proSubscription: result.proSubscription,
         showExtension: true,
         showPopup: !recording,
       }));
@@ -370,8 +368,6 @@ export const setupHandlers = (): void => {
         ...prev,
         isLoggedIn: false,
         screenityUser: null,
-        isSubscribed: false,
-        proSubscription: null,
         showExtension: true,
         showPopup: !recording,
       }));
@@ -391,8 +387,6 @@ export const setupHandlers = (): void => {
         ...prev,
         isLoggedIn: result.authenticated,
         screenityUser: result.user,
-        isSubscribed: result.subscribed,
-        proSubscription: result.proSubscription,
       }));
 
       if (result.authenticated) {
