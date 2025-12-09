@@ -31,7 +31,7 @@ export const sendMessageTab = async (
     }
 
     return new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(tab.id!, message, (response) => {
+      chrome.tabs.sendMessage(tab.id, message, (response) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError.message);
         } else {

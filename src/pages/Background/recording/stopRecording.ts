@@ -38,24 +38,22 @@ export const stopRecording = async () => {
   } else {
     // 常に fallback editor を開く（mp4変換を無効化）
     chrome.tabs.create({ url: "editorfallback.html", active: true }, (tab) => {
-      chrome.tabs.onUpdated.addListener(
-        function _(tabId, changeInfo, updatedTab) {
-          if (tabId === tab.id && changeInfo.status === "complete") {
-            chrome.tabs.onUpdated.removeListener(_);
-            chrome.storage.local.set({ sandboxTab: tab.id });
-            waitForContentScript(tab.id)
-              .then(() => {
-                sendChunks();
-              })
-              .catch((err) => {
-                console.error(
-                  "❌ Failed to wait for content script:",
-                  err.message,
-                );
-              });
-          }
-        },
-      );
+      chrome.tabs.onUpdated.addListener(function _(tabId, changeInfo) {
+        if (tabId === tab.id && changeInfo.status === "complete") {
+          chrome.tabs.onUpdated.removeListener(_);
+          chrome.storage.local.set({ sandboxTab: tab.id });
+          waitForContentScript(tab.id)
+            .then(() => {
+              sendChunks();
+            })
+            .catch((err) => {
+              console.error(
+                "❌ Failed to wait for content script:",
+                err.message,
+              );
+            });
+        }
+      });
     });
 
     chrome.runtime.sendMessage({ type: "turn-off-pip" });

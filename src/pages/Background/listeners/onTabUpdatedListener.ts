@@ -1,8 +1,8 @@
 import { sendMessageTab } from "../tabManagement";
 
-export const handleTabUpdate = async (
+const handleTabUpdate = async (
   tabId: number,
-  changeInfo,
+  changeInfo: chrome.tabs.OnUpdatedInfo,
   tab: chrome.tabs.Tab,
 ): Promise<void> => {
   try {

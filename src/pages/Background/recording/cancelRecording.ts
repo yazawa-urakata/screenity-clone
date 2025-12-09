@@ -5,7 +5,7 @@ export const handleDismiss = async () => {
   try {
     await chrome.storage.local.set({ restarting: true });
 
-    const { region, wasRegion } = await chrome.storage.local.get([
+    const { wasRegion } = await chrome.storage.local.get([
       "region",
       "wasRegion",
     ]);

@@ -104,7 +104,7 @@ export const resetActiveTab = async (forceRestart = false) => {
         url.protocol === "chrome-extension:" ||
         url.protocol === "about:"
       );
-    } catch (e) {
+    } catch {
       return false;
     }
   }

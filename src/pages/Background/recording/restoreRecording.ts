@@ -4,7 +4,7 @@ import { sendChunks } from "./sendChunks";
 
 export const checkRestore = async (sendResponse) => {
   const chunks = [];
-  await chunksStore.iterate((value, key) => {
+  await chunksStore.iterate((value) => {
     chunks.push(value);
   });
 

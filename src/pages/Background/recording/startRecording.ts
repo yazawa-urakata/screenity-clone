@@ -19,7 +19,7 @@ export const startRecording = async () => {
   if (recordingType === "region") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
-      if (tab && tab.url) {
+      if (tab?.url) {
         try {
           const url = new URL(tab.url);
           let hostname = url.hostname;

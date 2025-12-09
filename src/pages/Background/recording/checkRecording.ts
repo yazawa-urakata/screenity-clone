@@ -14,7 +14,7 @@ export const checkRecording = async (): Promise<void> => {
           discardRecording();
         }
       });
-    } catch (error) {
+    } catch {
       discardRecording();
     }
   } else if (offscreen) {

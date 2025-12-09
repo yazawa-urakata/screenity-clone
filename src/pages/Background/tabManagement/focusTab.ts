@@ -8,14 +8,14 @@ export const focusTab = async (tabId: number | null) => {
       });
     });
 
-    if (tab && tab.id && tab.windowId) {
+    if (tab?.id && tab.windowId) {
       chrome.windows.update(tab.windowId, { focused: true }).then(() => {
         if (tab.id) {
           chrome.tabs.update(tab.id, { active: true });
         }
       });
     }
-  } catch (error) {
+  } catch {
     // Tab doesn't exist or can't be accessed
   }
 };

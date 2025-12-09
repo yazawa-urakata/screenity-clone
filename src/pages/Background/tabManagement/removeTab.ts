@@ -8,10 +8,10 @@ export const removeTab = async (tabId: number | null) => {
       });
     });
 
-    if (tab && tab.id) {
+    if (tab?.id) {
       chrome.tabs.remove(tab.id);
     }
-  } catch (error) {
+  } catch {
     // Tab doesn't exist or can't be accessed
   }
 };

@@ -7,7 +7,7 @@ export const onWindowFocusChangedListener = async (
 
   try {
     const tabs = await chrome.tabs.query({ active: true, windowId });
-    if (tabs && tabs[0]) {
+    if (tabs?.[0]) {
       handleTabActivation({ tabId: tabs[0].id as number, windowId });
     }
   } catch (error) {
