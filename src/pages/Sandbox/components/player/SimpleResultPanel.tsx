@@ -132,7 +132,7 @@ const SimpleResultPanel: React.FC<SimpleResultPanelProps> = () => {
             <h2 className="uploadTitle">{statusMessage.title}</h2>
             <p className="uploadDescription">{statusMessage.description}</p>
           </div>
-          {contentState.mode === "player" && <ClipsPanel />}
+          <ClipsPanel />
         </div>
       </div>
       <style>

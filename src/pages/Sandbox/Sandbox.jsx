@@ -1,12 +1,11 @@
 import "./styles/edit/_VideoPlayer.scss";
 import "./styles/global/_app.scss";
 
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import Modal from "./components/global/Modal";
 // Context
 import { ContentStateContext } from "./context/ContentState"; // Import the ContentState context
 // Layout
-import Editor from "./layout/editor/Editor";
 import Player from "./layout/player/Player";
 
 const Sandbox = () => {
@@ -100,17 +99,7 @@ const Sandbox = () => {
     <div ref={parentRef}>
       <Modal />
       <video></video>
-      {/* Render the WaveformGenerator component and pass the ffmpeg instance as a prop */}
-      {contentState.ffmpeg &&
-        contentState.ready &&
-        contentState.mode === "edit" && <Editor />}
-      {/*
-        動画再生機能を削除:
-        - contentState.ready の条件を削除し、録画完了後すぐに Player を表示
-        - Player 内の SimpleResultPanel がタイトルとクリップ一覧を表示
-        - RightPanel で S3 アップロード状態が利用可能
-      */}
-      {contentState.mode != "edit" && <Player />}
+      <Player />
       <style>
         {`
 /* スクロールバーのカスタムスタイル（Windows用） */
