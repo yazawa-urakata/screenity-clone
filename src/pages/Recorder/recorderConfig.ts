@@ -7,7 +7,7 @@ export const MIME_TYPES = [
   "video/webm;codecs=avc1",
 ] as const;
 
-export type QualityValue =
+type QualityValue =
   | "4k"
   | "1080p"
   | "720p"

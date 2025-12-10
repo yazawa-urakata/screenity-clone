@@ -177,211 +177,14 @@ export interface BaseMessage {
   payload?: unknown;
 }
 
-// 録画関連メッセージ
-export interface StartRecordingMessage extends BaseMessage {
-  type: "start-recording";
-  payload?: {
-    audio?: boolean;
-    video?: boolean;
-    screen?: boolean;
-    microphoneId?: string;
-    tabId?: number;
-    recordingType?: string;
-  };
-}
-
-export interface StopRecordingTabMessage extends BaseMessage {
-  type: "stop-recording-tab";
-  save?: boolean;
-}
-
-export interface VideoReadyMessage extends BaseMessage {
-  type: "video-ready";
-}
-
+// 録画エラーメッセージ
 export interface RecordingErrorMessage extends BaseMessage {
   type: "recording-error";
   error?: string;
   why?: string;
 }
 
-// ストリーミング関連メッセージ
-export interface GetStreamingDataMessage extends BaseMessage {
-  type: "get-streaming-data";
-}
-
-export interface StreamingDataMessage extends BaseMessage {
-  type: "streaming-data";
-  data?: string;
-}
-
-export interface PipMessage extends BaseMessage {
-  type: "pip-started" | "pip-ended" | "toggle-pip";
-}
-
-// バックアップ関連メッセージ
-export interface RestoreRecordingMessage extends BaseMessage {
-  type: "restore-recording";
-}
-
-// タブ/ウィンドウ管理メッセージ
-export interface ResetActiveTabMessage extends BaseMessage {
-  type: "reset-active-tab" | "reset-active-tab-restart";
-}
-
-export interface SetSurfaceMessage extends BaseMessage {
-  type: "set-surface";
-  surface?: string;
-}
-
-export interface FocusTabMessage extends BaseMessage {
-  type: "focus-this-tab";
-  tabId?: number;
-}
-
-// 権限関連メッセージ
-export interface CheckCapturePermissionsMessage extends BaseMessage {
-  type: "check-capture-permissions";
-}
-
-export interface OnGetPermissionsMessage extends BaseMessage {
-  type: "on-get-permissions";
-  data?: any;
-}
-
-// Google Drive関連メッセージ
-export interface SaveToDriveMessage extends BaseMessage {
-  type: "save-to-drive" | "save-to-drive-fallback";
-  fileName?: string;
-  mimeType?: string;
-}
-
-export interface SavedToDriveMessage extends BaseMessage {
-  type: "saved-to-drive";
-  success: boolean;
-  url?: string;
-}
-
-// 認証関連メッセージ
-export interface CheckAuthStatusMessage extends BaseMessage {
-  type: "check-auth-status" | "check-auth";
-}
-
-export interface HandleLoginMessage extends BaseMessage {
-  type: "handle-login";
-  token?: string;
-  user?: any;
-}
-
-export interface HandleLogoutMessage extends BaseMessage {
-  type: "handle-logout";
-}
-
-// プロジェクト関連メッセージ
-export interface CreateVideoProjectMessage extends BaseMessage {
-  type: "create-video-project";
-  title?: string;
-  projectId?: string;
-}
-
-export interface FetchVideosMessage extends BaseMessage {
-  type: "fetch-videos";
-}
-
-export interface GetProjectInfoMessage extends BaseMessage {
-  type: "get-project-info" | "GET_PROJECT_INFO";
-  projectId?: string;
-}
-
-export interface EditorReadyMessage extends BaseMessage {
-  type: "editor-ready";
-}
-
-// FFmpeg関連メッセージ
-export interface LoadFfmpegMessage extends BaseMessage {
-  type: "load-ffmpeg";
-}
-
-export interface CropVideoMessage extends BaseMessage {
-  type: "crop-video";
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-}
-
-export interface CutVideoMessage extends BaseMessage {
-  type: "cut-video";
-  start?: number;
-  end?: number;
-}
-
-// システム関連メッセージ
-export interface GetPlatformInfoMessage extends BaseMessage {
-  type: "get-platform-info";
-}
-
-export interface IsPinnedMessage extends BaseMessage {
-  type: "is-pinned";
-}
-
-export interface ResizeWindowMessage extends BaseMessage {
-  type: "resize-window";
-  width: number;
-  height: number;
-}
-
-export interface AvailableMemoryMessage extends BaseMessage {
-  type: "available-memory";
-}
-
-export interface PingMessage extends BaseMessage {
-  type: "ping";
-}
-
-// タイマー関連メッセージ
-export interface TimeMessage extends BaseMessage {
-  type: "time";
-  duration?: number;
-}
-
-export interface TimeWarningMessage extends BaseMessage {
-  type: "time-warning";
-}
-
-export interface AddAlarmListenerMessage extends BaseMessage {
-  type: "add-alarm-listener";
-  time?: number;
-}
-
-// UI関連メッセージ
-export interface ShowToastMessage extends BaseMessage {
-  type: "show-toast";
-  message?: string;
-  duration?: number;
-}
-
-export interface TogglePopupMessage extends BaseMessage {
-  type: "toggle-popup";
-}
-
-// イベント関連メッセージ
-export interface ClickEventMessage extends BaseMessage {
-  type: "click-event";
-  x?: number;
-  y?: number;
-  timestamp?: number;
-}
-
-// クリップ録画関連メッセージ
-export interface StartClipRecordingMessage extends BaseMessage {
-  type: "start-clip-recording";
-}
-
-export interface EndClipRecordingMessage extends BaseMessage {
-  type: "end-clip-recording";
-}
-
+// クリップ保存メッセージ
 export interface SaveClipMessage extends BaseMessage {
   type: "save-clip";
   payload: {
@@ -402,35 +205,6 @@ export interface SaveClipMessage extends BaseMessage {
   };
 }
 
-export interface ClipSavedMessage extends BaseMessage {
-  type: "clip-saved";
-  payload: {
-    clipId: string;
-    clipNumber: number;
-    duration: number;
-  };
-}
-
-export interface ClipErrorMessage extends BaseMessage {
-  type: "clip-error";
-  payload: {
-    code: string;
-    message: string;
-  };
-}
-
-export interface SetClipCropMessage extends BaseMessage {
-  type: "set-clip-crop";
-  payload: {
-    crop: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    } | null;
-  };
-}
-
 // Supabase認証関連メッセージ
 export interface SupabaseSessionSyncedMessage extends BaseMessage {
   type: "SUPABASE_SESSION_SYNCED";
@@ -448,40 +222,13 @@ export interface SupabaseAuthCheckMessage extends BaseMessage {
   type: "SUPABASE_AUTH_CHECK";
 }
 
-export interface SupabaseClearAuthMessage extends BaseMessage {
-  type: "SUPABASE_CLEAR_AUTH";
-}
-
-export interface SupabaseSetAuthMessage extends BaseMessage {
-  type: "SUPABASE_SET_AUTH";
-  payload: {
-    accessToken: string;
-    user: any;
-    expiresAt: number;
-  };
-}
-
 export interface SupabaseLoginRequestMessage extends BaseMessage {
   type: "SUPABASE_LOGIN_REQUEST";
-}
-
-export interface AuthStateChangedMessage extends BaseMessage {
-  type: "AUTH_STATE_CHANGED";
-  payload: {
-    authenticated: boolean;
-  };
 }
 
 // メッセージハンドラーの型
 export type MessageHandler<T extends BaseMessage = BaseMessage> = (
   message: T,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: any) => void,
-) => void | boolean | unknown | Promise<any>;
-
-// メッセージレスポンスの型
-export interface MessageResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+  sendResponse: (response?: unknown) => void,
+) => undefined | boolean | unknown | Promise<unknown>;

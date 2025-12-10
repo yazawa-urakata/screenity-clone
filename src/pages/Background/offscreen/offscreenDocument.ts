@@ -2,7 +2,7 @@ import { sendMessageRecord } from "../recording/sendMessageRecord";
 import { getCurrentTab } from "../tabManagement";
 import { closeOffscreenDocument } from "./closeOffscreenDocument";
 
-export interface RecordingRequest {
+interface RecordingRequest {
   region?: boolean;
   customRegion?: boolean;
   offscreenRecording?: boolean;

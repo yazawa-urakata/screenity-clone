@@ -6,7 +6,7 @@
 import { DEFAULT_RETRY_CONFIG, exponentialBackoff } from "./retryUtils";
 import { addOrphanedUpload, saveUploadState } from "./uploadStateManager";
 
-export type AbortReason =
+type AbortReason =
   | "user_cancel"
   | "max_retry"
   | "expired"

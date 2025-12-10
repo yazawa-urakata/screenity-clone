@@ -2,7 +2,6 @@ import fixWebmDuration from "fix-webm-duration";
 import localforage from "localforage";
 import React, {
   createContext,
-  type FC,
   type ReactNode,
   useCallback,
   useEffect,
@@ -24,7 +23,7 @@ const chunksStore = localforage.createInstance({
 });
 
 // Sandbox ContentState type definition
-export interface SandboxContentStateType {
+interface SandboxContentStateType {
   time: number;
   editLimit: number;
   blob: Blob | null;
@@ -133,10 +132,6 @@ interface ContentStateProps {
 interface ChunkItem {
   timestamp?: number;
   chunk: Blob | ArrayBuffer;
-}
-
-interface ChunkMessage {
-  chunk: string;
 }
 
 // Brave browser detection
@@ -283,7 +278,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
       history: [...prevState.history, prevState],
       redoHistory: [],
     }));
-  }, [contentState]);
+  }, []);
 
   const undo = useCallback(() => {
     if (contentState.history.length > 1) {
@@ -438,7 +433,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
         };
         reader.readAsDataURL(blob);
       }
-    } catch (error) {
+    } catch {
       setContentState((prevState) => ({
         ...prevState,
         webm: blob,
@@ -448,65 +443,9 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     }
   };
 
-  const checkMemory = (): void => {
-    if (typeof contentStateRef.current.openModal === "function") {
-      chrome.storage.local.get("memoryError", (result) => {
-        const memoryError = result.memoryError as boolean | undefined;
-        if (memoryError && memoryError !== null) {
-          chrome.storage.local.set({ memoryError: false });
-          contentStateRef.current.openModal!(
-            chrome.i18n.getMessage("memoryLimitTitle"),
-            chrome.i18n.getMessage("memoryLimitDescription"),
-            chrome.i18n.getMessage("understoodButton"),
-            null,
-            () => {},
-            () => {},
-            null,
-            chrome.i18n.getMessage("learnMoreDot"),
-            () => {
-              chrome.runtime.sendMessage({ type: "memory-limit-help" });
-            },
-          );
-        }
-      });
-    }
-  };
-
   useEffect(() => {
     chunkCount.current = contentState.chunkCount;
   }, [contentState.chunkCount]);
-
-  const handleBatch = (
-    chunks: ChunkMessage[],
-    sendResponse: (response: { status: string }) => void,
-  ): boolean => {
-    (async () => {
-      try {
-        await Promise.all(
-          chunks.map(async (chunk) => {
-            if (contentStateRef.current.chunkIndex >= chunkCount.current) {
-              console.warn("Too many chunks received");
-              return;
-            }
-
-            const chunkData = base64ToUint8Array(chunk.chunk);
-            videoChunks.current.push(chunkData);
-
-            setContentState((prevState) => ({
-              ...prevState,
-              chunkIndex: prevState.chunkIndex + 1,
-            }));
-          }),
-        );
-
-        sendResponse({ status: "ok" });
-      } catch (error) {
-        console.error("Error processing batch", error);
-      }
-    })();
-
-    return true;
-  };
 
   // Check Chrome version
   useEffect(() => {
@@ -541,17 +480,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     if (sendResponse !== null) {
       sendResponse({ status: "ok" });
     }
-  };
-
-  const toBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = () => {
-        resolve(reader.result as string);
-      };
-      reader.onerror = reject;
-    });
   };
 
   const onChromeMessage = useCallback(
@@ -750,7 +678,7 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
       (contentState.duration > contentState.editLimit && !contentState.override)
     )
       return;
-    const data = base64ToUint8Array(contentState.base64!);
+    const data = base64ToUint8Array(contentState.base64);
     const webmVideo =
       data instanceof Blob
         ? data
