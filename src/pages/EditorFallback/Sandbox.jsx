@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import cropVideo from "./utils/cropVideo";
 import cutVideo from "./utils/cutVideo";
 import getFrame from "./utils/getFrame";
-import muteVideo from "./utils/muteVideo";
 import reencodeVideo from "./utils/reencodeVideo";
 
 const Sandbox = () => {
@@ -77,24 +76,6 @@ const Sandbox = () => {
           message.time,
         );
         sendMessage({ type: "new-frame", frame: blob });
-      } catch (error) {
-        sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
-      }
-    } else if (message.type === "mute-video") {
-      try {
-        const blob = await muteVideo(
-          ffmpegInstance.current,
-          message.blob,
-          message.startTime,
-          message.endTime,
-          message.duration,
-        );
-        const base64 = await toBase64(blob);
-        sendMessage({
-          type: "updated-blob",
-          base64: base64,
-          addToHistory: true,
-        });
       } catch (error) {
         sendMessage({ type: "ffmpeg-error", error: JSON.stringify(error) });
       }
