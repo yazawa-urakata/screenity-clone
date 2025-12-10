@@ -1,10 +1,7 @@
 # Screenity Clone - アーキテクチャドキュメント
 
-**Version**: 4.0.0
-**License**: GPLv3
 **Manifest**: Chrome Extension Manifest V3
-**最終更新**: 2025-12-02
-**ドキュメントバージョン**: 2.1.0
+**最終更新**: 2025-12-11
 
 ---
 
@@ -15,17 +12,16 @@ Screenity Clone は Chrome 拡張機能 (MV3) として実装された画面録�
 ### 主要機能
 
 - **画面録画**: タブ/ウィンドウ/デスクトップ/領域の録画
-- **クリップ録画**: 長時間録画中の特定区間マーキング（最大100クリップ）
+- **クリップ録画**: 長時間録画中の特定区間マーキング（最大5クリップ、各60秒まで）
 - **Instant Upload**: S3 マルチパートアップロード（リアルタイム）
 - **音声ミキシング**: マイク + システム音声の Web Audio API ミキシング
 - **バックアップ/復旧**: IndexedDB による録画チャンク保存
 
 ### コード規模
 
-- 139 ファイル (TS/TSX/JS/JSX)
-- ビルドサイズ: 5.5MB
-- 12 エントリーポイント
-- 153 メッセージタイプ
+- 129 ファイル (TS/TSX/JS/JSX)
+- 11 エントリーポイント
+- 136 メッセージタイプ
 
 ---
 
@@ -33,36 +29,34 @@ Screenity Clone は Chrome 拡張機能 (MV3) として実装された画面録�
 
 ### Core
 
-- **React 18.2** + **TypeScript 5.0** (移行中)
+- **React 18.2** + **TypeScript 5.0**
 - **Webpack 5** + Babel
 - **SCSS** + ShadowDOM (スタイル分離)
+- **Biome** - コード品質管理
 
 ### Recording/Video
 
 - **MediaRecorder API** - ネイティブ録画
 - **Chrome APIs**: `tabCapture`, `desktopCapture`, `getUserMedia`, `offscreen`
 - **Web Audio API** - 入出力音声ミキシング
-- **Plyr 3.7.8** - ビデオプレイヤー
-- **fix-webm-duration** - WebM メタデータ修正
+- **fix-webm-duration** / **webm-duration-fix** - WebM メタデータ修正
 
 ### UI Components
 
-- **Radix UI** - アクセシブルなコンポーネント
+- **Radix UI** - アクセシブルなコンポーネント（alert-dialog, dropdown-menu, select, switch, toast, toolbar, tooltip）
 - **react-rnd 10.4** - ドラッグ/リサイズ
-- **react-advanced-cropper 0.19** - 領域選択
-- **react-hotkeys-hook 4.4** - キーボードショートカット
 
 ### Storage & Upload
 
 - **IndexedDB** (localforage 1.10) - 録画チャンク保存（DB: "screenity", Store: "chunks"）
 - **Chrome Storage API** - 設定永続化
-- **Axios 1.6** - S3 マルチパートアップロード
+- **Fetch API** - S3 マルチパートアップロード
 
 ---
 
 ## エントリーポイント
 
-### 12個のエントリーポイント
+### 11個のエントリーポイント
 
 | エントリー | パス | 役割 |
 |-----------|------|------|
@@ -75,7 +69,6 @@ Screenity Clone は Chrome 拡張機能 (MV3) として実装された画面録�
 | permissions | `src/pages/Permissions/index.tsx` | 権限要求 UI |
 | setup | `src/pages/Setup/index.tsx` | 初回セットアップガイド |
 | region | `src/pages/Region/index.tsx` | 領域選択 UI |
-| backup | `src/pages/Backup/index.jsx` | IndexedDB からの録画復旧 |
 | playground | `src/pages/Playground/index.tsx` | テスト/デモページ |
 | supabaseAuthSync | `src/pages/SupabaseAuthSync/index.ts` | 認証同期 (localhost:3000 のみ) |
 
@@ -124,7 +117,6 @@ Screenity Clone は Chrome 拡張機能 (MV3) として実装された画面録�
 5. 録画実行
    - チャンク保存: IndexedDB ("screenity" DB, "chunks" store)
    - リアルタイムアップロード: S3 マルチパート (5MB バッファ)
-   - クォータチェック: 5秒ごと (最小空き容量: 25MB)
 ```
 
 ### Offscreen Documents (MV3 対応)
@@ -147,6 +139,8 @@ await chrome.offscreen.createDocument({
 
 ### クリップデータ構造
 
+**ファイル**: `src/types/clip.ts`
+
 ```typescript
 interface ClipMetadata {
   id: string;              // クリップ ID
@@ -155,23 +149,26 @@ interface ClipMetadata {
   duration: number;        // 長さ (ms)
   crop?: ClipCropRegion;   // トリミング領域
   createdAt: number;       // 作成日時
-  recordingId?: string;    // 録画セッション ID
 }
 ```
 
 ### フロー
 
 ```txt
-1. startClipSelection() → clipStartTime 記録
-2. confirmClipSelection() → clipEndTime 記録 → メタデータ生成
+1. startClipSelection() → clipStartTime 記録 (:507)
+2. confirmClipSelection() → clipEndTime 記録 → メタデータ生成 (:577)
 3. Background で検証 → Chrome Storage に保存
 4. Content Script へ通知 (clip-saved)
 ```
 
 ### 制限
 
-- **最大クリップ数**: 100 (MAX_CLIPS)
-- **重複チェック**: 時間範囲の重複を検証
+**ファイル**: `src/utils/clipUtils.ts`
+
+| 定数 | 値 | 説明 |
+|------|-----|------|
+| MAX_CLIPS | 5 | 最大クリップ数 |
+| MAX_CLIP_DURATION_MS | 60,000 | 最大クリップ長（60秒） |
 
 ---
 
@@ -199,10 +196,26 @@ interface ClipMetadata {
 
 ### 設定
 
-- **最小パートサイズ**: 5MB
-- **最大パートサイズ**: 20MB
-- **リトライ回数**: 3回
-- **タイムアウト**: 60秒
+**ファイル**: `src/pages/Recorder/useInstantUpload.ts`
+
+| 設定 | 値 |
+|------|-----|
+| 最小パートサイズ | 5MB |
+| 最大パートサイズ | 20MB |
+| 進捗スロットリング | 200ms |
+| XHRタイムアウト | 60秒 |
+
+### リトライ設定
+
+**ファイル**: `src/pages/Recorder/retryUtils.ts`
+
+| 操作 | 最大試行 | 初期遅延 | 最大遅延 |
+|------|---------|---------|---------|
+| initiate | 3 | 1秒 | 8秒 |
+| partUrl | 5 | 1秒 | 16秒 |
+| s3Put | 3 | 2秒 | 16秒 |
+| complete | 5 | 2秒 | 32秒 |
+| abort | 3 | 1秒 | 8秒 |
 
 ---
 
@@ -210,16 +223,16 @@ interface ClipMetadata {
 
 ### 統計
 
-**総数**: 153 メッセージタイプ (types/message.ts)
+**総数**: 136 メッセージタイプ (`src/types/message.ts`)
 
 **主要カテゴリ**:
 
 | カテゴリ | 例 |
 |---------|-----|
 | 録画制御 | start-recording, stop-recording-tab, pause-recording-tab |
-| クリップ録画 | start-clip-recording, save-clip, clip-saved, clip-error |
+| クリップ録画 | save-clip, clip-saved, clip-error |
 | Supabase Auth | SUPABASE_SESSION_SYNCED, SUPABASE_LOGIN_REQUEST |
-| Editor | crop-video, cut-video, mute-video |
+| Editor | crop-video, cut-video, reencode-video |
 | その他 | ストリーム、ファイル、バックアップ、タイマー等 |
 
 ### Message-Driven Architecture
@@ -231,7 +244,6 @@ Background ↔ Content ↔ Recorder
 
 - 型安全なメッセージング (TypeScript 型定義)
 - 非同期ハンドラーサポート
-- 型ガード関数 (isStartRecordingMessage, isSaveClipMessage 等)
 ```
 
 ---
@@ -242,7 +254,7 @@ Background ↔ Content ↔ Recorder
 
 **ファイル**: `src/pages/Content/context/ContentState.tsx`
 
-React Context で 180+ の状態プロパティを管理。
+React Context で約 140 の状態プロパティを管理。
 
 #### 主要プロパティ
 
@@ -252,6 +264,7 @@ React Context で 180+ の状態プロパティを管理。
 recording: boolean          // 録画中
 paused: boolean            // 一時停止中
 timer: number              // 録画時間 (秒)
+time: number               // 経過時間
 timeWarning: boolean       // 時間制限警告
 ```
 
@@ -271,9 +284,12 @@ setDevices: boolean                    // デバイス設定済み
 clipSelecting: boolean                 // クリップ選択中
 clipRecording: boolean                 // クリップ録画中
 clipStartTime: number | null           // クリップ開始時刻 (ms)
+clipCrop: ClipCropRegion | null        // クロップ領域
 clips: ClipList                        // 保存済みクリップ一覧
 startClipSelection: () => void         // クリップ選択開始
 confirmClipSelection: () => void       // クリップ選択確定
+cancelClipSelection: () => void        // クリップ選択キャンセル
+endClipRecording: () => void           // クリップ録画終了
 ```
 
 **録画設定**:
@@ -297,6 +313,15 @@ hideToolbar: boolean                   // ツールバー非表示
 hideUI: boolean                        // UI 非表示
 ```
 
+**認証状態**:
+
+```typescript
+isLoggedIn: boolean                    // ログイン状態
+screenityUser: { name?, email? } | null // ユーザー情報
+hasSeenInstantModeModal: boolean       // インスタントモード説明表示済み
+instantMode: boolean                   // インスタントモード有効
+```
+
 ### Chrome Storage 同期
 
 Background の各種リスナーが状態を同期：
@@ -314,9 +339,7 @@ Background の各種リスナーが状態を同期：
 ### チャンクベースストレージ
 
 - **バッファフラッシュ**: 5MB
-- **最小空き容量**: 25MB
-- **最大保留バイト**: 8MB
-- **クォータチェック**: 5秒間隔
+- IndexedDB へのチャンク単位保存
 
 ### 進捗スロットリング
 
@@ -337,15 +360,21 @@ Background の各種リスナーが状態を同期：
 ```json
 {
   "permissions": [
+    "identity",
+    "activeTab",
     "storage",
     "unlimitedStorage",
+    "downloads",
     "tabs",
     "tabCapture",
-    "downloads"
+    "scripting",
+    "system.display",
+    "alarms"
   ],
   "optional_permissions": [
     "offscreen",
-    "desktopCapture"
+    "desktopCapture",
+    "clipboardWrite"
   ]
 }
 ```
@@ -356,7 +385,7 @@ Background の各種リスナーが状態を同期：
 {
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; media-src 'self' data: blob: *;",
-    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;"
+    "sandbox": "sandbox allow-scripts allow-modals allow-popups; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;"
   }
 }
 ```
@@ -375,13 +404,9 @@ Background の各種リスナーが状態を同期：
 Screenity Clone の特徴：
 
 - **最新技術**: React 18.2, TypeScript 5.0, Manifest V3
-- **モジュール設計**: 12 エントリーポイント、明確な責務分離
+- **モジュール設計**: 11 エントリーポイント、明確な責務分離
 - **プライバシー重視**: ローカル処理、ユーザー制御
 - **高機能**: 画面/タブ/領域録画、クリップ、S3 アップロード
-- **型安全メッセージング**: 153 メッセージタイプ、型ガード
-- **状態管理**: ContentStateContext (180+ プロパティ)
-- **スケーラビリティ**: 139 ソースファイル、整理された構造
-
----
-
-**変更内容**: カメラ機能削除に伴う更新、開発ワークフロー・詳細実装削除による簡潔化
+- **型安全メッセージング**: 136 メッセージタイプ
+- **状態管理**: ContentStateContext (約140 プロパティ)
+- **スケーラビリティ**: 129 ソースファイル、整理された構造
