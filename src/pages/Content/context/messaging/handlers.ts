@@ -266,34 +266,6 @@ export const setupHandlers = (): void => {
     }, 1000);
   });
 
-  registerMessage("open-popup-project", (message: BaseMessage) => {
-    const msg = message as unknown as {
-      projectTitle: string;
-      projectId: string;
-      recordingToScene: boolean;
-      activeSceneId: string;
-      senderId: string;
-    };
-    setContentState((prev) => ({
-      ...prev,
-      showExtension: true,
-      showPopup: true,
-      recordingProjectTitle: msg.projectTitle,
-      projectId: msg.projectId,
-      recordingToScene: msg.recordingToScene,
-      activeSceneId: msg.activeSceneId,
-    }));
-
-    updateFromStorage(false, parseInt(msg.senderId, 10));
-
-    setTimeout(() => {
-      contentStateRef.current.openToast(
-        chrome.i18n.getMessage("readyRecordSceneToast"),
-        () => {},
-      );
-    }, 1000);
-  });
-
   registerMessage("time-warning", () => {
     // Only trigger when actively recording
     if (contentStateRef.current.recording && !contentStateRef.current.paused) {
@@ -322,55 +294,6 @@ export const setupHandlers = (): void => {
         () => {},
         5000,
       );
-    }
-  });
-
-  registerMessage("get-project-info", () => {
-    window.postMessage({ source: "get-project-info" }, "*");
-  });
-  registerMessage("check-auth", async () => {
-    // 認証チェックは常に実行（CLOUD_FEATURES_ENABLEDに依存しない）
-    try {
-      const result = await checkAuthStatus();
-      const { recording } = await chrome.storage.local.get("recording");
-
-      setContentState((prev) => ({
-        ...prev,
-        isLoggedIn: result.authenticated,
-        screenityUser: result.user,
-        showExtension: true,
-        showPopup: !recording,
-      }));
-
-      if (result.authenticated) {
-        console.log("✅ User authenticated:", result.user);
-
-        // Offscreen recording is not available for authenticated users
-        setContentState((prev) => ({
-          ...prev,
-          offscreenRecording: false,
-          onboarding: false,
-          showProSplash: false,
-        }));
-
-        chrome.storage.local.set({
-          offscreenRecording: false,
-        });
-      } else {
-        console.log("ℹ️ User not authenticated");
-      }
-    } catch (error) {
-      console.error("❌ Failed to check auth:", error);
-
-      // エラー時はログアウト状態として扱う
-      const { recording } = await chrome.storage.local.get("recording");
-      setContentState((prev) => ({
-        ...prev,
-        isLoggedIn: false,
-        screenityUser: null,
-        showExtension: true,
-        showPopup: !recording,
-      }));
     }
   });
 
@@ -413,26 +336,6 @@ export const setupHandlers = (): void => {
       console.error("❌ Content Script: Failed to update auth state:", error);
     }
   });
-  registerMessage(
-    "update-project-loading",
-    (message: BaseMessage, sender: chrome.runtime.MessageSender) => {
-      const msg = message as unknown as { multiMode: boolean };
-      window.postMessage(
-        { source: "update-project-loading", multiMode: msg.multiMode },
-        "*",
-      );
-
-      if (!msg.multiMode) {
-        setContentState((prev) => ({
-          ...prev,
-          showExtension: false,
-          showPopup: false,
-        }));
-      }
-
-      updateFromStorage(true, sender.id ? parseInt(sender.id, 10) : null);
-    },
-  );
   registerMessage("update-project-ready", (message: BaseMessage) => {
     const msg = message as unknown as {
       share: boolean;
@@ -448,10 +351,6 @@ export const setupHandlers = (): void => {
       },
       "*",
     );
-  });
-  registerMessage("clear-project-recording", (message: BaseMessage) => {
-    const msg = message as unknown as { senderId: string };
-    updateFromStorage(false, parseInt(msg.senderId, 10));
   });
   registerMessage("preparing-recording", () => {
     setContentState((prev) => ({

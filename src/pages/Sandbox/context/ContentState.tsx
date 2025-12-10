@@ -34,7 +34,6 @@ interface SandboxContentStateType {
   end: number;
   trimming: boolean;
   cutting: boolean;
-  muting: boolean;
   cropping?: boolean;
   history: Partial<SandboxContentStateType>[];
   redoHistory: Partial<SandboxContentStateType>[];
@@ -98,7 +97,6 @@ interface SandboxContentStateType {
   redo?: () => void;
   addToHistory?: () => void;
   handleTrim?: (cut: boolean) => Promise<void>;
-  handleMute?: () => Promise<void>;
   download?: () => Promise<void>;
   handleCrop?: (
     x: number,
@@ -159,7 +157,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     end: 1,
     trimming: false,
     cutting: false,
-    muting: false,
     history: [{}],
     redoHistory: [],
     undoDisabled: true,
@@ -599,7 +596,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
         reencoding: false,
         trimming: false,
         cutting: false,
-        muting: false,
         cropping: false,
       }));
 
@@ -789,31 +785,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
     });
   };
 
-  const handleMute = async (): Promise<void> => {
-    if (contentState.isFfmpegRunning || contentState.muting) {
-      return;
-    }
-    if (
-      contentState.duration > contentState.editLimit &&
-      !contentState.override
-    )
-      return;
-
-    setContentState((prevState) => ({
-      ...prevState,
-      muting: true,
-      isFfmpegRunning: true,
-    }));
-
-    sendMessage({
-      type: "mute-video",
-      blob: contentState.blob,
-      startTime: contentState.start * contentState.duration,
-      endTime: contentState.end * contentState.duration,
-      duration: contentState.duration,
-    });
-  };
-
   const handleCrop = async (
     x: number,
     y: number,
@@ -874,7 +845,6 @@ const ContentState: React.FC<ContentStateProps> = (props) => {
   contentState.redo = redo;
   contentState.addToHistory = addToHistory;
   contentState.handleTrim = handleTrim;
-  contentState.handleMute = handleMute;
   contentState.handleCrop = handleCrop;
   contentState.handleReencode = handleReencode;
   contentState.getFrame = getImage;

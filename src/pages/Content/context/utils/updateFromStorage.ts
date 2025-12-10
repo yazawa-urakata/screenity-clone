@@ -31,9 +31,6 @@ export const updateFromStorage = (
       "hideUI",
       "bigTab",
       "askDismiss",
-      "swatch",
-      "color",
-      "strokeWidth",
       "quality",
       "systemAudio",
       "backup",
@@ -160,18 +157,6 @@ export const updateFromStorage = (
             result.askDismiss !== undefined && result.askDismiss !== null
               ? (result.askDismiss as any)
               : prevContentState.askDismiss,
-          swatch:
-            result.swatch !== undefined && result.swatch !== null
-              ? (result.swatch as any)
-              : prevContentState.swatch,
-          color:
-            result.color !== undefined && result.color !== null
-              ? (result.color as any)
-              : prevContentState.color,
-          strokeWidth:
-            result.strokeWidth !== undefined && result.strokeWidth !== null
-              ? (result.strokeWidth as any)
-              : prevContentState.strokeWidth,
           quality:
             result.quality !== undefined && result.quality !== null
               ? (result.quality as any)

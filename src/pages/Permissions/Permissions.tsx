@@ -76,7 +76,7 @@ const Recorder: React.FC = () => {
           "*",
         );
       }
-    } catch (err) {
+    } catch {
       enumerateDevices();
     }
   };

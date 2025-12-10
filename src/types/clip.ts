@@ -43,8 +43,6 @@ export enum ClipErrorCode {
   MAX_CLIPS_REACHED = "MAX_CLIPS_REACHED",
   /** クリップの長さが最大値を超えた */
   DURATION_TOO_LONG = "DURATION_TOO_LONG",
-  /** 無効なクロップ領域 */
-  INVALID_CROP = "INVALID_CROP",
   /** 録画中ではない */
   NOT_RECORDING = "NOT_RECORDING",
   /** 無効な時刻範囲 */

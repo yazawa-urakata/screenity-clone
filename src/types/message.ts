@@ -28,9 +28,7 @@ export type MessageType =
   | "desktop-capture"
   | "get-streaming-data"
   | "streaming-data"
-  | "screen-update"
   // PiP関連
-  | "toggle-pip"
   | "pip-started"
   | "pip-ended"
   | "turn-off-pip"
@@ -52,7 +50,6 @@ export type MessageType =
   | "restarted"
   // UI/ポップアップ関連
   | "toggle-popup"
-  | "toggle-extension"
   | "hide-popup-recording"
   | "setup-complete"
   | "show-toast"
@@ -75,7 +72,6 @@ export type MessageType =
   | "add-audio-to-video"
   | "crop-video"
   | "cut-video"
-  | "mute-video"
   | "reencode-video"
   | "get-frame"
   | "crop-update"
@@ -84,31 +80,11 @@ export type MessageType =
   | "ffmpeg-error"
   | "updated-blob"
   | "new-frame"
-  // Google Drive関連
-  | "save-to-drive"
-  | "save-to-drive-fallback"
-  | "saved-to-drive"
-  | "sign-out-drive"
   // 認証/アカウント関連
-  | "check-auth-status"
-  | "check-auth"
-  | "refresh-auth"
   | "handle-login"
   | "handle-logout"
-  | "auth-expired"
-  | "AUTH_SUCCESS"
-  | "LOGIN_SUCCESS"
-  | "SIGN_OUT"
   // プロジェクト/ビデオ管理関連
-  | "create-video-project"
-  | "fetch-videos"
-  | "get-project-info"
-  | "open-popup-project"
-  | "OPEN_POPUP_PROJECT"
-  | "GET_PROJECT_INFO"
-  | "update-project-loading"
   | "update-project-ready"
-  | "clear-project-recording"
   // エディター関連
   | "editor-ready"
   | "preparing-recording"
@@ -121,7 +97,6 @@ export type MessageType =
   | "resize-window"
   | "available-memory"
   | "ping"
-  | "PING_FROM_WEBAPP"
   // ストレージ/クォータ関連
   | "check-storage-quota"
   | "clear-recordings"
@@ -148,20 +123,15 @@ export type MessageType =
   | "stream-error"
   | "check-banner-support"
   | "hide-banner"
-  // モニター/ディスプレイ関連
-  | "get-monitor-for-window"
   // イベント関連
   | "click-event"
   | "crop-target"
   // Region Capture関連
   | "screenity-region-capture-loaded"
   // クリップ録画関連
-  | "start-clip-recording"
-  | "end-clip-recording"
   | "save-clip"
   | "clip-saved"
   | "clip-error"
-  | "set-clip-crop"
   // Supabase認証関連
   | "SUPABASE_SESSION_SYNCED"
   | "SUPABASE_SESSION_EXPIRED"

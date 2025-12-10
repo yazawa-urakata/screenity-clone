@@ -391,62 +391,6 @@ export const setupHandlers = (): void => {
     );
   }
 
-  function getMonitorForWindow(
-    message: unknown,
-    sender: chrome.runtime.MessageSender,
-    sendResponse: (response?: {
-      error?: string;
-      monitorId?: string;
-      monitorBounds?: chrome.system.display.Bounds;
-      displays?: unknown[];
-    }) => void,
-  ): boolean {
-    chrome.system.display.getInfo((displays) => {
-      chrome.windows.getCurrent((win?: chrome.windows.Window) => {
-        if (!win || chrome.runtime.lastError) {
-          console.warn(
-            "[get-monitor-for-window] No window found",
-            chrome.runtime.lastError,
-          );
-          sendResponse({ error: "No window found" });
-          return;
-        }
-
-        const monitor = displays.find(
-          (d) =>
-            (win.left as number) >= d.bounds.left &&
-            (win.left as number) < d.bounds.left + d.bounds.width &&
-            (win.top as number) >= d.bounds.top &&
-            (win.top as number) < d.bounds.top + d.bounds.height,
-        );
-
-        if (!monitor) {
-          console.warn("[get-monitor-for-window] No matching monitor");
-          sendResponse({ error: "No matching monitor" });
-        } else {
-          // Save monitor info directly into chrome.storage.local
-          chrome.storage.local.set(
-            {
-              displays,
-              recordedMonitorId: monitor.id,
-              monitorBounds: monitor.bounds,
-            },
-            () => {
-              sendResponse({
-                monitorId: monitor.id,
-                monitorBounds: monitor.bounds,
-                displays,
-              });
-            },
-          );
-        }
-      });
-    });
-
-    return true;
-  }
-
-  registerMessage("get-monitor-for-window", getMonitorForWindow);
   registerMessage("reopen-popup-multi", async (message) => {
     if (!CLOUD_FEATURES_ENABLED) {
       console.warn("Cloud features disabled");

@@ -1,4 +1,3 @@
-import "./styles/edit/_VideoPlayer.scss";
 import "./styles/global/_app.scss";
 
 import React, { useContext, useEffect, useRef } from "react";

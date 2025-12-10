@@ -22,14 +22,7 @@ import { updateFromStorage } from "./utils/updateFromStorage";
 
 // Context type definition
 export interface ContentStateType {
-  color: string;
-  strokeWidth: number | string;
   drawingMode: boolean;
-  tool: string;
-  undoStack: unknown[];
-  redoStack: unknown[];
-  canvas: HTMLCanvasElement | null;
-  swatch: number;
   time: number;
   timer: number;
   recording: boolean;
@@ -113,8 +106,6 @@ export interface ContentStateType {
   microphonePermission: boolean;
   askMicrophone: boolean;
   recordingShortcut: string;
-  shape: string;
-  shapeFill: boolean;
   offscreenRecording: boolean;
   isAddingImage: boolean;
   pipEnded: boolean;
@@ -187,9 +178,6 @@ export interface ContentStateType {
   confirmClipSelection: () => void;
   cancelClipSelection: () => void;
   endClipRecording: () => void;
-  setClipCrop: (
-    crop: { x: number; y: number; width: number; height: number } | null,
-  ) => void;
 }
 
 type ContextValue = [
@@ -892,20 +880,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     );
   }, []);
 
-  const setClipCrop = useCallback(
-    (
-      crop: { x: number; y: number; width: number; height: number } | null,
-    ): void => {
-      setContentState((prev) => ({
-        ...prev,
-        clipCrop: crop,
-      }));
-
-      chrome.storage.local.set({ clipCrop: crop });
-    },
-    [],
-  );
-
   const checkChromeCapturePermissions =
     useCallback(async (): Promise<boolean> => {
       const currentState = contentStateRef.current;
@@ -1350,14 +1324,7 @@ const ContentState: FC<ContentStateProps> = (props) => {
 
   // These settings are available throughout the Content
   const [contentState, setContentStateInternal] = useState<ContentStateType>({
-    color: "#4597F7",
-    strokeWidth: 2,
     drawingMode: false,
-    tool: "pen",
-    undoStack: [],
-    redoStack: [],
-    canvas: null,
-    swatch: 1,
     time: 0,
     timer: 0,
     recording: false,
@@ -1416,8 +1383,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     microphonePermission: true,
     askMicrophone: true,
     recordingShortcut: "⌥⇧D",
-    shape: "rectangle",
-    shapeFill: false,
     offscreenRecording: false,
     isAddingImage: false,
     pipEnded: false,
@@ -1496,7 +1461,6 @@ const ContentState: FC<ContentStateProps> = (props) => {
     confirmClipSelection: confirmClipSelection,
     cancelClipSelection: cancelClipSelection,
     endClipRecording: endClipRecording,
-    setClipCrop: setClipCrop,
   });
   contentStateRef.current = contentState;
 
