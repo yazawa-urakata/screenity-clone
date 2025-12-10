@@ -11,7 +11,6 @@
     "postinstall": "patch-package",
     "package": "npm run build && cd build && zip -r ../extension.zip . && cd ..",
     "clean": "rm -rf build && mkdir build",
-    "lint": "eslint src/**/*.js --fix",
     "knip": "knip",
     "biome:check": "biome check .",
     "biome:check:file": "biome check",
@@ -41,7 +40,8 @@
     "react-shadow": "^20.0.0",
     "react-svg": "^16.1.18",
     "ssestream": "^1.1.0",
-    "webm-duration-fix": "^1.0.4"
+    "webm-duration-fix": "^1.0.4",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
